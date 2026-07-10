@@ -9,17 +9,24 @@ const axiosClient = axios.create({
     },
 });
 
+
 axiosClient.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem('token');
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
+
+        const method = config.method?.toLowerCase();
+        if (method === 'put' || method === 'delete') {
+            config.headers['X-HTTP-Method-Override'] = method.toUpperCase();
+            config.method = 'post';
+        }
+        
         return config;
     },
     (error) => Promise.reject(error)
 );
-
 axiosClient.interceptors.response.use(
     (response) => response.data || response,
     (error) => {
