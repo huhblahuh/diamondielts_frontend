@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://localhost:7053/api';
+const API_URL = import.meta.env.VITE_API_URL || 'https://api.diamondielts.com/api';
 
 const axiosClient = axios.create({
     baseURL: API_URL,
