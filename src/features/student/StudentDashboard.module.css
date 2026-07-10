@@ -1,0 +1,664 @@
+/* ── Diamond IELTS — Student Dashboard ──────────────────────────────────── */
+
+.container {
+    max-width: 1280px;
+    margin: 0 auto;
+    animation: fadeIn 0.35s ease;
+    font-family: 'Inter', 'Segoe UI', sans-serif;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Welcome Banner ──────────────────────────────────────────────────────── */
+.welcomeBanner {
+    background: url('https://diamondielts.blob.core.windows.net/public-asset/webasset/heroBannerHome.webp') no-repeat;
+    background-size: cover;
+    background-position: right center;
+    border-radius: var(--di-radius, 22px);
+    padding: 1.25rem 2rem;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 12px 40px rgba(0, 91, 255, 0.15);
+    position: relative;
+    overflow: hidden;
+    min-height: 120px;
+}
+
+/* Wave decoration bottom */
+.welcomeBanner::before {
+    display: none;
+}
+
+/* Glow orb top-right */
+.welcomeBanner::after {
+    display: none;
+}
+
+/* Sparkle stars inside banner */
+.bannerStars {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.bannerStar {
+    position: absolute;
+    color: var(--di-gold, #F7B731);
+    font-style: normal;
+    animation: sparkle 2.5s ease-in-out infinite;
+}
+.bannerStar:nth-child(1) { top: 15%; left: 48%; font-size: 14px; animation-delay: 0s; }
+.bannerStar:nth-child(2) { top: 60%; left: 55%; font-size: 10px; animation-delay: 0.8s; }
+.bannerStar:nth-child(3) { top: 25%; left: 62%; font-size: 12px; animation-delay: 1.6s; }
+.bannerStar:nth-child(4) { top: 70%; left: 42%; font-size: 8px; animation-delay: 0.4s; }
+
+@keyframes sparkle {
+    0%, 100% { opacity: 0.3; transform: scale(0.8); }
+    50% { opacity: 1; transform: scale(1.2); }
+}
+
+.welcomeLeft {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    position: relative;
+    z-index: 1;
+}
+
+/* Score circle — matches the "0" circle in reference */
+.avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: rgba(6, 27, 94, 0.5);
+    border: 3px solid var(--di-gold, #F7B731);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.75rem;
+    font-weight: 900;
+    flex-shrink: 0;
+    box-shadow: 0 0 20px rgba(247, 183, 49, 0.4);
+    position: relative;
+}
+
+.avatar::after {
+    content: '🏅';
+    position: absolute;
+    bottom: -6px;
+    right: -4px;
+    font-size: 1rem;
+}
+
+.greeting {
+    margin: 0;
+    font-size: 0.85rem;
+    opacity: 0.85;
+    font-weight: 500;
+}
+
+.welcomeName {
+    margin: 0.15rem 0;
+    font-size: 1.7rem;
+    font-weight: 900;
+    line-height: 1.2;
+}
+
+.welcomeSub {
+    margin: 0;
+    font-size: 0.88rem;
+    opacity: 0.75;
+}
+
+/* Right side illustration area */
+.welcomeRight {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    position: relative;
+    z-index: 1;
+    flex-shrink: 0;
+    width: 200px;
+}
+
+.heroIllustration {
+    position: relative;
+    width: 180px;
+    height: 90px;
+}
+
+.heroMic, .heroRocket, .heroBot {
+    position: absolute;
+    font-size: 3rem;
+    filter: drop-shadow(0 4px 12px rgba(0,0,0,0.3));
+    animation: floatUp 3s ease-in-out infinite;
+}
+
+.heroMic {
+    bottom: 0;
+    right: 20px;
+    font-size: 3.5rem;
+    animation-delay: 0s;
+}
+
+.heroRocket {
+    top: 0;
+    right: 0;
+    font-size: 2rem;
+    animation-delay: 0.8s;
+}
+
+.heroBot {
+    top: 10px;
+    right: 80px;
+    font-size: 2rem;
+    animation-delay: 1.6s;
+}
+
+@keyframes floatUp {
+    0%, 100% { transform: translateY(0px); }
+    50%       { transform: translateY(-10px); }
+}
+
+/* ── Stats Row ───────────────────────────────────────────────────────────── */
+.statsGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 1.5rem;
+}
+
+.statCard {
+    background: var(--di-card, #FFFFFF);
+    border-radius: 18px;
+    padding: 1.4rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1.1rem;
+    box-shadow: 0 4px 20px rgba(0, 45, 130, 0.07);
+    border: 1px solid var(--di-border, #DDE8F8);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.statCard:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(0, 45, 130, 0.13);
+}
+
+.statIcon {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    flex-shrink: 0;
+}
+
+/* Matches reference image icon colors */
+.statIcon.purple { background: #EDE9FE; color: #7B3FF2; }
+.statIcon.orange { background: #FFF7ED; color: #EA580C; }
+.statIcon.blue   { background: #EFF6FF; color: #005BFF; }
+.statIcon.gold   { background: #FFFBEB; color: #D97706; }
+
+.statVal {
+    display: block;
+    font-size: 2rem;
+    font-weight: 900;
+    color: var(--di-text, #13213C);
+    line-height: 1.1;
+}
+
+.statLabel {
+    margin: 0.2rem 0 0 0;
+    color: var(--di-muted, #6B7A99);
+    font-size: 0.82rem;
+    font-weight: 500;
+}
+
+/* ── Main 2-column Grid ──────────────────────────────────────────────────── */
+.mainGrid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 1.5rem;
+    align-items: stretch;
+}
+
+/* ── Section Title ────────────────────────────────────────────────────────── */
+.sectionTitle {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--di-text, #13213C);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0 0 1.1rem 0;
+}
+
+.sectionTitle i { color: var(--di-blue, #005BFF); }
+
+/* ── Left Column ─────────────────────────────────────────────────────────── */
+.leftCol {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    height: 100%;
+    min-width: 0;
+}
+
+/* ── Heatmap Card ────────────────────────────────────────────────────────── */
+.heatmapCard {
+    background: var(--di-card, #FFFFFF);
+    border-radius: 18px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 20px rgba(0, 45, 130, 0.07);
+    border: 1px solid var(--di-border, #DDE8F8);
+    overflow: hidden;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-width: 0;
+}
+
+.heatmapWrapper {
+    display: flex;
+    gap: 6px;
+    overflow: hidden;
+    padding-bottom: 4px;
+    flex: 1;
+    width: 100%;
+}
+
+.dayLabels {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding-top: 22px;
+    flex-shrink: 0;
+}
+
+.dayLabel {
+    height: 13px;
+    font-size: 10px;
+    color: var(--di-muted, #6B7A99);
+    line-height: 13px;
+    text-align: right;
+    min-width: 20px;
+}
+
+.heatmapGrid {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.monthLabels {
+    display: grid;
+    gap: 3px;
+    margin-bottom: 4px;
+    height: 18px;
+    overflow: visible;
+}
+
+.monthLabel {
+    font-size: 10px;
+    color: var(--di-muted, #6B7A99);
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.weeksRow {
+    display: flex;
+    gap: 3px;
+}
+
+.weekCol {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.heatCell {
+    width: 13px;
+    height: 13px;
+    border-radius: 2px;
+    cursor: default;
+    transition: opacity 0.15s;
+}
+
+.heatCell:hover { opacity: 0.75; }
+
+/* Heat colors — matching the green heatmap in reference */
+.heat0 { background: #EDF0F7; }
+.heat1 { background: #9BE9A8; }
+.heat2 { background: #40C463; }
+.heat3 { background: #1A7F37; }
+
+.heatmapLegend {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 0.85rem;
+    justify-content: flex-end;
+}
+
+.legendLabel {
+    font-size: 11px;
+    color: var(--di-muted, #6B7A99);
+}
+
+.legendCell {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+}
+
+/* ── Right Column — Deadlines ────────────────────────────────────────────── */
+.rightCol {
+    position: sticky;
+    top: 1rem;
+    height: 100%;
+}
+
+.deadlineCard_wrapper {
+    background: var(--di-card, #FFFFFF);
+    border-radius: 18px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 20px rgba(0, 45, 130, 0.07);
+    border: 1px solid var(--di-border, #DDE8F8);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.deadlineCard {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.9rem 1rem;
+    border-radius: 12px;
+    border: 1px solid var(--di-border, #DDE8F8);
+    margin-bottom: 0.65rem;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.15s, box-shadow 0.15s;
+}
+
+.deadlineCard:last-child { margin-bottom: 0; }
+
+.deadlineCard:hover {
+    background: #F5F9FF;
+    transform: translateX(3px);
+    box-shadow: 0 4px 12px rgba(0, 45, 130, 0.08);
+}
+
+.deadlineCard > i { color: #CBD5E1; font-size: 1rem; flex-shrink: 0; }
+
+.deadlineInfo {
+    flex: 1;
+    min-width: 0;
+}
+
+.urgencyBadge {
+    display: inline-block;
+    padding: 0.15rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    margin-bottom: 0.35rem;
+}
+
+.urgencyRed    { background: #FEF2F2; color: #DC2626; }
+.urgencyYellow { background: #FFFBEB; color: #D97706; }
+.urgencyGreen  { background: #F0FDF4; color: #16A34A; }
+
+.deadlineTitle {
+    margin: 0 0 0.25rem 0;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--di-text, #13213C);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.deadlineClass {
+    margin: 0;
+    font-size: 0.78rem;
+    color: var(--di-muted, #6B7A99);
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+/* ── Empty & Error States ───────────────────────────────────────────────── */
+.emptyState {
+    text-align: center;
+    padding: 2rem 1rem;
+    color: var(--di-muted, #6B7A99);
+}
+
+.emptyState i { font-size: 2.5rem; display: block; margin-bottom: 0.75rem; color: #10B981; }
+.emptyState p  { margin: 0; font-size: 0.9rem; }
+
+.errorMsg {
+    padding: 1rem;
+    background: #FEF2F2;
+    color: #DC2626;
+    border-radius: 10px;
+    font-size: 0.88rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* ── Skeleton Loading ───────────────────────────────────────────────────── */
+@keyframes shimmer {
+    0%   { background-position: -600px 0; }
+    100% { background-position: 600px 0; }
+}
+
+.skeletonCard {
+    height: 200px;
+    border-radius: 18px;
+    background: linear-gradient(90deg, #EDF2FB 25%, #DDE8F8 50%, #EDF2FB 75%);
+    background-size: 600px 100%;
+    animation: shimmer 1.5s infinite;
+}
+
+.skeletonItem {
+    height: 72px;
+    border-radius: 12px;
+    margin-bottom: 0.65rem;
+    background: linear-gradient(90deg, #EDF2FB 25%, #DDE8F8 50%, #EDF2FB 75%);
+    background-size: 600px 100%;
+    animation: shimmer 1.5s infinite;
+}
+
+/* ── Avatar flame for streak ─────────────────────────────────────────────── */
+.avatarFlame {
+    position: absolute;
+    bottom: -8px;
+    right: -6px;
+    font-size: 1.1rem;
+    animation: flamePulse 1.2s ease-in-out infinite;
+    filter: drop-shadow(0 0 4px rgba(251, 146, 60, 0.8));
+}
+
+@keyframes flamePulse {
+    0%, 100% { transform: scale(1) rotate(-5deg); }
+    50%       { transform: scale(1.2) rotate(5deg); }
+}
+
+/* ── Streak Badge (standalone) ───────────────────────────────────────────── */
+.streakBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: linear-gradient(135deg, #FFF7ED, #FFEDD5);
+    border: 1.5px solid #FED7AA;
+    border-radius: 999px;
+    padding: 0.3rem 0.75rem;
+    font-weight: 700;
+    color: #C2410C;
+    animation: streakGlow 2s ease-in-out infinite;
+}
+
+.streakFlame {
+    font-size: 1rem;
+    animation: flamePulse 1.2s ease-in-out infinite;
+}
+
+.streakCount {
+    font-size: 1rem;
+    font-weight: 900;
+    color: #EA580C;
+}
+
+.streakText {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #C2410C;
+}
+
+@keyframes streakGlow {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(234, 88, 12, 0.2); }
+    50%       { box-shadow: 0 0 0 6px rgba(234, 88, 12, 0); }
+}
+
+.historyCard {
+    background: var(--di-card, #FFFFFF);
+    border-radius: 18px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 20px rgba(0, 45, 130, 0.07);
+    border: 1px solid var(--di-border, #DDE8F8);
+    margin-top: 1.5rem;
+}
+
+.historyHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.25rem;
+}
+
+.viewAllBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--di-blue, #005BFF);
+    background: #EEF4FF;
+    border: 1px solid #C7DCFF;
+    padding: 6px 14px;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.viewAllBtn:hover {
+    background: var(--di-blue, #005BFF);
+    color: white;
+    border-color: var(--di-blue, #005BFF);
+}
+
+.tableWrapper {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 0.88rem;
+}
+
+.table th {
+    padding: 12px 16px;
+    color: var(--di-muted, #6B7A99);
+    font-weight: 600;
+    border-bottom: 1px solid var(--di-border, #DDE8F8);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--di-border, #DDE8F8);
+    color: #334155;
+    vertical-align: middle;
+}
+
+.table tr:last-child td { border-bottom: none; }
+.table tr:hover td { background-color: #F5F9FF; }
+
+/* Skill badges */
+.skillBadge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.badgeSPEAKING  { background: #EEF4FF; color: #005BFF; }
+.badgeWRITING   { background: #FEF2F2; color: #991B1B; }
+.badgeREADING   { background: #DCFCE7; color: #166534; }
+.badgeLISTENING { background: #FEF3C7; color: #92400E; }
+
+/* Status badges */
+.statusBadge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.statusCompleted { background: #DCFCE7; color: #15803D; }
+.statusGrading   { background: #EEF4FF; color: #005BFF; }
+.statusPending   { background: #FEF3C7; color: #B45309; }
+
+/* Score badges */
+.scoreBadge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.scoreGreen  { background: #DCFCE7; color: #166534; }
+.scoreYellow { background: #FEF3C7; color: #92400E; }
+.scoreRed    { background: #FEF2F2; color: #991B1B; }
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+@media (max-width: 960px) {
+    .mainGrid { grid-template-columns: 1fr; }
+    .rightCol { position: static; height: auto; }
+}
+
+@media (max-width: 640px) {
+    .statsGrid { grid-template-columns: 1fr; }
+    .welcomeBanner {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+        padding: 1.5rem;
+    }
+    .welcomeRight { display: none; }
+    .heatmapWrapper { overflow-x: scroll; }
+}

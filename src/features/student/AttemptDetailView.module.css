@@ -1,0 +1,1061 @@
+/* ============================================================
+   AttemptDetailView — Grammarly Style CSS Module (v2)
+   ============================================================ */
+
+/* ── CSS VARIABLES (scoped to component root) ── */
+.detailContainer {
+    /* Color palette */
+    --color-overall: #0e101a;
+    --color-fluency: #0070f3;
+    --color-fluency-bg: #e3f2fd;
+    --color-lexical: #10a37f;
+    --color-lexical-bg: #dcfce7;
+    --color-grammar: #f05152;
+    --color-grammar-bg: #fee2e2;
+    --color-pron: #f5a623;
+    --color-pron-bg: #fff8eb;
+
+    /* Neutrals */
+    --bg-card: #ffffff;
+    --border: #e1e4e8;
+    --text-main: #0e101a;
+    --text-muted: #6a737d;
+    --text-sub: #64748b;
+
+    /* Layout */
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    animation: fadeInUp 0.4s ease-out;
+}
+
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+
+/* ══════════════════════════════════════════════
+   HEADER
+═══════════════════════════════════════════════ */
+.viewHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1.25rem;
+    background: var(--bg-card);
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    border: 1px solid var(--border);
+}
+
+.backBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 16px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #4f46e5;
+    background-color: #f5f3ff;
+    border: 1px solid #e0e7ff;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+    white-space: nowrap;
+}
+
+.backBtn i {
+    font-size: 0.88rem;
+    transition: transform 0.2s ease;
+}
+
+.backBtn:hover {
+    color: white;
+    background-color: #4f46e5;
+    border-color: #4f46e5;
+    box-shadow: 0 4px 14px rgba(79,70,229,0.28);
+    transform: translateY(-1px);
+}
+
+.backBtn:hover i { transform: translateX(-3px); }
+
+.viewTitle {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--text-main);
+    letter-spacing: -0.1px;
+}
+
+
+/* ══════════════════════════════════════════════
+   MAIN LAYOUT  (2-column grid)
+═══════════════════════════════════════════════ */
+.bottomLayout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+    align-items: start;
+}
+
+@media (min-width: 900px) {
+    .bottomLayout {
+        grid-template-columns: 1.65fr 1fr;
+        gap: 1.5rem;
+    }
+}
+
+
+/* ══════════════════════════════════════════════
+   TRANSCRIPT CARD  (left panel)
+═══════════════════════════════════════════════ */
+.transcriptCard {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px 28px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05), 0 8px 24px rgba(0,0,0,0.03);
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    min-height: 400px;
+    overflow: hidden;
+}
+
+/* ── Score Bar (top section) ── */
+.topSection {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 18px;
+}
+
+/* Overall Badge */
+.overallPill {
+    background: var(--color-overall);
+    color: white;
+    padding: 5px 14px;
+    border-radius: 8px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.overallLabel {
+    font-size: 10px;
+    font-weight: 500;
+    text-transform: uppercase;
+    opacity: 0.75;
+    letter-spacing: 0.8px;
+}
+
+.overallScore {
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: -0.3px;
+}
+
+/* Sub-metric pills */
+.subMetricPills {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.metricPill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    background: transparent;
+    border: 1.5px solid var(--border);
+    cursor: pointer;
+    transition: all 0.18s ease;
+    line-height: 1;
+}
+
+.metricPillName {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.1px;
+}
+
+.metricPillVal {
+    padding: 2px 7px;
+    border-radius: 5px;
+    background: #f1f5f9;
+    font-size: 12px;
+    font-weight: 700;
+    color: #4b5563;
+    transition: background 0.18s ease, color 0.18s ease;
+}
+
+/* Pill colour variants */
+.pillFluency { color: var(--color-fluency); }
+.pillFluency:hover,
+.pillFluency.active {
+    border-color: var(--color-fluency);
+    background: var(--color-fluency-bg);
+}
+.pillFluency:hover .metricPillVal,
+.pillFluency.active .metricPillVal { background: white; color: var(--color-fluency); }
+
+.pillLexical { color: var(--color-lexical); }
+.pillLexical:hover,
+.pillLexical.active {
+    border-color: var(--color-lexical);
+    background: var(--color-lexical-bg);
+}
+.pillLexical:hover .metricPillVal,
+.pillLexical.active .metricPillVal { background: white; color: var(--color-lexical); }
+
+.pillGrammar { color: var(--color-grammar); }
+.pillGrammar:hover,
+.pillGrammar.active {
+    border-color: var(--color-grammar);
+    background: var(--color-grammar-bg);
+}
+.pillGrammar:hover .metricPillVal,
+.pillGrammar.active .metricPillVal { background: white; color: var(--color-grammar); }
+
+.pillPronun { color: var(--color-pron); }
+.pillPronun:hover,
+.pillPronun.active {
+    border-color: var(--color-pron);
+    background: var(--color-pron-bg);
+}
+.pillPronun:hover .metricPillVal,
+.pillPronun.active .metricPillVal { background: white; color: var(--color-pron); }
+
+.pillSuggest { color: #8b5cf6; }
+.pillSuggest:hover,
+.pillSuggest.active {
+    border-color: #8b5cf6;
+    background: #f5f3ff;
+}
+
+/* ── Transcript Header ── */
+.transcriptHeader {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.transcriptTitle {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-sub);
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.7px;
+}
+
+.transcriptTitle i { color: #4f46e5; }
+
+
+/* ── Transcript body ── */
+.transcriptPanel {
+    font-size: 17px;
+    line-height: 2.15;
+    color: var(--text-main);
+    text-align: left;
+    letter-spacing: 0.15px;
+    padding: 4px 0;
+    min-height: 180px;
+    word-break: break-word;
+}
+
+.transcriptPanel.suggestMode {
+    background: #faf5ff;
+    border-radius: 10px;
+    padding: 16px 18px;
+    font-size: 15.5px;
+    line-height: 2;
+}
+
+
+/* ══════════════════════════════════════════════
+   GRAMMARLY-STYLE HIGHLIGHTS
+═══════════════════════════════════════════════ */
+.hlTap {
+    display: inline;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: background-color 0.14s ease-out, padding 0.14s ease-out, margin 0.14s ease-out;
+    padding: 1px 0;
+}
+
+/* Underlines */
+.hlFluency {
+    text-decoration: underline;
+    text-decoration-color: var(--color-fluency);
+    text-decoration-thickness: 2.5px;
+    text-underline-offset: 4px;
+}
+.hlLexical {
+    text-decoration: underline;
+    text-decoration-color: var(--color-lexical);
+    text-decoration-thickness: 2.5px;
+    text-underline-offset: 4px;
+}
+.hlGrammar {
+    text-decoration: underline;
+    text-decoration-color: var(--color-grammar);
+    text-decoration-thickness: 2.5px;
+    text-underline-offset: 4px;
+}
+.hlPronun {
+    text-decoration: underline;
+    text-decoration-color: var(--color-pron);
+    text-decoration-thickness: 2.5px;
+    text-underline-offset: 4px;
+}
+
+/* Hover/active: swell with background, hide underline */
+.hlFluency:hover, .hlFluency.hlActive {
+    background-color: var(--color-fluency-bg);
+    text-decoration-color: transparent;
+    padding: 3px 5px;
+    margin: 0 -3px;
+    border-radius: 4px;
+}
+.hlLexical:hover, .hlLexical.hlActive {
+    background-color: var(--color-lexical-bg);
+    text-decoration-color: transparent;
+    padding: 3px 5px;
+    margin: 0 -3px;
+    border-radius: 4px;
+}
+.hlGrammar:hover, .hlGrammar.hlActive {
+    background-color: var(--color-grammar-bg);
+    text-decoration-color: transparent;
+    padding: 3px 5px;
+    margin: 0 -3px;
+    border-radius: 4px;
+}
+.hlPronun:hover, .hlPronun.hlActive {
+    background-color: var(--color-pron-bg);
+    text-decoration-color: transparent;
+    padding: 3px 5px;
+    margin: 0 -3px;
+    border-radius: 4px;
+}
+
+.pronunciationBoard {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
+    gap: 10px;
+    line-height: 1.2;
+}
+
+.pronWordTile {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    min-height: 126px;
+    padding: 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #172033;
+    text-align: left;
+    cursor: pointer;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.pronWordTile:hover,
+.pronWordSelected {
+    transform: translateY(-1px);
+    border-color: #f59e0b;
+    box-shadow: 0 8px 18px rgba(245, 158, 11, 0.14);
+}
+
+.pronWordGood { background: #f0fdf4; border-color: #bbf7d0; }
+.pronWordOk { background: #fff7ed; border-color: #fed7aa; }
+.pronWordWeak { background: #fff1f2; border-color: #fecdd3; }
+.pronWordNeutral { background: #f8fafc; border-color: #cbd5e1; }
+
+.pronWordTop {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.pronWordText {
+    font-size: 0.98rem;
+    font-weight: 800;
+    color: #0f172a;
+    overflow-wrap: anywhere;
+}
+
+.pronWordScore {
+    min-width: 32px;
+    height: 26px;
+    padding: 0 7px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #0f172a;
+    color: white;
+    font-size: 0.78rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+}
+
+.pronScoreTrack {
+    width: 100%;
+    height: 5px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.1);
+}
+
+.pronScoreTrack span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #f59e0b, #22c55e);
+}
+
+.pronIpaRow {
+    display: grid;
+    grid-template-columns: 52px 1fr;
+    gap: 7px;
+    align-items: baseline;
+    font-size: 0.72rem;
+    color: #64748b;
+}
+
+.pronIpaRow strong {
+    color: #1e293b;
+    font-size: 0.82rem;
+    font-weight: 750;
+    overflow-wrap: anywhere;
+}
+
+.pronQuietFlag {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 16px;
+    height: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: #e2e8f0;
+    color: #64748b;
+    font-size: 0.65rem;
+    font-weight: 800;
+}
+
+.pronRawScore {
+    position: absolute;
+    bottom: 7px;
+    right: 9px;
+    font-size: 0.62rem;
+    color: #94a3b8;
+    font-variant-numeric: tabular-nums;
+}
+
+.pronInlineTranscript {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 8px 1px;
+    padding: 8px 0 2px;
+    line-height: 1.25;
+}
+
+.pronInlineWord {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 2px;
+    min-width: 36px;
+    max-width: 180px;
+    padding: 1px 2px 2px;
+    background: transparent;
+    color: #0f172a;
+    cursor: pointer;
+    border: 0;
+    outline: none;
+}
+
+.pronInlineSelected .pronInlineText {
+    text-decoration-line: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 4px;
+}
+
+.pronInlinePhonemes {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    max-width: 100%;
+    min-height: 18px;
+    font-size: 0.68rem;
+    font-weight: 800;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.phonemeInlineGood,
+.phonemeInlineBad,
+.phonemeInlineWarn {
+    display: inline-flex;
+    min-width: 12px;
+    justify-content: center;
+}
+
+.phonemeInlineGood { color: #16a34a; }
+.phonemeInlineWarn { color: #d97706; }
+.phonemeInlineBad { color: #dc2626; }
+
+.pronInlineText {
+    display: block;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    font-size: 1.02rem;
+    font-weight: 650;
+    letter-spacing: 0;
+}
+
+.pronWordGood .pronInlineText { color: #16a34a; }
+.pronWordOk .pronInlineText { color: #d97706; }
+.pronWordWeak .pronInlineText { color: #dc2626; }
+.pronWordNeutral .pronInlineText { color: #64748b; }
+
+/* Suggest notes */
+.suggestNote {
+    background: #f3e8ff;
+    color: #6d28d9;
+    padding: 2px 6px;
+    border-radius: 5px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid #d8b4fe;
+    transition: all 0.14s;
+    display: inline-block;
+    line-height: 1.3;
+}
+.suggestNote:hover { background: #e9d5ff; }
+
+
+/* ══════════════════════════════════════════════
+   AUDIO PLAYER DOCK (bottom of transcript card)
+══════════════════════════════════════════════ */
+.audioSection {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    padding-top: 18px;
+    margin-top: 20px;
+    border-top: 1px solid var(--border);
+}
+
+.playBtn {
+    flex-shrink: 0;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: #4f46e5;
+    color: white;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    transition: transform 0.12s ease, background 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 2px 8px rgba(79, 70, 229, 0.28);
+}
+.playBtn:hover {
+    background: #4338ca;
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.38);
+    transform: scale(1.07);
+}
+.playBtn:active { transform: scale(0.93); }
+
+/* Time labels */
+.audioCur,
+.audioDur {
+    font-size: 11.5px;
+    font-variant-numeric: tabular-nums;
+    font-weight: 500;
+    color: var(--text-muted);
+    white-space: nowrap;
+    user-select: none;
+    flex-shrink: 0;
+    min-width: 34px;
+}
+.audioCur { text-align: right; }
+.audioDur { text-align: left; }
+
+/* Seek bar — takes all remaining space */
+.audioSlider {
+    -webkit-appearance: none;
+    appearance: none;
+    flex: 1;
+    height: 4px;
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+    transition: height 0.15s ease;
+    /* track colour set by inline style gradient */
+}
+
+.audioSlider:hover {
+    height: 6px;
+}
+
+/* Webkit thumb (Chrome / Safari / Edge) */
+.audioSlider::-webkit-slider-runnable-track {
+    height: 100%;
+    border-radius: 2px;
+}
+
+.audioSlider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    margin-top: calc((4px - 14px) / 2); /* vertically centre on 4px track */
+    border-radius: 50%;
+    background: #4f46e5;
+    border: 2px solid white;
+    box-shadow: 0 1px 5px rgba(79, 70, 229, 0.45);
+    transition: transform 0.12s ease, background 0.15s ease,
+                width 0.12s ease, height 0.12s ease;
+    cursor: grab;
+}
+
+.audioSlider:hover::-webkit-slider-thumb {
+    transform: scale(1.15);
+    background: #4338ca;
+}
+
+/* Firefox */
+.audioSlider::-moz-range-track {
+    width: 100%;
+    height: 100%;
+    border-radius: 3px;
+}
+
+.audioSlider::-moz-range-thumb {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #4f46e5;
+    border: 2px solid white;
+    box-shadow: 0 1px 4px rgba(79, 70, 229, 0.4);
+    transition: transform 0.12s ease, background 0.15s ease;
+}
+
+.audioSlider:hover::-moz-range-thumb {
+    transform: scale(1.15);
+    background: #4338ca;
+}
+
+
+
+/* ══════════════════════════════════════════════
+   ADVICE PANEL  (right column)
+═══════════════════════════════════════════════ */
+.errorCardsCard {
+    position: sticky;
+    top: 24px;
+    background: var(--bg-card);
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05), 0 8px 24px rgba(0,0,0,0.03);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-height: 260px;
+    transition: border-color 0.22s ease, box-shadow 0.22s ease;
+}
+
+/* Title row */
+.errorCardsTitle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.7px;
+    margin: 0;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+}
+
+.statusDot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+/* Panel body */
+.panelBody {
+    font-size: 14.5px;
+    line-height: 1.65;
+    color: #24292e;
+}
+
+/* Solution box */
+.solutionBox {
+    font-size: 14.5px;
+    line-height: 1.65;
+    background: #f9f9fb;
+    padding: 14px 16px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    color: var(--text-main);
+}
+
+.solutionBox em {
+    font-style: normal;
+    font-weight: 700;
+    background-color: #edf2f7;
+    padding: 1px 6px;
+    border-radius: 4px;
+    margin: 0 1px;
+    color: var(--text-main);
+}
+
+/* Empty State */
+.emptyState {
+    text-align: center;
+    padding: 36px 12px;
+    color: var(--text-muted);
+    font-size: 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+.emptyState i {
+    font-size: 28px;
+    color: var(--color-lexical);
+    opacity: 0.7;
+}
+
+
+/* ══════════════════════════════════════════════
+   POPOVER
+═══════════════════════════════════════════════ */
+.popover {
+    position: absolute;
+    z-index: 1000;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.13);
+    padding: 12px 14px;
+    width: 240px;
+    font-size: 0.8rem;
+    color: #334155;
+    animation: popIn 0.15s ease-out;
+}
+
+@keyframes popIn {
+    from { opacity: 0; transform: scale(0.94) translateY(-4px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.popHead {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    padding-bottom: 7px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.popTitle {
+    font-weight: 700;
+    color: var(--text-main);
+    font-size: 0.8rem;
+}
+
+.popClose {
+    background: none;
+    border: none;
+    font-size: 1.1rem;
+    cursor: pointer;
+    color: #94a3b8;
+    line-height: 1;
+    transition: color 0.15s;
+}
+.popClose:hover { color: var(--text-main); }
+
+/* ← Missing class added */
+.popRow {
+    font-size: 0.8rem;
+    line-height: 1.6;
+    padding: 2px 0;
+}
+
+.wrongTxt {
+    color: var(--color-grammar);
+    text-decoration: line-through;
+    font-weight: 600;
+}
+
+.correctTxt {
+    color: var(--color-lexical);
+    font-weight: 600;
+}
+
+
+/* ══════════════════════════════════════════════
+   PRONUNCIATION — panel extras
+═══════════════════════════════════════════════ */
+.popPronSection { margin-top: 8px; }
+
+.pronActions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.pronActionBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: opacity 0.15s;
+}
+.pronActionBtn:hover { opacity: 0.82; }
+
+.pronPlaySeg   { background: var(--color-fluency-bg); color: var(--color-fluency); }
+.pronSpeakWord { background: var(--color-pron-bg);    color: var(--color-pron); }
+
+.pronWord   { font-weight: 700; color: var(--text-main); }
+
+.pronFocusSummary {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.pronFocusWord {
+    font-size: 1.45rem;
+    font-weight: 850;
+    color: #0f172a;
+    line-height: 1.15;
+    overflow-wrap: anywhere;
+}
+
+.pronFocusMeta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    color: #64748b;
+}
+
+.pronMiniBadge {
+    display: inline-flex;
+    align-items: center;
+    height: 22px;
+    padding: 0 9px;
+    border-radius: 999px;
+    background: #f1f5f9;
+    color: #64748b;
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+
+.pronFixList {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-top: 2px;
+}
+
+.pronFixPill {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 9px;
+    border-radius: 999px;
+    background: #fff1f2;
+    border: 1px solid #fecdd3;
+    color: #9f1239;
+    font-size: 0.76rem;
+    font-weight: 700;
+}
+
+.pronFixPill strong {
+    color: #dc2626;
+    font-size: 0.9rem;
+}
+
+.pronCompareGrid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    margin: 12px 0 14px;
+}
+
+.pronCompareCard {
+    display: grid;
+    grid-template-columns: 76px 1fr;
+    gap: 10px;
+    align-items: center;
+    padding: 10px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #ffffff;
+}
+
+.pronCompareCard span {
+    color: #64748b;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.pronCompareCard strong {
+    color: #0f172a;
+    font-size: 1rem;
+    overflow-wrap: anywhere;
+}
+
+.phonemeWrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 10px;
+}
+
+.phonemeChip {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 2px 7px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    font-size: 0.7rem;
+}
+
+.phonemeChip.phonemeBad {
+    border-color: #fca5a5;
+    background: #fff1f2;
+}
+
+.phonemeText { font-weight: 700; }
+.phonemeScore { color: #94a3b8; }
+
+
+/* ══════════════════════════════════════════════
+   PAUSE BADGES  (fluency tab)
+═══════════════════════════════════════════════ */
+.pauseBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 0.68em;
+    font-weight: 600;
+    margin: 0 3px;
+    vertical-align: middle;
+    background: #e0f2fe;
+    color: #0369a1;
+    border: 1px solid #bae6fd;
+}
+.pauseLong  { background: #fce7f3; color: #9d174d;  border-color: #f9a8d4; }
+.pauseMed   { background: #fef3c7; color: #92400e;  border-color: #fde68a; }
+.pauseShort { background: #dcfce7; color: #166534;  border-color: #86efac; }
+
+
+/* ══════════════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════════════ */
+@media (max-width: 640px) {
+    .transcriptCard {
+        padding: 16px;
+        min-height: auto;
+    }
+
+    .errorCardsCard {
+        padding: 16px;
+        position: static;
+    }
+
+    .viewHeader {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+        padding: 0.75rem 1rem;
+    }
+
+    .topSection {
+        gap: 6px;
+        padding-bottom: 14px;
+        margin-bottom: 14px;
+    }
+
+    .metricPill {
+        padding: 4px 8px;
+        font-size: 11.5px;
+    }
+
+    .transcriptPanel {
+        font-size: 15px;
+        line-height: 2;
+    }
+
+    .audioSection {
+        gap: 10px;
+    }
+
+    .playBtn {
+        width: 38px;
+        height: 38px;
+        font-size: 13px;
+    }
+
+    .audioTime {
+        min-width: 64px;
+        font-size: 11.5px;
+    }
+}
+
+@media (max-width: 400px) {
+    .overallPill { padding: 4px 10px; }
+    .overallScore { font-size: 14px; }
+    .metricPillVal { padding: 1px 5px; font-size: 11px; }
+}
