@@ -1,13 +1,8 @@
 import React from 'react';
-import LoadingSpinner from '../../../components/common/LoadingSpinner';
+import Skeleton from '../../../components/common/Skeleton';
 import { displayCourseName } from '../../../utils/displayText';
 
 export default function ClassroomGrid({ classes = [], onSelect, onCreate, onEdit, onDelete, loading, styles }) {
-    if (loading) {
-        return <LoadingSpinner text="Đang nạp danh sách lớp học" />;
-    }
-
-
     return (
         <>
             <div className={styles.header}>
@@ -22,7 +17,9 @@ export default function ClassroomGrid({ classes = [], onSelect, onCreate, onEdit
                 </button>
             </div>
             
-            {classes.length === 0 ? (
+            {loading ? (
+                <Skeleton type="classroom" count={6} />
+            ) : classes.length === 0 ? (
                 <div className={styles.emptyState}>Bạn chưa tham gia quản lý lớp học nào. Click nút phía trên để tạo lớp học mới.</div>
             ) : (
                 <div className={styles.grid}>

@@ -4,7 +4,7 @@ import axiosClient from '../../api/axiosClient';
 import Swal from 'sweetalert2';
 import AttemptDetailView from '../../features/student/AttemptDetailView';
 import s from '../../features/classroom/components/SubmissionReviewModal.module.css';
-import LoadingSpinner from '../../components/common/LoadingSpinner';
+import Skeleton from '../../components/common/Skeleton';
 
 // ─────────────────────────────────────────────
 //  Helper: parse JSON safely
@@ -534,13 +534,208 @@ export default function AssignmentReviewPage() {
         return data?.allStudents?.filter(std => std.submittedByItem?.[item.itemId]).length || 0;
     };
 
+                        </div>
+                    )}
+
+                    {pendingAttachments.length > 0 && (
+                        <div className={s.gradeFormGroup}>
+                            <label className={s.gradeLabel}>File sẽ được thêm</label>
+                            <div className={s.attachList}>
+                                {pendingAttachments.map((p, idx) => (
+                                    <div key={idx} className={s.attachChipPending}>
+                                        <i className={`bi ${getAttachIcon(p.dataType)}`} />
+                                        <span className={s.attachName}>{p.originalFileName}</span>
+                                        <button
+                                            type="button"
+                                            className={s.attachDelBtn}
+                                            onClick={() => removePending(idx)}
+                                            title="Bỏ file này"
+                                        >
+                                            <i className="bi bi-x-lg" />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    <div className={s.gradeFormGroup}>
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept=".pdf,.doc,.docx,.mp3,.webm,.wav,.jpg,.jpeg,.png,.zip,.rar"
+                            style={{ display: 'none' }}
+                            onChange={handleFileSelect}
+                        />
+                        <button
+                            type="button"
+                            className={s.uploadAttachBtn}
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={uploadingFile}
+                        >
+                            {uploadingFile
+                                ? <><i className="bi bi-hourglass-split" /> Đang tải lên...</>
+                                : <><i className="bi bi-paperclip" /> Đính kèm file</>
+                            }
+                        </button>
+                        <span className={s.uploadHint}>PDF, Word, MP3, WAV, ảnh JPG/PNG, ZIP — tối đa 50MB</span>
+                    </div>
+
+                    <div className={s.gradeFormActions}>
+                        {existing && (
+                            <button
+                                className={s.cancelGradeBtn}
+                                onClick={() => {
+                                    setEditing(false);
+                                    setPendingAttachments([]);
+                                    setPayloadsToDelete([]);
+                                }}
+                            >
+                                Hủy
+                            </button>
+                        )}
+                        <button
+                            className={s.saveGradeBtn}
+                            onClick={handleSubmit}
+                            disabled={submitting || uploadingFile}
+                        >
+                            {submitting
+                                ? <><i className="bi bi-hourglass-split" /> Đang lưu...</>
+                                : <><i className="bi bi-check-lg" /> Lưu nhận xét</>
+                            }
+                        </button>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
+// ─────────────────────────────────────────────
+//  Component Registry
+// ─────────────────────────────────────────────
+const SUBMISSION_VIEWERS = {
+    AI_SPEAKING: SpeakingSubmissionViewer,
+    SPEAKING: SpeakingSubmissionViewer,
+    fileSubmission: FileSubmissionViewer,
+    FILE_UPLOAD: FileSubmissionViewer,
+};
+
+function getViewer(itemType) {
+    const key = Object.keys(SUBMISSION_VIEWERS).find(
+        k => k.toUpperCase() === (itemType || '').toUpperCase()
+    ) || itemType;
+    return SUBMISSION_VIEWERS[key] || null;
+}
+
+// ─────────────────────────────────────────────
+//  MAIN PAGE COMPONENT
+// ─────────────────────────────────────────────
+export default function AssignmentReviewPage() {
+    const { assignmentId } = useParams();
+    const navigate = useNavigate();
+    const location = useLocation();
+
+    const [data, setData] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    // Navigation state
+    const [selectedItemId, setSelectedItemId] = useState(null);
+    const [selectedStudentId, setSelectedStudentId] = useState(null);
+    const [selectedAttemptIdx, setSelectedAttemptIdx] = useState(0);
+
+    const fetchData = async () => {
+        try {
+            setLoading(true);
+            const result = await axiosClient.get(`/teacher/assignment/${assignmentId}/student-submissions`);
+            setData(result);
+            
+            // Check if we came from dashboard with a selected item and student
+            const stateItemId = location.state?.itemId;
+            const stateStudentId = location.state?.studentId;
+            
+            if (stateItemId && result?.items?.some(i => i.itemId === stateItemId)) {
+                setSelectedItemId(stateItemId);
+            } else if (result?.items?.length > 0) {
+                setSelectedItemId(result.items[0].itemId);
+            }
+            
+            if (stateStudentId) {
+                setSelectedStudentId(stateStudentId);
+            }
+        } catch (err) {
+            console.error(err);
+            Swal.fire('Lỗi', 'Không thể tải dữ liệu bài nộp.', 'error');
+            navigate('/teacher/classrooms');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (assignmentId) fetchData();
+    }, [assignmentId]);
+
+    // Reset student/attempt when item changes
+    useEffect(() => {
+        setSelectedStudentId(null);
+        setSelectedAttemptIdx(0);
+    }, [selectedItemId]);
+
+    const selectedItem = data?.items?.find(i => i.itemId === selectedItemId);
+    const currentStudentInfo = data?.allStudents?.find(s => s.studentId === selectedStudentId);
+
+    // Check if the student has submitted attempts for currently selected item
+    const hasSubmittedCurrentItem = currentStudentInfo?.submittedByItem?.[selectedItemId] || false;
+
+    // Load attempt data if submitted
+    const selectedStudentData = hasSubmittedCurrentItem
+        ? selectedItem?.studentAttempts?.find(sa => sa.studentId === selectedStudentId)
+        : null;
+
+    const selectedAttempt = selectedStudentData?.attempts?.[selectedAttemptIdx];
+    const Viewer = selectedItem ? getViewer(selectedItem.itemType) : null;
+
+    useEffect(() => {
+        if (selectedStudentData?.attempts?.length > 0) {
+            setSelectedAttemptIdx(selectedStudentData.attempts.length - 1);
+        } else {
+            setSelectedAttemptIdx(0);
+        }
+    }, [selectedStudentId, selectedStudentData]);
+
+    const isFileSub = selectedItem && (selectedItem.itemType === 'fileSubmission' || selectedItem.itemType === 'FILE_UPLOAD');
+
+    const getItemTypeLabel = (type) => {
+        const t = (type || '').toUpperCase();
+        if (t === 'AI_SPEAKING' || t === 'SPEAKING') return 'Speaking AI';
+        if (t === 'FILESUBMISSION' || t === 'FILE_UPLOAD') return 'Nộp File';
+        return type;
+    };
+
+    const getItemTypeBadgeClass = (type) => {
+        const t = (type || '').toUpperCase();
+        if (t === 'AI_SPEAKING' || t === 'SPEAKING') return s.badgeSpeaking;
+        return s.badgeFile;
+    };
+
+    const parseItemTitle = (contentJson) => {
+        const parsed = tryParseJson(contentJson);
+        return parsed.title || parsed.textPrompt?.slice(0, 40) || 'Không có tiêu đề';
+    };
+
+    const countSubmitted = (item) => {
+        // Count how many students in roster have submitted this specific item
+        return data?.allStudents?.filter(std => std.submittedByItem?.[item.itemId]).length || 0;
+    };
+
     const getLatestAttemptStatus = (studentData) => {
         if (!studentData?.attempts?.length) return null;
         return studentData.attempts[studentData.attempts.length - 1]?.status;
     };
 
     if (loading) {
-        return <LoadingSpinner text="Đang tải dữ liệu bài nộp" fullscreen={true} />;
+        return <Skeleton type="assignment-detail" />;
     }
 
     if (!data) return null;

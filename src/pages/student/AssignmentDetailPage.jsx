@@ -4,7 +4,7 @@ import axiosClient from '../../api/axiosClient';
 import styles from '../../features/student/StudentAssignmentModal.module.css';
 import Swal from 'sweetalert2';
 import { showToastError } from '../../utils/toast';
-import LoadingSpinner from '../../components/common/LoadingSpinner';
+import Skeleton from '../../components/common/Skeleton';
 import * as SpeechSDK from 'microsoft-cognitiveservices-speech-sdk';
 import AttemptDetailView from '../../features/student/AttemptDetailView';
 import { buildSpeechChunk, createPronunciationAssessmentConfig } from '../../features/student/speechChunkUtils';
@@ -30,7 +30,7 @@ const detectPartNumber = (type, contentJson) => {
             if (pContent.includes('part 2') || pContent.includes('part2')) return 2;
             if (pContent.includes('part 3') || pContent.includes('part3')) return 3;
             if (pContent.includes('part 1') || pContent.includes('part1')) return 1;
-        } catch (e) {}
+        } catch (e) { }
     }
     return 1;
 };
@@ -580,7 +580,7 @@ export default function AssignmentDetailPage() {
     };
 
     if (loading) {
-        return <LoadingSpinner text="Đang tải thông tin bài tập" fullscreen={true} />;
+        return <Skeleton type="assignment-detail" />;
     }
 
     if (!assignment) return null;

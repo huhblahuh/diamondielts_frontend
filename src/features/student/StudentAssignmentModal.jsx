@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axiosClient from '../../api/axiosClient';
 import styles from './StudentAssignmentModal.module.css';
-import LoadingSpinner from '../../components/common/LoadingSpinner';
+import Skeleton from '../../components/common/Skeleton';
 import CommonAttachmentUploader from '../../components/CommonAttachmentUploader';
 import Swal from 'sweetalert2';
 import { showToastError } from '../../utils/toast';
@@ -601,7 +601,13 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
 
 
     if (loading) {
-        return <LoadingSpinner text="Đang tải thông tin bài tập" fullscreen={true} />;
+        return (
+            <div className={styles.modalOverlay}>
+                <div className={styles.modalContent} style={{ maxWidth: '1000px', width: '90%' }}>
+                    <Skeleton type="assignment-detail" />
+                </div>
+            </div>
+        );
     }
 
     if (!assignment) return null;

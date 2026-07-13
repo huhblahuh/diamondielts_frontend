@@ -3,7 +3,7 @@ import axiosClient from '../../../api/axiosClient';
 import Swal from 'sweetalert2';
 import AttemptDetailView from '../../student/AttemptDetailView';
 import s from './SubmissionReviewModal.module.css';
-import LoadingSpinner from '../../../components/common/LoadingSpinner';
+import Skeleton from '../../../components/common/Skeleton';
 
 // ─────────────────────────────────────────────
 //  Helper: parse JSON safely
@@ -558,7 +558,13 @@ export default function SubmissionReviewModal({ assignmentId, onClose }) {
     };
 
     if (loading) {
-        return <LoadingSpinner text="Đang tải dữ liệu bài nộp" fullscreen={true} />;
+        return (
+            <div className={s.overlay}>
+                <div className={s.modal} style={{ maxWidth: '1000px', width: '90%' }}>
+                    <Skeleton type="assignment-detail" />
+                </div>
+            </div>
+        );
     }
 
     if (!data) return null;

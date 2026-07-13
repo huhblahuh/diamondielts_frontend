@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL || 'https://localhost:7053/api';
 
 const axiosClient = axios.create({
     baseURL: API_URL,
@@ -8,7 +8,6 @@ const axiosClient = axios.create({
         'Content-Type': 'application/json',
     },
 });
-
 
 axiosClient.interceptors.request.use(
     (config) => {
@@ -19,14 +18,16 @@ axiosClient.interceptors.request.use(
 
         const method = config.method?.toLowerCase();
         if (method === 'put' || method === 'delete') {
-            config.headers['X-HTTP-Method-Override'] = method.toUpperCase();
+            const separator = config.url.includes('?') ? '&' : '?';
+            config.url = `${config.url}${separator}_method=${method.toUpperCase()}`;
             config.method = 'post';
         }
-        
+
         return config;
     },
     (error) => Promise.reject(error)
 );
+
 axiosClient.interceptors.response.use(
     (response) => response.data || response,
     (error) => {

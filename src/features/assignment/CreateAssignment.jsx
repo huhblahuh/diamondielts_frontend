@@ -8,7 +8,7 @@ import AssignmentForm from './components/AssignmentForm';
 import AssignmentBuilder from './components/AssignmentBuilder';
 import ExerciseBankModal from './components/ExerciseBankModal';
 import styles from './CreateAssignment.module.css';
-import LoadingSpinner from '../../components/common/LoadingSpinner';
+import Skeleton from '../../components/common/Skeleton';
 
 export default function CreateAssignment() {
     const { assignmentId } = useParams();
@@ -137,7 +137,13 @@ export default function CreateAssignment() {
         }
     };
 
-    if (loading) return <LoadingSpinner text="Đang tải dữ liệu cấu hình" fullscreen={true} />;
+    if (loading) {
+        return (
+            <div className={styles.container}>
+                <Skeleton type="form" />
+            </div>
+        );
+    }
 
     return (
         <div className={styles.container}>
