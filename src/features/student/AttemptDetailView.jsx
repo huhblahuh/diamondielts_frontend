@@ -90,6 +90,8 @@ const getPhonemeTone = (ph) => {
     const expected = ph?.phoneme || '';
     const spoken = ph?.spokenPhoneme || expected;
     const score = ph?.accuracyScore ?? ph?.spokenScore ?? 100;
+    // Ưu tiên điểm số: nếu >= 80 thì luôn xanh lá dù spokenPhoneme có khác expected
+    if (score >= 80) return 'phonemeInlineGood';
     if (spoken !== expected || score < 50) return 'phonemeInlineBad';
     if (score <= 70) return 'phonemeInlineWarn';
     return 'phonemeInlineGood';
@@ -288,6 +290,34 @@ export default function AttemptDetailView({ results, onBack }) {
         }
 
         // Lexical / Grammar tabs
+        const taggedFix = activeTab === 'lexical' ? results?.lexical_resource?.tagged_fix : results?.grammar?.tagged_fix;
+        if (taggedFix && (taggedFix.includes('[') || taggedFix.includes(']'))) {
+            const re = /\[([^|\]]+)\|([^|\]]+)\|([^\]]+)\]/g;
+            let html = '';
+            let lastIndex = 0;
+            let match;
+            let idx = 0;
+
+            while ((match = re.exec(taggedFix)) !== null) {
+                // Append text before match
+                html += escHtml(taggedFix.substring(lastIndex, match.index));
+
+                const wrong = match[1].trim();
+                const right = match[2].trim();
+                const description = match[3].trim();
+
+                const hlClass = HL_CLASSES[activeTab] || '';
+                const isSelected = selectedIssue && selectedIssue.cat === activeTab && selectedIssue.idx === idx;
+                
+                html += `<span class="${s.hlTap} ${s[hlClass] || ''} ${isSelected ? s.hlActive : ''}" data-cat="${activeTab}" data-idx="${idx}" data-wrong="${escHtml(wrong)}" data-right="${escHtml(right)}" data-desc="${escHtml(description)}">${escHtml(wrong)}</span>`;
+
+                lastIndex = re.lastIndex;
+                idx++;
+            }
+            html += escHtml(taggedFix.substring(lastIndex));
+            return html.replace(/\n/g, '<br/>');
+        }
+
         const issues = getIssues(results, activeTab);
         const sorted = [...issues].filter(i => i.wrong).sort((a, b) => b.wrong.length - a.wrong.length);
         if (!sorted.length) return escHtml(raw).replace(/\n/g, '<br/>');
@@ -365,9 +395,9 @@ export default function AttemptDetailView({ results, onBack }) {
     const progressPct = duration > 0 ? (curTime / duration) * 100 : 0;
     const selectedPronFixes = selectedIssue?.cat === 'pronun'
         ? (selectedIssue.word?.phonemes || []).filter(ph => {
-            const spoken = ph.spokenPhoneme || ph.phoneme;
             const score = ph.accuracyScore ?? ph.spokenScore ?? 100;
-            return spoken !== ph.phoneme || score < 85;
+            // Chỉ hiển thị âm vị thực sự có vấn đề (điểm < 80)
+            return score < 80;
         })
         : [];
 
