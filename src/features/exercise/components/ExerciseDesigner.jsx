@@ -94,6 +94,7 @@ export default function ExerciseDesigner({ topic, onBack, onRefreshTopics }) {
             />
 
             <ExerciseDesignerModal 
+                key={editingExercise ? `edit-${editingExercise.exerciseId}` : 'add-new'}
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 topic={topic}

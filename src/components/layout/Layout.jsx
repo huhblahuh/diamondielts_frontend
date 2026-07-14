@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { Suspense, useState } from 'react';
 import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import styles from './Layout.module.css';
 import siteLogo from '../../assets/site-logo.webp';
+import PageSkeleton from '../common/PageSkeleton';
 
 export default function Layout() {
     const navigate = useNavigate();
@@ -105,7 +106,9 @@ export default function Layout() {
                     <h2>{(role === 'Teacher' || role === 'Admin') ? 'Bảng Điều Khiển Giáo Viên' : 'Cổng Học Viên / Student Portal'}</h2>
                 </header>
                 <div className={styles.pageBody}>
-                    <Outlet />
+                    <Suspense fallback={<PageSkeleton />}>
+                        <Outlet />
+                    </Suspense>
                 </div>
             </main>
         </div>

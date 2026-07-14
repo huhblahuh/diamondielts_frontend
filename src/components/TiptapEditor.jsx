@@ -39,6 +39,8 @@ const GapNode = Node.create({
 });
 
 const TiptapEditor = forwardRef(({ value, onChange, placeholder, minHeight = '150px' }, ref) => {
+  const isInternalChange = React.useRef(false);
+
   const editor = useEditor({
     extensions: [
       StarterKit,
@@ -47,6 +49,7 @@ const TiptapEditor = forwardRef(({ value, onChange, placeholder, minHeight = '15
     ],
     content: value,
     onUpdate: ({ editor }) => {
+      isInternalChange.current = true;
       // Pass the HTML back to parent
       onChange(editor.getHTML(), editor);
     },
@@ -81,14 +84,19 @@ const TiptapEditor = forwardRef(({ value, onChange, placeholder, minHeight = '15
     }
   }));
 
-  // Update editor content when `value` prop changes externally 
-  // (e.g. initial load or clearing the form)
+  // Update editor content when `value` prop changes externally
+  // (e.g. when switching from add-mode to edit-mode)
   useEffect(() => {
-    if (editor && value !== editor.getHTML()) {
-      // Prevent cursor jumping while typing by only updating if the editor is not focused
-      if (!editor.isFocused || !value || value === '' || value === '<p></p>') {
-        editor.commands.setContent(value || '');
-      }
+    if (!editor) return;
+    // If the change came from user typing inside editor, skip (avoid cursor jumps)
+    if (isInternalChange.current) {
+      isInternalChange.current = false;
+      return;
+    }
+    // Otherwise it's an external change (parent set a new value) — always sync
+    const currentHtml = editor.getHTML();
+    if (value !== currentHtml) {
+      editor.commands.setContent(value || '', false);
     }
   }, [value, editor]);
 

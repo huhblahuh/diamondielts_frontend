@@ -18,8 +18,7 @@ axiosClient.interceptors.request.use(
 
         const method = config.method?.toLowerCase();
         if (method === 'put' || method === 'delete') {
-            const separator = config.url.includes('?') ? '&' : '?';
-            config.url = `${config.url}${separator}_method=${method.toUpperCase()}`;
+            config.headers['X-HTTP-Method-Override'] = method.toUpperCase();
             config.method = 'post';
         }
 

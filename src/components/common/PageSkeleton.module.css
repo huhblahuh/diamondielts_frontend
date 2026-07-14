@@ -1,0 +1,221 @@
+/* ── PageSkeleton — in-layout loading shimmer ─────────────────────────────── */
+
+/* Shimmer keyframe */
+@keyframes shimmer {
+    0%   { background-position: -600px 0; }
+    100% { background-position: 600px 0; }
+}
+
+.shimmer {
+    background: linear-gradient(
+        90deg,
+        #eef2f9 0px,
+        #dde6f5 120px,
+        #eef2f9 240px
+    );
+    background-size: 600px 100%;
+    animation: shimmer 1.6s ease-in-out infinite;
+    border-radius: 10px;
+}
+
+/* ── Page wrapper ─────────────────────────────────────────────────────────── */
+.page {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    padding: 0.25rem 0;
+    animation: fadeIn 0.25s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Page header ──────────────────────────────────────────────────────────── */
+.pageHeader {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.pageTitle {
+    height: 32px;
+    width: 260px;
+    border-radius: 8px;
+}
+
+.pageBadge {
+    height: 28px;
+    width: 80px;
+    border-radius: 20px;
+}
+
+/* ── Stats row ────────────────────────────────────────────────────────────── */
+.statsRow {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+}
+
+@media (max-width: 900px) {
+    .statsRow { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 540px) {
+    .statsRow { grid-template-columns: 1fr; }
+}
+
+.statCard {
+    background: #ffffff;
+    border-radius: 18px;
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    border: 1px solid #dde8f8;
+    box-shadow: 0 4px 18px rgba(0, 45, 130, 0.06);
+}
+
+.statIcon {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    flex-shrink: 0;
+}
+
+.statBody {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.statValue {
+    height: 22px;
+    width: 70%;
+    border-radius: 6px;
+}
+
+.statLabel {
+    height: 14px;
+    width: 55%;
+    border-radius: 6px;
+}
+
+/* ── Content grid ─────────────────────────────────────────────────────────── */
+.contentGrid {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 1.5rem;
+    align-items: start;
+}
+
+@media (max-width: 1100px) {
+    .contentGrid { grid-template-columns: 1fr; }
+    .sideBlock { display: none; }
+}
+
+/* ── Main block ───────────────────────────────────────────────────────────── */
+.mainBlock {
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 1.5rem;
+    border: 1px solid #dde8f8;
+    box-shadow: 0 4px 18px rgba(0, 45, 130, 0.06);
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.blockTitle {
+    height: 22px;
+    width: 180px;
+    border-radius: 6px;
+}
+
+/* ── Card list ────────────────────────────────────────────────────────────── */
+.cardList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.listCard {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.1rem;
+    background: #f8fbff;
+    border-radius: 14px;
+    border: 1px solid #eef2fb;
+}
+
+.cardAvatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    flex-shrink: 0;
+}
+
+.cardContent {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+}
+
+.cardTitle {
+    height: 16px;
+    width: 65%;
+    border-radius: 5px;
+}
+
+.cardSub {
+    height: 13px;
+    width: 45%;
+    border-radius: 5px;
+}
+
+.cardAction {
+    width: 72px;
+    height: 32px;
+    border-radius: 10px;
+    flex-shrink: 0;
+}
+
+/* ── Side block ───────────────────────────────────────────────────────────── */
+.sideBlock {
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 1.5rem;
+    border: 1px solid #dde8f8;
+    box-shadow: 0 4px 18px rgba(0, 45, 130, 0.06);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.bigRect {
+    height: 160px;
+    width: 100%;
+    border-radius: 14px;
+}
+
+.tagRow {
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}
+
+.tag {
+    height: 28px;
+    width: 80px;
+    border-radius: 20px;
+}
+
+.medRect {
+    height: 90px;
+    width: 100%;
+    border-radius: 14px;
+}

@@ -22,8 +22,6 @@ const StudentAssignmentDetail = lazy(() => import('./pages/student/AssignmentDet
 const SpeakingPractice = lazy(() => import('./features/student/SpeakingPractice'));
 const StudentSubmissionHistory = lazy(() => import('./pages/student/SubmissionHistoryPage'));
 
-
-
 function App() {
   const token = localStorage.getItem('token');
 
@@ -40,14 +38,22 @@ function App() {
 
   return (
     <Router>
-      <Suspense fallback={<LoadingSpinner text="Đang tải trang" fullscreen />}>
-        <Routes>
+      <Routes>
         {/* Tự động chuyển hướng dựa trên Role */}
         <Route path="/" element={<Navigate to={getRedirectPath()} replace />} />
-        
-        <Route path="/login" element={<Login />} />
-        
+
+        {/* Login — vẫn cần Suspense riêng vì không có Layout */}
+        <Route
+          path="/login"
+          element={
+            <Suspense fallback={<LoadingSpinner text="Đang tải trang" fullscreen />}>
+              <Login />
+            </Suspense>
+          }
+        />
+
         {/* ══════ TEACHER ROUTES ══════ */}
+        {/* Layout tự xử lý Suspense skeleton cho từng page */}
         <Route element={<ProtectedRoute allowedRoles={['Teacher', 'Admin']} />}>
             <Route path="/teacher" element={<Layout />}>
               <Route index element={<TeacherDashboard />} />
@@ -55,7 +61,7 @@ function App() {
               <Route path="classrooms" element={<TeacherClassrooms />} />
               <Route path="assignment/:assignmentId" element={<AssignmentReview />} />
               <Route path="assignment/edit/:assignmentId" element={<AssignmentBuilder />} />
-              <Route path="create-speaking" element={<AssignmentBuilder />} /> {/* Reusing builder for speaking assignments */}
+              <Route path="create-speaking" element={<AssignmentBuilder />} />
               <Route path="exercises" element={<TeacherExercises />} />
               <Route element={<ProtectedRoute allowedRoles={['Admin']} />}>
                 <Route path="users" element={<UserManagementPage />} />
@@ -77,8 +83,7 @@ function App() {
         </Route>
 
         <Route path="*" element={<Navigate to="/login" replace />} />
-        </Routes>
-      </Suspense>
+      </Routes>
     </Router>
   )
 }
