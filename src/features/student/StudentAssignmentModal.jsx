@@ -1136,7 +1136,7 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
                                                     }
                                                 }}
                                             >
-                                                <i className="bi bi-mic-fill"></i> Vào phòng thu âm
+                                                <i className="bi bi-mic-fill"></i> Làm bài
                                             </button>
                                         </div>
                                     )}

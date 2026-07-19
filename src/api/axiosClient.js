@@ -16,12 +16,6 @@ axiosClient.interceptors.request.use(
             config.headers.Authorization = `Bearer ${token}`;
         }
 
-        const method = config.method?.toLowerCase();
-        if (method === 'put' || method === 'delete') {
-            config.headers['X-HTTP-Method-Override'] = method.toUpperCase();
-            config.method = 'post';
-        }
-
         return config;
     },
     (error) => Promise.reject(error)
@@ -30,6 +24,15 @@ axiosClient.interceptors.request.use(
 axiosClient.interceptors.response.use(
     (response) => response.data || response,
     (error) => {
+        if (error.response?.status === 401 && localStorage.getItem('token')) {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+
+            if (window.location.pathname !== '/login') {
+                window.location.replace('/login');
+            }
+        }
+
         const msg = error.response?.data?.errorMessage || error.response?.data?.message || 'Network error occurred';
         return Promise.reject({ message: msg, status: error.response?.status });
     }
