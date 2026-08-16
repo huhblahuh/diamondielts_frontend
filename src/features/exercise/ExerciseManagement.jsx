@@ -46,7 +46,7 @@ export default function ExerciseManagement() {
                     loadTopics();
                 } catch (err) {
                     console.error(err);
-                    Swal.fire('Lỗi', err.message || 'Không thể xóa chủ đề.', 'error');
+                    Swal.fire('Lỗi', 'Không thể thực hiện thao tác. Vui lòng thử lại.', 'error');
                 } finally {
                     setLoading(false);
                 }

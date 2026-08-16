@@ -26,7 +26,7 @@ const SpotTaskCreator = React.forwardRef(({ show, onClose, onAddTask, onDirtyCha
                     id: localId,
                     exerciseId: null,
                     itemType: 'SPEAKING',
-                    contentJson: JSON.stringify({
+                    formattedContent: JSON.stringify({
                         part: inlinePart,
                         prompt: inlinePrompt
                     }),
@@ -38,7 +38,7 @@ const SpotTaskCreator = React.forwardRef(({ show, onClose, onAddTask, onDirtyCha
                     id: localId,
                     exerciseId: null,
                     itemType: 'fileSubmission',
-                    contentJson: JSON.stringify({
+                    formattedContent: JSON.stringify({
                         description: inlinePrompt
                     }),
                     payloads: inlineUploadPayloads,
@@ -86,7 +86,7 @@ const SpotTaskCreator = React.forwardRef(({ show, onClose, onAddTask, onDirtyCha
                 id: localId,
                 exerciseId: null,
                 itemType: 'SPEAKING',
-                contentJson: JSON.stringify({
+                formattedContent: JSON.stringify({
                     part: inlinePart,
                     prompt: inlinePrompt
                 }),
@@ -98,7 +98,7 @@ const SpotTaskCreator = React.forwardRef(({ show, onClose, onAddTask, onDirtyCha
                 id: localId,
                 exerciseId: null,
                 itemType: 'fileSubmission',
-                contentJson: JSON.stringify({
+                formattedContent: JSON.stringify({
                     description: inlinePrompt
                 }),
                 payloads: inlineUploadPayloads,

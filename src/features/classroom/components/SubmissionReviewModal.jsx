@@ -36,7 +36,7 @@ function SpeakingSubmissionViewer({ attempt, onGrade }) {
     const [playing, setPlaying] = useState(false);
 
     const audioPayload = attempt.payloads?.find(p => p.dataType === 'AUDIO_URL');
-    const jsonPayload  = attempt.payloads?.find(p => p.dataType === 'JSON_RESULT');
+    const jsonPayload = attempt.payloads?.find(p => p.dataType === 'JSON_RESULT');
     const results = jsonPayload ? tryParseJson(jsonPayload.dataValue) : null;
     const hasAIResult = results && (results.fluency_coherence || results.pronunciationReport);
 
@@ -99,8 +99,10 @@ function SpeakingSubmissionViewer({ attempt, onGrade }) {
                         { label: 'Fluency', val: results.fluency_coherence?.score },
                         { label: 'Lexical', val: results.lexical_resource?.score },
                         { label: 'Grammar', val: results.grammar?.score },
-                        { label: 'Pron', val: results.pronunciationReport?.overall?.pronunciationScore != null
-                            ? results.pronunciationReport.overall.pronunciationScore / 10 : null },
+                        {
+                            label: 'Pron', val: results.pronunciationReport?.overall?.pronunciationScore != null
+                                ? results.pronunciationReport.overall.pronunciationScore / 10 : null
+                        },
                     ].map(m => (
                         <div key={m.label} className={s.scoreChip}>
                             <span className={s.scoreChipVal}>{m.val != null ? m.val.toFixed(1) : '--'}</span>
@@ -230,7 +232,7 @@ function TeacherGradePanel({ attempt, onGrade }) {
                 originalFileName: res.fileName
             }]);
         } catch (err) {
-            Swal.fire('Lỗi upload', err?.response?.data || 'Không thể tải file lên.', 'error');
+            Swal.fire('Lỗi', 'Không thể tải file lên. Vui lòng thử lại.', 'error');
         } finally {
             setUploadingFile(false);
         }
@@ -263,7 +265,7 @@ function TeacherGradePanel({ attempt, onGrade }) {
             setPayloadsToDelete([]);
             onGrade && onGrade(attempt.submissionId);
         } catch (err) {
-            Swal.fire('Lỗi', err?.response?.data?.message || 'Không thể lưu điểm', 'error');
+            Swal.fire('Lỗi', 'Không thể lưu thông tin. Vui lòng thử lại.', 'error');
         } finally {
             setSubmitting(false);
         }
@@ -543,8 +545,8 @@ export default function SubmissionReviewModal({ assignmentId, onClose }) {
         return s.badgeFile;
     };
 
-    const parseItemTitle = (contentJson) => {
-        const parsed = tryParseJson(contentJson);
+    const parseItemTitle = (formattedContent) => {
+        const parsed = tryParseJson(formattedContent);
         return parsed.title || parsed.textPrompt?.slice(0, 40) || 'Không có tiêu đề';
     };
 
@@ -622,7 +624,7 @@ export default function SubmissionReviewModal({ assignmentId, onClose }) {
                                             </span>
                                         </div>
                                         <div className={s.itemBtnTitle}>
-                                            #{idx + 1} {parseItemTitle(item.contentJson)}
+                                            #{idx + 1} {parseItemTitle(item.formattedContent)}
                                         </div>
                                     </button>
                                 );

@@ -4,7 +4,6 @@ import Swal from 'sweetalert2';
 import styles from './Dashboard.module.css';
 import Pagination from '../../components/Pagination';
 import AttemptDetailView from '../student/AttemptDetailView';
-import { displayCourseName } from '../../utils/displayText';
 import { Line } from 'react-chartjs-2';
 import {
     Chart as ChartJS,
@@ -37,7 +36,7 @@ export default function Dashboard() {
     const [selectedClassId, setSelectedClassId] = useState('');
     const [loadingData, setLoadingData] = useState(true);
     const [subPage, setSubPage] = useState(1);
-    
+
     // Detailed submission view state
     const [selectedSubmissionDetail, setSelectedSubmissionDetail] = useState(null);
     const [loadingDetail, setLoadingDetail] = useState(false);
@@ -203,9 +202,9 @@ export default function Dashboard() {
                                 <i className="bi bi-arrow-left"></i> Quay lại Dashboard
                             </button>
                         </div>
-                        <AttemptDetailView 
-                            results={enrichedFeedback} 
-                            onBack={() => setSelectedSubmissionDetail(null)} 
+                        <AttemptDetailView
+                            results={enrichedFeedback}
+                            onBack={() => setSelectedSubmissionDetail(null)}
                         />
                     </div>
                 </div>
@@ -265,7 +264,7 @@ export default function Dashboard() {
                     <p>Theo dõi danh sách học viên, tiến độ hoàn thành và lịch sử bài nộp của lớp</p>
                 </div>
                 <div className={styles.filters}>
-                    <select 
+                    <select
                         className={styles.select}
                         value={selectedClassId}
                         onChange={(e) => setSelectedClassId(e.target.value)}
@@ -275,7 +274,7 @@ export default function Dashboard() {
                         ) : (
                             classes.map(cls => (
                                 <option key={cls.classId} value={cls.classId}>
-                                    {cls.className}{displayCourseName(cls.courseName) ? ` (${displayCourseName(cls.courseName)})` : ''}
+                                    {cls.className}
                                 </option>
                             ))
                         )}
@@ -286,7 +285,7 @@ export default function Dashboard() {
             {/* 4 Stat Cards */}
             <div className={styles.statsGrid}>
                 <div className={styles.statCard}>
-                    <div className={styles.iconBox} style={{backgroundColor: '#ede9fe', color: '#6366f1'}}>
+                    <div className={styles.iconBox} style={{ backgroundColor: '#ede9fe', color: '#6366f1' }}>
                         <i className="bi bi-people-fill"></i>
                     </div>
                     <div>
@@ -302,7 +301,7 @@ export default function Dashboard() {
                 </div>
 
                 <div className={styles.statCard}>
-                    <div className={styles.iconBox} style={{backgroundColor: '#e0f2fe', color: '#0284c7'}}>
+                    <div className={styles.iconBox} style={{ backgroundColor: '#e0f2fe', color: '#0284c7' }}>
                         <i className="bi bi-journal-check"></i>
                     </div>
                     <div>
@@ -318,7 +317,7 @@ export default function Dashboard() {
                 </div>
 
                 <div className={styles.statCard}>
-                    <div className={styles.iconBox} style={{backgroundColor: '#fef3c7', color: '#d97706'}}>
+                    <div className={styles.iconBox} style={{ backgroundColor: '#fef3c7', color: '#d97706' }}>
                         <i className="bi bi-percent"></i>
                     </div>
                     <div>
@@ -334,7 +333,7 @@ export default function Dashboard() {
                 </div>
 
                 <div className={styles.statCard}>
-                    <div className={styles.iconBox} style={{backgroundColor: '#dcfce7', color: '#16a34a'}}>
+                    <div className={styles.iconBox} style={{ backgroundColor: '#dcfce7', color: '#16a34a' }}>
                         <i className="bi bi-award-fill"></i>
                     </div>
                     <div>
@@ -360,7 +359,7 @@ export default function Dashboard() {
                     {loadingData ? (
                         <div className={styles.skeleton} style={{ width: '100%', height: '100%', borderRadius: '12px' }}></div>
                     ) : (
-                        <Line 
+                        <Line
                             data={{
                                 labels: (dashboardData.submissionsTrend || []).map(t => t.date),
                                 datasets: [
@@ -378,7 +377,7 @@ export default function Dashboard() {
                                         pointHoverRadius: 6,
                                     }
                                 ]
-                            }} 
+                            }}
                             options={{
                                 responsive: true,
                                 maintainAspectRatio: false,
@@ -404,7 +403,7 @@ export default function Dashboard() {
                                         grid: { display: false }
                                     }
                                 }
-                            }} 
+                            }}
                         />
                     )}
                 </div>
@@ -412,7 +411,7 @@ export default function Dashboard() {
 
             {/* Tab Navigation to prevent layout shifts and improve structure */}
             <div style={{ display: 'flex', gap: '0.5rem', borderBottom: '1px solid #e2e8f0', paddingBottom: '0px', marginTop: '0.75rem', marginBottom: '0.25rem' }}>
-                <button 
+                <button
                     onClick={() => setActiveTab('submissions')}
                     style={{
                         background: 'none',
@@ -432,7 +431,7 @@ export default function Dashboard() {
                     <i className="bi bi-clock-history"></i>
                     Bài nộp gần đây
                 </button>
-                <button 
+                <button
                     onClick={() => setActiveTab('students')}
                     style={{
                         background: 'none',
@@ -527,7 +526,7 @@ export default function Dashboard() {
                                     renderTableSkeletons()
                                 ) : recentSubmissions.length === 0 ? (
                                     <tr>
-                                        <td colSpan="5" style={{textAlign: 'center', padding: '2.5rem', color: '#64748b', fontStyle: 'italic'}}>
+                                        <td colSpan="5" style={{ textAlign: 'center', padding: '2.5rem', color: '#64748b', fontStyle: 'italic' }}>
                                             Chưa có bài nộp nào trong lớp học này.
                                         </td>
                                     </tr>
@@ -544,9 +543,9 @@ export default function Dashboard() {
                                                 </div>
                                             </td>
                                             <td>
-                                                {sub.assignmentTitle} 
+                                                {sub.assignmentTitle}
                                                 {sub.itemType && (
-                                                    <span style={{fontSize: '0.7rem', padding: '0.15rem 0.4rem', borderRadius: '4px', backgroundColor: '#f1f5f9', color: '#475569', marginLeft: '0.5rem', fontWeight: 600}}>
+                                                    <span style={{ fontSize: '0.7rem', padding: '0.15rem 0.4rem', borderRadius: '4px', backgroundColor: '#f1f5f9', color: '#475569', marginLeft: '0.5rem', fontWeight: 600 }}>
                                                         {sub.itemType.toUpperCase() === 'SPEAKING' || sub.itemType.toUpperCase() === 'AI_SPEAKING' ? 'Speaking' : 'File'}
                                                     </span>
                                                 )}
@@ -563,8 +562,8 @@ export default function Dashboard() {
                                                 )}
                                             </td>
                                             <td style={{ textAlign: 'right' }}>
-                                                <button 
-                                                    className={styles.btnView} 
+                                                <button
+                                                    className={styles.btnView}
                                                     onClick={() => handleViewSubmission(sub)}
                                                     disabled={loadingDetail}
                                                 >

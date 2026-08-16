@@ -5,22 +5,21 @@ import styles from '../../features/student/StudentAssignmentModal.module.css';
 import Swal from 'sweetalert2';
 import { showToastError } from '../../utils/toast';
 import Skeleton from '../../components/common/Skeleton';
-import * as SpeechSDK from 'microsoft-cognitiveservices-speech-sdk';
 import AttemptDetailView from '../../features/student/AttemptDetailView';
-import { buildSpeechChunk, createPronunciationAssessmentConfig } from '../../features/student/speechChunkUtils';
+import { SpeakingAssessmentPipeline } from '../../features/student/speakingAssessmentPipeline';
 import FileSubmissionItem from '../../features/student/FileSubmissionItem';
 import SpeakingSubmissionItem from '../../features/student/SpeakingSubmissionItem';
 import SpeakingPractice from '../../features/student/SpeakingPractice';
 
-const detectPartNumber = (type, contentJson) => {
+const detectPartNumber = (type, formattedContent) => {
     const typeLower = (type || '').toLowerCase();
     if (typeLower.includes('part 2') || typeLower.includes('part2') || typeLower.includes('speaking2')) return 2;
     if (typeLower.includes('part 3') || typeLower.includes('part3') || typeLower.includes('speaking3')) return 3;
     if (typeLower.includes('part 1') || typeLower.includes('part1') || typeLower.includes('speaking1')) return 1;
 
-    if (contentJson) {
+    if (formattedContent) {
         try {
-            const parsed = typeof contentJson === 'string' ? JSON.parse(contentJson) : contentJson;
+            const parsed = typeof formattedContent === 'string' ? JSON.parse(formattedContent) : formattedContent;
             const pType = (parsed.type || parsed.part || '').toString().toLowerCase();
             if (pType.includes('part 2') || pType.includes('part2') || pType.includes('2')) return 2;
             if (pType.includes('part 3') || pType.includes('part3') || pType.includes('3')) return 3;
@@ -63,19 +62,13 @@ export default function AssignmentDetailPage() {
     const [leftSidebarOpen, setLeftSidebarOpen] = useState(false);
     const [rightSidebarOpen, setRightSidebarOpen] = useState(false);
 
-    // Azure SDK & MediaRecorder Refs
-    const recognizerRef = useRef(null);
-    const chunksRef = useRef([]);
+    // Shared Soniox transcription and audio capture pipeline
+    const assessmentPipelineRef = useRef(null);
     const timerRef = useRef(null);
-    const startTimeRef = useRef(0);
-    const mediaRecorderRef = useRef(null);
-    const audioChunksRef = useRef([]);
 
     useEffect(() => {
         return () => {
-            if (recognizerRef.current) {
-                recognizerRef.current.close();
-            }
+            assessmentPipelineRef.current?.dispose();
             if (timerRef.current) clearInterval(timerRef.current);
         };
     }, []);
@@ -95,7 +88,7 @@ export default function AssignmentDetailPage() {
             if (data?.items) {
                 const historyPromises = data.items.map(async (item) => {
                     try {
-                        const historyData = await axiosClient.get(`/student/PracticeSpeaking/history/${item.itemId}`);
+                        const historyData = await axiosClient.get(`/student/assignment/items/${item.itemId}/submissions`);
                         return { itemId: item.itemId, history: historyData || [] };
                     } catch (e) {
                         console.error(`Failed to fetch history for item ${item.itemId}:`, e);
@@ -121,7 +114,7 @@ export default function AssignmentDetailPage() {
 
     const fetchItemHistory = async (itemId) => {
         try {
-            const historyData = await axiosClient.get(`/student/PracticeSpeaking/history/${itemId}`);
+            const historyData = await axiosClient.get(`/student/assignment/items/${itemId}/submissions`);
             setHistories(prev => ({
                 ...prev,
                 [itemId]: historyData || []
@@ -139,6 +132,14 @@ export default function AssignmentDetailPage() {
     };
 
     const handleRemoveSubmission = async (itemId, submissionId) => {
+        const targetSubmission = histories[itemId]?.find(s => s.submissionId === submissionId);
+        const isGraded = targetSubmission?.status?.toLowerCase() === 'completed'
+            || targetSubmission?.feedback?.responderType?.toLowerCase() === 'teacher';
+        if (isGraded) {
+            await Swal.fire('Không thể xóa', 'Bài nộp đã được chấm nên không thể xóa.', 'info');
+            return;
+        }
+
         const result = await Swal.fire({
             title: 'Xác nhận xóa?',
             text: 'Bạn có chắc chắn muốn hủy và xóa bài nộp này? Thao tác này không thể hoàn tác.',
@@ -154,7 +155,7 @@ export default function AssignmentDetailPage() {
 
         try {
             setSubmittingItemId(itemId);
-            await axiosClient.delete(`/student/PracticeSpeaking/submission/${submissionId}`);
+            await axiosClient.delete(`/student/submissions/${submissionId}`);
 
             Swal.fire({
                 icon: 'success',
@@ -170,13 +171,23 @@ export default function AssignmentDetailPage() {
             await fetchItemHistory(itemId);
         } catch (err) {
             console.error("Failed to delete submission:", err);
-            showToastError('Không thể xóa bài nộp. Vui lòng thử lại sau.');
+            showToastError(err?.code === 'SUBMISSION_ALREADY_GRADED'
+                ? err.message
+                : 'Không thể xóa bài nộp. Vui lòng thử lại sau.');
         } finally {
             setSubmittingItemId(null);
         }
     };
 
     const handleEditSubmission = (itemId, submissionId) => {
+        const targetSubmission = histories[itemId]?.find(s => s.submissionId === submissionId);
+        const isGraded = targetSubmission?.status?.toLowerCase() === 'completed'
+            || targetSubmission?.feedback?.responderType?.toLowerCase() === 'teacher';
+        if (isGraded) {
+            Swal.fire('Không thể sửa', 'Bài nộp đã được chấm nên không thể cập nhật.', 'info');
+            return;
+        }
+
         setEditingSubmissionId(submissionId);
         setPendingFiles(prev => ({
             ...prev,
@@ -185,6 +196,15 @@ export default function AssignmentDetailPage() {
     };
 
     const handleSaveEditedSubmission = async (itemId, submissionId) => {
+        const targetSubmission = histories[itemId]?.find(s => s.submissionId === submissionId);
+        const isGraded = targetSubmission?.status?.toLowerCase() === 'completed'
+            || targetSubmission?.feedback?.responderType?.toLowerCase() === 'teacher';
+        if (isGraded) {
+            await Swal.fire('Không thể sửa', 'Bài nộp đã được chấm nên không thể cập nhật.', 'info');
+            setEditingSubmissionId(null);
+            return;
+        }
+
         const filesToSubmit = pendingFiles[itemId] || [];
         if (filesToSubmit.length === 0) {
             Swal.fire({
@@ -209,7 +229,7 @@ export default function AssignmentDetailPage() {
             const formData = new FormData();
             formData.append('audioBlobUrl', serializedPayloads);
 
-            await axiosClient.put(`/student/PracticeSpeaking/submission/${submissionId}`, formData, {
+            await axiosClient.put(`/student/submissions/${submissionId}`, formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
 
@@ -227,7 +247,9 @@ export default function AssignmentDetailPage() {
             await fetchItemHistory(itemId);
         } catch (err) {
             console.error("Failed to edit submission:", err);
-            showToastError('Cập nhật bài nộp thất bại. Vui lòng thử lại sau.');
+            showToastError(err?.code === 'SUBMISSION_ALREADY_GRADED'
+                ? err.message
+                : 'Cập nhật bài nộp thất bại. Vui lòng thử lại sau.');
         } finally {
             setSubmittingItemId(null);
         }
@@ -260,7 +282,7 @@ export default function AssignmentDetailPage() {
             formData.append('AudioBlobUrl', serializedPayloads);
             formData.append('AudioDurationSeconds', 0);
 
-            await axiosClient.post('/student/PracticeSpeaking/submit', formData, {
+            await axiosClient.post('/student/submissions/file', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
 
@@ -338,7 +360,7 @@ export default function AssignmentDetailPage() {
         }
     };
 
-    const startSpeakingRecording = async (itemId, itemType, contentJson) => {
+    const startSpeakingRecording = async (itemId, itemType, formattedContent) => {
         try {
             try {
                 const checkData = await axiosClient.get(`/student/PracticeSpeaking/check-attempts/${itemId}`);
@@ -368,165 +390,141 @@ export default function AssignmentDetailPage() {
                 return;
             }
 
-            const speechConfig = SpeechSDK.SpeechConfig.fromAuthorizationToken(tokenData.token, tokenData.region);
-            speechConfig.speechRecognitionLanguage = "en-US";
+            const pipeline = new SpeakingAssessmentPipeline({
+                credentials: tokenData,
+                question: getCleanTextQuestion(formattedContent),
+                partNumber: detectPartNumber(itemType, formattedContent)
+            });
+            assessmentPipelineRef.current = pipeline;
+            await pipeline.start();
 
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            const audioConfig = SpeechSDK.AudioConfig.fromStreamInput(stream);
-
-            const pronunciationConfig = createPronunciationAssessmentConfig();
-
-            const recognizer = new SpeechSDK.SpeechRecognizer(speechConfig, audioConfig);
-            pronunciationConfig.applyTo(recognizer);
-
-            chunksRef.current = [];
-
-            recognizer.recognized = (s, e) => {
-                if (e.result.reason === SpeechSDK.ResultReason.RecognizedSpeech) {
-                    chunksRef.current.push(buildSpeechChunk(e.result));
-                }
-            };
-
-            recognizerRef.current = recognizer;
-
-            const mediaRecorder = new MediaRecorder(stream);
-            audioChunksRef.current = [];
-
-            mediaRecorder.ondataavailable = (e) => {
-                if (e.data.size > 0) audioChunksRef.current.push(e.data);
-            };
-
-            startTimeRef.current = Date.now();
-            mediaRecorder.start();
-            mediaRecorderRef.current = mediaRecorder;
-
-            recognizer.startContinuousRecognitionAsync(
-                () => {
-                    setIsRecording(true);
-                    setSpeakingStatus(prev => ({ ...prev, [itemId]: 'recording' }));
-                    setSpeakingTimer(0);
-                    timerRef.current = setInterval(() => setSpeakingTimer(prev => prev + 1), 1000);
-                },
-                (err) => {
-                    console.error(err);
-                    showToastError('Không thể khởi động micro');
-                }
-            );
+            setIsRecording(true);
+            setSpeakingStatus(prev => ({ ...prev, [itemId]: 'recording' }));
+            setSpeakingTimer(0);
+            timerRef.current = setInterval(() => setSpeakingTimer(prev => prev + 1), 1000);
 
         } catch (err) {
             console.error(err);
-            showToastError('Lỗi khởi tạo Speech SDK');
+            assessmentPipelineRef.current = null;
+            showToastError('Không thể bắt đầu ghi âm. Vui lòng thử lại.');
         }
     };
 
-    const stopSpeakingRecording = (itemId, itemType, contentJson) => {
-        if (!recognizerRef.current) return;
+    const stopSpeakingRecording = async (itemId, itemType, formattedContent) => {
+        if (!assessmentPipelineRef.current) return;
 
         setSpeakingStatus(prev => ({ ...prev, [itemId]: 'processing' }));
         setIsRecording(false);
         if (timerRef.current) clearInterval(timerRef.current);
 
-        recognizerRef.current.stopContinuousRecognitionAsync(
-            async () => {
-                const duration = (Date.now() - startTimeRef.current) / 1000;
+        try {
+            const outcome = await assessmentPipelineRef.current.stop();
+            assessmentPipelineRef.current = null;
+            const duration = outcome.durationSeconds;
 
-                // Trích xuất transcript từ chunks và đếm số từ
-                const transcript = (chunksRef.current || []).map(c => c.DisplayText || '').join(' ').trim();
-                const wordCount = transcript ? transcript.split(/\s+/).filter(Boolean).length : 0;
+            // Trích xuất transcript từ chunks và đếm số từ
+            const transcript = outcome.transcript;
+            const wordCount = transcript ? transcript.split(/\s+/).filter(Boolean).length : 0;
 
-                // 1. Kiểm tra từ = 0 (lỗi mic)
-                if (wordCount === 0) {
-                    setSpeakingStatus(prev => ({ ...prev, [itemId]: 'idle' }));
-                    if (mediaRecorderRef.current && mediaRecorderRef.current.stream) {
-                        mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
-                    }
-
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'Không nhận diện được giọng nói',
-                        text: 'Vui lòng kiểm tra lại micro hoặc thiết bị thu âm của bạn. Hãy đảm bảo bạn đã cho phép trình duyệt truy cập micro và nói rõ ràng.',
-                        confirmButtonText: 'Cấp quyền & Thử lại',
-                        showCancelButton: true,
-                        cancelButtonText: 'Đóng',
-                        confirmButtonColor: '#4f46e5'
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            navigator.mediaDevices.getUserMedia({ audio: true })
-                                .then(stream => {
-                                    stream.getTracks().forEach(track => track.stop());
-                                    Swal.fire('Thành công', 'Micro đã sẵn sàng hoạt động! Hãy bắt đầu ghi âm lại nhé.', 'success');
-                                })
-                                .catch(err => {
-                                    console.error(err);
-                                    Swal.fire('Thất bại', 'Không thể truy cập micro. Vui lòng bật quyền truy cập Micro trong cài đặt trình duyệt của bạn.', 'error');
-                                });
-                        }
-                    });
-                    return;
-                }
-
-                // 2. Kiểm tra độ dài bài nói dựa trên Part
-                const partNum = detectPartNumber(itemType, contentJson);
-                const minWords = partNum === 2 ? 20 : 10;
-                if (wordCount < minWords) {
-                    setSpeakingStatus(prev => ({ ...prev, [itemId]: 'idle' }));
-                    if (mediaRecorderRef.current && mediaRecorderRef.current.stream) {
-                        mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
-                    }
-                    Swal.fire({
-                        toast: true,
-                        position: 'top-end',
-                        icon: 'warning',
-                        title: 'Hãy nói dài hơn để có điểm số chính xác',
-                        showConfirmButton: false,
-                        timer: 4500,
-                        timerProgressBar: true,
-                        background: '#fffbeb',
-                        iconColor: '#d97706',
-                        didOpen: (toast) => {
-                            toast.style.border = '1.5px solid #fde68a';
-                            toast.style.boxShadow = '0 10px 15px -3px rgba(180, 83, 9, 0.15)';
-                            toast.style.color = '#b45309';
-                            toast.style.fontSize = '0.9rem';
-                            toast.style.fontWeight = '600';
-                        }
-                    });
-                    return;
-                }
-
-                if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-                    mediaRecorderRef.current.onstop = async () => {
-                        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-                        await submitSpeakingToBackend(itemId, itemType, contentJson, duration, audioBlob);
-                        mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
-                    };
-                    mediaRecorderRef.current.stop();
-                } else {
-                    await submitSpeakingToBackend(itemId, itemType, contentJson, duration);
-                }
-            },
-            (err) => {
-                console.error(err);
+            // 1. Kiểm tra từ = 0 (lỗi mic)
+            if (wordCount === 0) {
                 setSpeakingStatus(prev => ({ ...prev, [itemId]: 'idle' }));
+
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Không nhận diện được giọng nói',
+                    text: 'Vui lòng kiểm tra lại micro hoặc thiết bị thu âm của bạn. Hãy đảm bảo bạn đã cho phép trình duyệt truy cập micro và nói rõ ràng.',
+                    confirmButtonText: 'Cấp quyền & Thử lại',
+                    showCancelButton: true,
+                    cancelButtonText: 'Đóng',
+                    confirmButtonColor: '#4f46e5'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        navigator.mediaDevices.getUserMedia({ audio: true })
+                            .then(stream => {
+                                stream.getTracks().forEach(track => track.stop());
+                                Swal.fire('Thành công', 'Micro đã sẵn sàng hoạt động! Hãy bắt đầu ghi âm lại nhé.', 'success');
+                            })
+                            .catch(err => {
+                                console.error(err);
+                                Swal.fire('Thất bại', 'Không thể truy cập micro. Vui lòng bật quyền truy cập Micro trong cài đặt trình duyệt của bạn.', 'error');
+                            });
+                    }
+                });
+                return;
             }
-        );
+
+            // 2. Kiểm tra độ dài bài nói dựa trên Part
+            const partNum = detectPartNumber(itemType, formattedContent);
+            const minWords = partNum === 2 ? 20 : 10;
+            if (wordCount < minWords) {
+                setSpeakingStatus(prev => ({ ...prev, [itemId]: 'idle' }));
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'warning',
+                    title: 'Hãy nói dài hơn để có điểm số chính xác',
+                    showConfirmButton: false,
+                    timer: 4500,
+                    timerProgressBar: true,
+                    background: '#fffbeb',
+                    iconColor: '#d97706',
+                    didOpen: (toast) => {
+                        toast.style.border = '1.5px solid #fde68a';
+                        toast.style.boxShadow = '0 10px 15px -3px rgba(180, 83, 9, 0.15)';
+                        toast.style.color = '#b45309';
+                        toast.style.fontSize = '0.9rem';
+                        toast.style.fontWeight = '600';
+                    }
+                });
+                return;
+            }
+
+            await submitSpeakingToBackend(
+                itemId,
+                itemType,
+                formattedContent,
+                duration,
+                outcome.audioBlob,
+                outcome.transcript,
+                outcome.tokens,
+                outcome.sessionId
+            );
+        } catch (err) {
+            console.error(err);
+            assessmentPipelineRef.current = null;
+            setSpeakingStatus(prev => ({ ...prev, [itemId]: 'idle' }));
+            showToastError('Không thể xử lý bài nói. Vui lòng thử lại.');
+        }
     };
 
-    const submitSpeakingToBackend = async (itemId, itemType, contentJson, duration, audioBlob = null) => {
+    const submitSpeakingToBackend = async (
+        itemId,
+        itemType,
+        formattedContent,
+        duration,
+        audioBlob = null,
+        sonioxTranscript = '',
+        sonioxTokens = [],
+        sessionId = ''
+    ) => {
         try {
             const formData = new FormData();
 
             formData.append("AssignmentItemId", itemId);
             formData.append("type", (itemType || '').toUpperCase() === 'AI_SPEAKING' ? 'AI_SPEAKING' : 'SPEAKING');
-            formData.append("question", getCleanTextQuestion(contentJson));
+            formData.append("question", getCleanTextQuestion(formattedContent));
             formData.append("audioDurationSeconds", duration);
-            formData.append("chunksJson", JSON.stringify(chunksRef.current));
+            formData.append("sonioxTranscript", sonioxTranscript);
+            formData.append("sonioxTokensJson", JSON.stringify(sonioxTokens));
+            formData.append("sonioxFinalized", "true");
+            formData.append("speechSessionId", sessionId || "");
 
             if (audioBlob) {
                 formData.append("file", audioBlob, `speaking_${Date.now()}.webm`);
             }
 
-            const resp = await axiosClient.post('/student/PracticeSpeaking/submit', formData, {
+            const resp = await axiosClient.post('/student/submissions/speaking', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
 
@@ -534,7 +532,15 @@ export default function AssignmentDetailPage() {
             await fetchItemHistory(itemId);
         } catch (err) {
             console.error(err);
-            showToastError(err.response?.data?.message || 'Không thể nộp bài');
+            if (err.code === 'OFF_TOPIC') {
+                showToastError(
+                    `${err.reason || err.message} Còn ${err.remainingRetries || 0} lần thử lại.`
+                );
+            } else {
+                showToastError(
+                    err.message || 'Không thể nộp bài. Vui lòng thử lại.'
+                );
+            }
             setSpeakingStatus(prev => ({ ...prev, [itemId]: 'idle' }));
         }
     };
@@ -542,7 +548,7 @@ export default function AssignmentDetailPage() {
     const pollSpeakingResults = async (itemId, subId) => {
         const check = async () => {
             try {
-                const data = await axiosClient.get(`/student/PracticeSpeaking/${subId}`);
+                const data = await axiosClient.get(`/student/submissions/${subId}`);
                 if (data.status === 'Completed') {
                     setSpeakingResults(prev => ({ ...prev, [itemId]: data.feedback }));
                     setSpeakingStatus(prev => ({ ...prev, [itemId]: 'completed' }));
@@ -570,7 +576,7 @@ export default function AssignmentDetailPage() {
         try {
             setSpeakingStatus(prev => ({ ...prev, [itemId]: 'processing' }));
             setActiveSubmissionId(prev => ({ ...prev, [itemId]: subId }));
-            const data = await axiosClient.get(`/student/PracticeSpeaking/${subId}`);
+            const data = await axiosClient.get(`/student/submissions/${subId}`);
             setSpeakingResults(prev => ({ ...prev, [itemId]: data.feedback }));
             setSpeakingStatus(prev => ({ ...prev, [itemId]: 'completed' }));
         } catch (err) {

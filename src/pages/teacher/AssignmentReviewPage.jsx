@@ -193,7 +193,7 @@ function TeacherGradePanel({ attempt, onGrade }) {
                 originalFileName: res.fileName
             }]);
         } catch (err) {
-            Swal.fire('Lỗi upload', err?.response?.data || 'Không thể tải file lên.', 'error');
+            Swal.fire('Lỗi', 'Không thể tải file lên. Vui lòng thử lại.', 'error');
         } finally {
             setUploadingFile(false);
         }
@@ -226,7 +226,7 @@ function TeacherGradePanel({ attempt, onGrade }) {
             setPayloadsToDelete([]);
             onGrade && onGrade(attempt.submissionId);
         } catch (err) {
-            Swal.fire('Lỗi', err?.response?.data?.message || 'Không thể lưu điểm', 'error');
+            Swal.fire('Lỗi', 'Không thể lưu thông tin. Vui lòng thử lại.', 'error');
         } finally {
             setSubmitting(false);
         }
@@ -454,17 +454,17 @@ export default function AssignmentReviewPage() {
             setLoading(true);
             const result = await axiosClient.get(`/teacher/assignment/${assignmentId}/student-submissions`);
             setData(result);
-            
+
             // Check if we came from dashboard with a selected item and student
             const stateItemId = location.state?.itemId;
             const stateStudentId = location.state?.studentId;
-            
+
             if (stateItemId && result?.items?.some(i => i.itemId === stateItemId)) {
                 setSelectedItemId(stateItemId);
             } else if (result?.items?.length > 0) {
                 setSelectedItemId(result.items[0].itemId);
             }
-            
+
             if (stateStudentId) {
                 setSelectedStudentId(stateStudentId);
             }
@@ -524,8 +524,8 @@ export default function AssignmentReviewPage() {
         return s.badgeFile;
     };
 
-    const parseItemTitle = (contentJson) => {
-        const parsed = tryParseJson(contentJson);
+    const parseItemTitle = (formattedContent) => {
+        const parsed = tryParseJson(formattedContent);
         return parsed.title || parsed.textPrompt?.slice(0, 40) || 'Không có tiêu đề';
     };
 
@@ -534,9 +534,9 @@ export default function AssignmentReviewPage() {
         return data?.allStudents?.filter(std => std.submittedByItem?.[item.itemId]).length || 0;
     };
 
-    const getLatestAttemptStatus = (studentData) => {
+    const getLatestAttempt = (studentData) => {
         if (!studentData?.attempts?.length) return null;
-        return studentData.attempts[studentData.attempts.length - 1]?.status;
+        return studentData.attempts[studentData.attempts.length - 1];
     };
 
     if (loading) {
@@ -600,7 +600,7 @@ export default function AssignmentReviewPage() {
                                         </span>
                                     </div>
                                     <div className={s.itemBtnTitle}>
-                                        #{idx + 1} {parseItemTitle(item.contentJson)}
+                                        #{idx + 1} {parseItemTitle(item.formattedContent)}
                                     </div>
                                 </button>
                             );
@@ -633,8 +633,10 @@ export default function AssignmentReviewPage() {
                             const studentAttemptGroup = submitted
                                 ? selectedItem?.studentAttempts?.find(sa => sa.studentId === student.studentId)
                                 : null;
-                            const latestStatus = studentAttemptGroup ? getLatestAttemptStatus(studentAttemptGroup) : null;
-                            const statusInfo = latestStatus ? (STATUS_LABELS[latestStatus] || {}) : {};
+                            const latestAttempt = studentAttemptGroup
+                                ? getLatestAttempt(studentAttemptGroup)
+                                : null;
+                            const isTeacherGraded = latestAttempt?.feedback?.responderType === 'Teacher';
 
                             return (
                                 <button
@@ -650,28 +652,12 @@ export default function AssignmentReviewPage() {
                                         <span className={s.studentEmail}>{student.studentEmail}</span>
                                     </div>
                                     <div className={s.studentRight}>
-                                        {submitted ? (
-                                            <>
-                                                {isFileSub ? (
-                                                    <span className={s.attemptCount} style={{ color: '#16a34a', fontWeight: 'bold' }}>
-                                                        Đã nộp
-                                                    </span>
-                                                ) : (
-                                                    <span className={s.attemptCount} style={{ color: '#16a34a', fontWeight: 'bold' }}>
-                                                        {studentAttemptGroup?.attempts?.length} lần
-                                                    </span>
-                                                )}
-                                                {latestStatus && (
-                                                    <span className={`${s.statusBadge} ${statusInfo.cls || ''}`}>
-                                                        {statusInfo.label || latestStatus}
-                                                    </span>
-                                                )}
-                                            </>
-                                        ) : (
-                                            <span className={`${s.statusBadge} ${s.statusNotSubmitted}`}>
-                                                Chưa nộp
-                                            </span>
-                                        )}
+                                        <span className={`${s.statusBadge} ${submitted ? s.statusSubmitted : s.statusNotSubmitted}`}>
+                                            {submitted ? 'Đã nộp' : 'Chưa nộp'}
+                                        </span>
+                                        <span className={`${s.statusBadge} ${isTeacherGraded ? s.statusCompleted : s.statusNotGraded}`}>
+                                            {isTeacherGraded ? 'Đã chấm' : 'Chưa chấm'}
+                                        </span>
                                     </div>
                                 </button>
                             );

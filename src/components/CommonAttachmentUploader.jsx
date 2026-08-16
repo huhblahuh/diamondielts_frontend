@@ -95,11 +95,10 @@ export default function CommonAttachmentUploader({
                 showConfirmButton: false
             });
         } catch (err) {
-            const errorMsg = err.response?.data || err.message || 'Không thể tải file lên hệ thống.';
             Swal.fire({
                 icon: 'error',
                 title: 'Thất bại',
-                text: typeof errorMsg === 'string' ? errorMsg : 'Đã có lỗi xảy ra khi tải lên file.',
+                text: 'Không thể tải file lên. Vui lòng thử lại.',
                 confirmButtonColor: '#3b82f6'
             });
         } finally {

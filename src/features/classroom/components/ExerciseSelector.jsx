@@ -10,10 +10,10 @@ const getPrefix = (skillType) => {
     return '📝';
 };
 
-const getCleanText = (contentJson) => {
-    if (!contentJson) return 'Không có chi tiết';
+const getCleanText = (formattedContent) => {
+    if (!formattedContent) return 'Không có chi tiết';
     try {
-        const parsed = typeof contentJson === 'string' ? JSON.parse(contentJson) : contentJson;
+        const parsed = typeof formattedContent === 'string' ? JSON.parse(formattedContent) : formattedContent;
         if (!parsed) return 'Không có chi tiết';
         const rawContent = parsed.htmlContent || parsed.passageHtml || parsed.prompt || parsed.question || parsed.textPrompt || parsed.topic || parsed.title || '';
         let cleanText = '';
@@ -65,7 +65,7 @@ export default function ExerciseSelector({ show, onClose, oldExercises = [], onS
                 const term = searchTerm.toLowerCase();
                 const typeStr = (ex.type || '').toLowerCase();
                 const skillStr = (ex.skillType || '').toLowerCase();
-                const detailsStr = getCleanText(ex.contentJson).toLowerCase();
+                const detailsStr = getCleanText(ex.formattedContent).toLowerCase();
                 return typeStr.includes(term) || skillStr.includes(term) || detailsStr.includes(term);
             }
             return true;
@@ -277,7 +277,7 @@ export default function ExerciseSelector({ show, onClose, oldExercises = [], onS
                                                         {getPrefix(ex.skillType)} {ex.type} - {ex.skillType}
                                                     </span>
                                                     <span style={{ fontSize: '0.78rem', color: '#64748b', maxBreakWords: '3' }}>
-                                                        {getCleanText(ex.contentJson)}
+                                                        {getCleanText(ex.formattedContent)}
                                                     </span>
                                                 </div>
                                             </div>

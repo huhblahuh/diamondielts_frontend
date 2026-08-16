@@ -18,7 +18,7 @@ export default function FileSubmissionItem({
     handleSubmitHomework,
     formatDateTime
 }) {
-    const parsedContent = item.contentJson ? JSON.parse(item.contentJson) : {};
+    const parsedContent = item.formattedContent ? JSON.parse(item.formattedContent) : {};
 
     return (
         <div className={styles.itemCard}>
@@ -87,6 +87,8 @@ export default function FileSubmissionItem({
             {(() => {
                 const latestSub = itemHistory[0];
                 const isEditing = latestSub && editingSubmissionId === latestSub.submissionId;
+                const isGraded = latestSub?.status?.toLowerCase() === 'completed'
+                    || latestSub?.feedback?.responderType?.toLowerCase() === 'teacher';
 
                 if (isBlockedByDeadline) {
                     if (itemHistory.length === 0) {
@@ -98,7 +100,7 @@ export default function FileSubmissionItem({
                     }
                 }
 
-                if (itemHistory.length === 0 || isEditing) {
+                if (itemHistory.length === 0 || (isEditing && !isGraded)) {
                     return (
                         <div className={styles.submitArea}>
                             {isEditing && (
@@ -153,7 +155,7 @@ export default function FileSubmissionItem({
                     <div className={styles.statusPanel}>
                         <h5 className={styles.statusPanelTitle}>Trạng thái nộp bài</h5>
 
-                        {!isBlockedByDeadline && (
+                        {!isBlockedByDeadline && !isGraded && (
                             <div className={styles.actionButtonRow}>
                                 <button
                                     className={styles.btnEditSubmission}
@@ -167,6 +169,12 @@ export default function FileSubmissionItem({
                                 >
                                     <i className="bi bi-trash-fill"></i> Xóa bài nộp
                                 </button>
+                            </div>
+                        )}
+
+                        {isGraded && (
+                            <div className="alert alert-info d-flex align-items-center gap-2 mb-3" style={{ fontSize: '0.9rem' }}>
+                                <i className="bi bi-lock-fill"></i> Bài nộp đã được chấm nên không thể sửa hoặc xóa.
                             </div>
                         )}
 

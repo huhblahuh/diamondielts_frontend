@@ -5,14 +5,50 @@ const PAGE_SIZE = 10;
 
 export default function DeadlineListTab({ deadlines = [], onEditFolder, onDeleteDeadline, onViewSubmissions, formatDate, styles }) {
     const [currentPage, setCurrentPage] = useState(1);
-    const totalPages = Math.max(1, Math.ceil(deadlines.length / PAGE_SIZE));
+    const [searchTerm, setSearchTerm] = useState('');
+    const now = Date.now();
+    const normalizedSearch = searchTerm.trim().toLocaleLowerCase('vi');
+
+    const visibleDeadlines = deadlines
+        .filter((deadline) => (
+            !normalizedSearch
+            || deadline.title?.toLocaleLowerCase('vi').includes(normalizedSearch)
+        ))
+        .sort((first, second) => {
+            const firstDueTime = new Date(first.dueDate).getTime();
+            const secondDueTime = new Date(second.dueDate).getTime();
+            const firstExpired = Number.isFinite(firstDueTime) && firstDueTime < now;
+            const secondExpired = Number.isFinite(secondDueTime) && secondDueTime < now;
+
+            if (firstExpired !== secondExpired) {
+                return firstExpired ? 1 : -1;
+            }
+
+            const firstCreatedAt = new Date(first.createdAt).getTime() || 0;
+            const secondCreatedAt = new Date(second.createdAt).getTime() || 0;
+            return secondCreatedAt - firstCreatedAt;
+        });
+    const totalPages = Math.max(1, Math.ceil(visibleDeadlines.length / PAGE_SIZE));
     const safePage = Math.min(currentPage, totalPages);
-    const paged = deadlines.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+    const paged = visibleDeadlines.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
     return (
         <div className={styles.tableContainer}>
             <div className={styles.tableHeader}>
                 <h4>Deadlines &amp; Assignments</h4>
+                <label className={styles.tableSearch}>
+                    <i className="bi bi-search" aria-hidden="true"></i>
+                    <input
+                        type="search"
+                        value={searchTerm}
+                        onChange={(event) => {
+                            setSearchTerm(event.target.value);
+                            setCurrentPage(1);
+                        }}
+                        placeholder="Tìm kiếm bài tập..."
+                        aria-label="Tìm kiếm bài tập"
+                    />
+                </label>
             </div>
             <div className={styles.tableWrapper}>
                 <table className={styles.table}>
@@ -26,8 +62,15 @@ export default function DeadlineListTab({ deadlines = [], onEditFolder, onDelete
                         </tr>
                     </thead>
                     <tbody>
-                        {paged.map((dl) => (
-                            <tr key={dl.assignmentId}>
+                        {paged.map((dl) => {
+                            const dueTime = new Date(dl.dueDate).getTime();
+                            const isPastDeadline = Number.isFinite(dueTime) && dueTime < now;
+
+                            return (
+                                <tr
+                                    key={dl.assignmentId}
+                                    className={isPastDeadline ? styles.pastDeadlineRow : undefined}
+                                >
                                 <td className={styles.boldText}>
                                     <span 
                                         onClick={() => onEditFolder(dl)}
@@ -71,10 +114,15 @@ export default function DeadlineListTab({ deadlines = [], onEditFolder, onDelete
                                         </button>
                                     </div>
                                 </td>
+                                </tr>
+                            );
+                        })}
+                        {visibleDeadlines.length === 0 && (
+                            <tr>
+                                <td colSpan="5" className={styles.emptyTableMessage}>
+                                    {searchTerm.trim() ? 'Không tìm thấy bài tập phù hợp.' : 'Chưa có deadline nào được giao.'}
+                                </td>
                             </tr>
-                        ))}
-                        {deadlines.length === 0 && (
-                            <tr><td colSpan="4" style={{textAlign:'center', fontStyle:'italic'}}>Chưa có deadline nào được giao.</td></tr>
                         )}
                     </tbody>
                 </table>

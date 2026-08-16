@@ -47,7 +47,7 @@ export default function SubmissionHistoryPage() {
     const handleViewDetail = async (submissionId) => {
         setLoadingDetail(true);
         try {
-            const detail = await axiosClient.get(`/student/PracticeSpeaking/${submissionId}`);
+            const detail = await axiosClient.get(`/student/submissions/${submissionId}`);
             setSelectedSubmission(detail);
         } catch (err) {
             console.error('Fetch submission detail error:', err);
@@ -108,9 +108,9 @@ export default function SubmissionHistoryPage() {
             return (
                 <div className={styles.container}>
                     <div className={styles.detailWrapper}>
-                        <AttemptDetailView 
-                            results={enrichedFeedback} 
-                            onBack={() => setSelectedSubmission(null)} 
+                        <AttemptDetailView
+                            results={enrichedFeedback}
+                            onBack={() => setSelectedSubmission(null)}
                         />
                     </div>
                 </div>
@@ -244,8 +244,8 @@ export default function SubmissionHistoryPage() {
                                                 )}
                                             </td>
                                             <td style={{ textAlign: 'right' }}>
-                                                <button 
-                                                    className={styles.btnView} 
+                                                <button
+                                                    className={styles.btnView}
                                                     onClick={() => handleViewDetail(sub.submissionId)}
                                                     disabled={loadingDetail}
                                                 >
@@ -258,7 +258,7 @@ export default function SubmissionHistoryPage() {
                             </table>
                         </div>
 
-                        <Pagination 
+                        <Pagination
                             currentPage={currentPage}
                             totalPages={totalPages}
                             onPageChange={setCurrentPage}

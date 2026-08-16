@@ -8,10 +8,15 @@ const PAGE_SIZE = 10;
 
 export default function UserManagementPage() {
     const [users, setUsers] = useState([]);
+    const [classes, setClasses] = useState([]);
     const [loading, setLoading] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [roleFilter, setRoleFilter] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
+    const [isExcelModalOpen, setIsExcelModalOpen] = useState(false);
+    const [excelFile, setExcelFile] = useState(null);
+    const [excelPreview, setExcelPreview] = useState(null);
+    const [excelLoading, setExcelLoading] = useState(false);
 
     // Modal states
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -22,7 +27,8 @@ export default function UserManagementPage() {
         email: '',
         username: '',
         role: 'Student',
-        password: ''
+        password: '',
+        classIds: []
     });
 
     const [formErrors, setFormErrors] = useState({});
@@ -35,14 +41,29 @@ export default function UserManagementPage() {
             setUsers(data);
         } catch (error) {
             console.error("Error fetching users:", error);
-            Swal.fire('Lỗi!', error.message || 'Không thể tải danh sách người dùng.', 'error');
+            Swal.fire('Lỗi!', 'Không thể tải dữ liệu. Vui lòng thử lại.', 'error');
         } finally {
             setLoading(false);
         }
     };
 
+    const fetchClasses = async () => {
+        try {
+            const data = await axiosClient.get('/admin/classes');
+            setClasses(data);
+        } catch (error) {
+            console.error("Error fetching classes:", error);
+            Swal.fire(
+                'Lỗi!',
+                'Không thể tải danh sách lớp học.',
+                'error'
+            );
+        }
+    };
+
     useEffect(() => {
         fetchUsers();
+        fetchClasses();
     }, []);
 
     // Handle form change
@@ -50,7 +71,19 @@ export default function UserManagementPage() {
         const { name, value } = e.target;
         setFormData(prev => ({
             ...prev,
-            [name]: value
+            [name]: value,
+            ...(name === 'role' && value !== 'Teacher'
+                ? { classIds: [] }
+                : {})
+        }));
+    };
+
+    const toggleTeacherClass = (classId) => {
+        setFormData(prev => ({
+            ...prev,
+            classIds: prev.classIds.includes(classId)
+                ? prev.classIds.filter(id => id !== classId)
+                : [...prev.classIds, classId]
         }));
     };
 
@@ -63,7 +96,8 @@ export default function UserManagementPage() {
             email: '',
             username: '',
             role: 'Student',
-            password: ''
+            password: '',
+            classIds: []
         });
         setFormErrors({});
         setIsModalOpen(true);
@@ -78,10 +112,92 @@ export default function UserManagementPage() {
             email: user.email,
             username: user.username,
             role: user.role,
-            password: '' // Keep empty to indicate no password change
+            password: '', // Keep empty to indicate no password change
+            classIds: user.classIds || []
         });
         setFormErrors({});
         setIsModalOpen(true);
+    };
+
+    const openExcelModal = () => {
+        setExcelFile(null);
+        setExcelPreview(null);
+        setIsExcelModalOpen(true);
+    };
+
+    const handleDownloadExcelTemplate = async () => {
+        try {
+            const blob = await axiosClient.get('/admin/users/import-excel/template', {
+                responseType: 'blob'
+            });
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'user-import-template.xlsx';
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            Swal.fire('Không thể tải file mẫu!', error.message, 'error');
+        }
+    };
+
+    const handlePreviewExcel = async () => {
+        if (!excelFile) {
+            Swal.fire('Thiếu dữ liệu!', 'Vui lòng chọn file Excel.', 'warning');
+            return;
+        }
+
+        setExcelLoading(true);
+        try {
+            const body = new FormData();
+            body.append('file', excelFile);
+            const preview = await axiosClient.post('/admin/users/import-excel/preview', body, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            setExcelPreview(preview);
+        } catch (error) {
+            setExcelPreview(null);
+            Swal.fire('File Excel không hợp lệ!', error.message, 'error');
+        } finally {
+            setExcelLoading(false);
+        }
+    };
+
+    const handleConfirmExcel = async () => {
+        if (!excelPreview || excelPreview.invalidCount > 0) return;
+
+        setExcelLoading(true);
+        const failures = [];
+
+        for (const item of excelPreview.users) {
+            try {
+                await axiosClient.post('/admin/users', item.user);
+            } catch (error) {
+                failures.push({
+                    index: item.index,
+                    username: item.user.username,
+                    message: error.message
+                });
+            }
+        }
+
+        setExcelLoading(false);
+        await fetchUsers();
+
+        if (failures.length === 0) {
+            setIsExcelModalOpen(false);
+            Swal.fire('Thành công!', `Đã tạo ${excelPreview.validCount} người dùng.`, 'success');
+            return;
+        }
+
+        Swal.fire({
+            icon: 'warning',
+            title: 'Hoàn tất một phần',
+            text: `Đã tạo ${excelPreview.total - failures.length}/${excelPreview.total} người dùng. ${failures.map(item => `Dòng ${item.index} (${item.username}): ${item.message}`).join(' | ')}`
+        });
+        await handlePreviewExcel();
     };
 
     // Form validation
@@ -121,7 +237,7 @@ export default function UserManagementPage() {
             fetchUsers();
         } catch (error) {
             console.error("Save User error:", error);
-            Swal.fire('Thất bại!', error.message || 'Đã xảy ra lỗi khi lưu thông tin.', 'error');
+            Swal.fire('Thất bại!', 'Không thể lưu thông tin. Vui lòng thử lại.', 'error');
         } finally {
             setLoading(false);
         }
@@ -152,7 +268,7 @@ export default function UserManagementPage() {
                     fetchUsers();
                 } catch (error) {
                     console.error("Delete user error:", error);
-                    Swal.fire('Lỗi!', error.message || 'Không thể xóa người dùng.', 'error');
+                    Swal.fire('Lỗi!', 'Không thể thực hiện thao tác. Vui lòng thử lại.', 'error');
                 }
             }
         });
@@ -190,9 +306,14 @@ export default function UserManagementPage() {
                     <h3>Quản Lý Người Dùng</h3>
                     <p>Thêm, sửa thông tin, đặt lại mật khẩu hoặc xóa tài khoản người dùng trong hệ thống.</p>
                 </div>
-                <button className={styles.btnAddUser} onClick={openCreateModal}>
-                    <i className="bi bi-person-plus-fill"></i> Thêm Người Dùng
-                </button>
+                <div className={styles.headerActions}>
+                    <button className={styles.btnImportExcel} onClick={openExcelModal}>
+                        <i className="bi bi-file-earmark-excel"></i> Nhập bằng Excel
+                    </button>
+                    <button className={styles.btnAddUser} onClick={openCreateModal}>
+                        <i className="bi bi-person-plus-fill"></i> Thêm Người Dùng
+                    </button>
+                </div>
             </div>
 
             {/* Filter and Search Panel */}
@@ -234,6 +355,7 @@ export default function UserManagementPage() {
                                 <th>Họ và Tên</th>
                                 <th>Tên Tài Khoản</th>
                                 <th>Email</th>
+                                <th>Lớp phụ trách</th>
                                 <th>Vai Trò</th>
                                 <th>Ngày Tạo</th>
                                 <th style={{ textAlign: 'center' }}>Thao Tác</th>
@@ -242,14 +364,14 @@ export default function UserManagementPage() {
                         <tbody>
                             {loading && users.length === 0 ? (
                                 <tr>
-                                    <td colSpan="7" style={{ textAlign: 'center', padding: '2rem' }}>
+                                    <td colSpan="8" style={{ textAlign: 'center', padding: '2rem' }}>
                                         <div className="spinner-border text-primary" role="status"></div>
                                         <div style={{ marginTop: '0.5rem', color: '#64748b' }}>Đang tải dữ liệu...</div>
                                     </td>
                                 </tr>
                             ) : filteredUsers.length === 0 ? (
                                 <tr>
-                                    <td colSpan="7" style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>
+                                    <td colSpan="8" style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>
                                         <i className="bi bi-people" style={{ fontSize: '2rem', display: 'block', marginBottom: '0.5rem' }}></i>
                                         Không tìm thấy người dùng nào phù hợp.
                                     </td>
@@ -268,6 +390,11 @@ export default function UserManagementPage() {
                                         </td>
                                         <td><strong>{user.username}</strong></td>
                                         <td>{user.email}</td>
+                                        <td className={styles.classCell}>
+                                            {user.role === 'Teacher'
+                                                ? (user.classNames?.join(', ') || 'Chưa phân lớp')
+                                                : '—'}
+                                        </td>
                                         <td>
                                             <span className={`${styles.roleBadge} ${getRoleBadgeClass(user.role)}`}>
                                                 {user.role === 'Admin' ? 'Admin' : user.role === 'Teacher' ? 'Giáo Viên' : 'Học Viên'}
@@ -387,6 +514,42 @@ export default function UserManagementPage() {
                                         {formErrors.password && <small className={styles.errorText}>{formErrors.password}</small>}
                                     </div>
                                 </div>
+
+                                {formData.role === 'Teacher' && (
+                                    <div className={styles.formGroup}>
+                                        <label>Phân công lớp học</label>
+                                        <div className={styles.classPicker}>
+                                            {classes.length === 0 ? (
+                                                <span className={styles.emptyClasses}>
+                                                    Chưa có lớp học để phân công.
+                                                </span>
+                                            ) : classes.map(item => (
+                                                <label
+                                                    key={item.classId}
+                                                    className={styles.classOption}
+                                                >
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={formData.classIds.includes(
+                                                            item.classId
+                                                        )}
+                                                        onChange={() =>
+                                                            toggleTeacherClass(
+                                                                item.classId
+                                                            )
+                                                        }
+                                                    />
+                                                    <span>
+                                                        {item.className}
+                                                        {item.status
+                                                            ? ` (${item.status})`
+                                                            : ''}
+                                                    </span>
+                                                </label>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                             <div className={styles.modalFooter}>
                                 <button type="button" className={styles.btnCancel} onClick={() => setIsModalOpen(false)}>
@@ -397,6 +560,107 @@ export default function UserManagementPage() {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {isExcelModalOpen && (
+                <div className={styles.modalOverlay}>
+                    <div className={`${styles.modalContent} ${styles.excelModal}`}>
+                        <div className={styles.modalHeader}>
+                            <div>
+                                <h4>Nhập người dùng bằng Excel</h4>
+                                <p className={styles.modalSubtitle}>Kiểm tra danh sách trước, sau đó Confirm để tạo bằng API người dùng hiện có.</p>
+                            </div>
+                            <button className={styles.btnCloseModal} onClick={() => setIsExcelModalOpen(false)}>&times;</button>
+                        </div>
+                        <div className={styles.modalBody}>
+                            <div className={styles.excelUploadBox}>
+                                <i className="bi bi-file-earmark-spreadsheet"></i>
+                                <div>
+                                    <strong>Chọn file Excel (.xlsx)</strong>
+                                    <p>Các cột: FullName, Email, Username, Password, Role.</p>
+                                </div>
+                                <input
+                                    type="file"
+                                    accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                                    onChange={(event) => {
+                                        setExcelFile(event.target.files?.[0] || null);
+                                        setExcelPreview(null);
+                                    }}
+                                />
+                                {excelFile && <span className={styles.selectedFile}>{excelFile.name}</span>}
+                                <button type="button" className={styles.btnTemplate} onClick={handleDownloadExcelTemplate}>
+                                    <i className="bi bi-download"></i> Tải file mẫu
+                                </button>
+                                <small className={styles.excelHint}>Role hỗ trợ: Student, Teacher, Admin. File Excel không thực hiện phân lớp. Tối đa 200 user/lần.</small>
+                            </div>
+
+                            {excelPreview && (
+                                <div className={styles.previewSection}>
+                                    <div className={styles.previewSummary}>
+                                        <strong>{excelPreview.total} người dùng</strong>
+                                        <span className={styles.validSummary}>{excelPreview.validCount} hợp lệ</span>
+                                        {excelPreview.invalidCount > 0 && (
+                                            <span className={styles.invalidSummary}>{excelPreview.invalidCount} cần sửa</span>
+                                        )}
+                                    </div>
+                                    <div className={styles.previewTableWrapper}>
+                                        <table className={styles.previewTable}>
+                                            <thead>
+                                                <tr>
+                                                    <th>#</th>
+                                                    <th>Họ tên</th>
+                                                    <th>Tài khoản</th>
+                                                    <th>Email</th>
+                                                    <th>Role</th>
+                                                    <th>Trạng thái</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {excelPreview.users.map(item => (
+                                                    <tr key={item.index} className={!item.isValid ? styles.invalidRow : ''}>
+                                                        <td>{item.index}</td>
+                                                        <td>{item.user.fullName || '—'}</td>
+                                                        <td>{item.user.username || '—'}</td>
+                                                        <td>{item.user.email || '—'}</td>
+                                                        <td>{item.user.role || '—'}</td>
+                                                        <td>
+                                                            {item.isValid ? (
+                                                                <span className={styles.validStatus}><i className="bi bi-check-circle-fill"></i> Hợp lệ</span>
+                                                            ) : (
+                                                                <ul className={styles.previewErrors}>
+                                                                    {item.errors.map(error => <li key={error}>{error}</li>)}
+                                                                </ul>
+                                                            )}
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                        <div className={styles.modalFooter}>
+                            <button type="button" className={styles.btnCancel} onClick={() => setIsExcelModalOpen(false)} disabled={excelLoading}>
+                                Hủy bỏ
+                            </button>
+                            <button type="button" className={styles.btnPreview} onClick={handlePreviewExcel} disabled={excelLoading || !excelFile}>
+                                <i className="bi bi-eye"></i> {excelPreview ? 'Kiểm tra lại' : 'Xem trước'}
+                            </button>
+                            {excelPreview && (
+                                <button
+                                    type="button"
+                                    className={styles.btnSave}
+                                    onClick={handleConfirmExcel}
+                                    disabled={excelLoading || excelPreview.invalidCount > 0}
+                                    title={excelPreview.invalidCount > 0 ? 'Hãy sửa tất cả dòng chưa hợp lệ trong Excel trước khi Confirm' : ''}
+                                >
+                                    {excelLoading ? 'Đang tạo...' : `Confirm & tạo ${excelPreview.validCount} user`}
+                                </button>
+                            )}
+                        </div>
                     </div>
                 </div>
             )}

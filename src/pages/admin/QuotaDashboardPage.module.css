@@ -1,0 +1,643 @@
+.page {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    max-width: 1500px;
+    margin: 0 auto;
+}
+
+.hero {
+    min-height: 176px;
+    padding: 2rem 2.25rem;
+    border-radius: 24px;
+    color: white;
+    background:
+        radial-gradient(circle at 85% 20%, rgba(51, 182, 255, 0.32), transparent 24%),
+        radial-gradient(circle at 70% 110%, rgba(168, 85, 247, 0.28), transparent 34%),
+        linear-gradient(125deg, #061b5e 0%, #0735a4 53%, #005bff 100%);
+    box-shadow: 0 22px 48px rgba(6, 27, 94, 0.22);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.hero::after {
+    content: '';
+    position: absolute;
+    width: 240px;
+    height: 240px;
+    border: 1px solid rgba(255, 255, 255, 0.13);
+    border-radius: 50%;
+    right: -70px;
+    top: -120px;
+}
+
+.eyebrow,
+.sectionLabel,
+.cardHeading span {
+    display: block;
+    color: #72d1ff;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+}
+
+.hero h1 {
+    margin: 0.45rem 0 0.55rem;
+    font-size: clamp(1.75rem, 3vw, 2.65rem);
+    line-height: 1.08;
+    letter-spacing: -0.045em;
+}
+
+.hero p {
+    max-width: 660px;
+    color: rgba(255, 255, 255, 0.72);
+    line-height: 1.6;
+}
+
+.heroBadge {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(12px);
+    font-size: 0.8rem;
+    font-weight: 700;
+    white-space: nowrap;
+    z-index: 1;
+}
+
+.filters {
+    display: grid;
+    grid-template-columns: minmax(190px, 1.4fr) repeat(3, minmax(140px, 0.8fr));
+    gap: 0.8rem;
+    padding: 1rem;
+    background: white;
+    border: 1px solid var(--di-border);
+    border-radius: 18px;
+    box-shadow: 0 10px 28px rgba(0, 45, 130, 0.07);
+}
+
+.filters label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.filters label span {
+    color: var(--di-muted);
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.filters input,
+.filters select,
+.bulkControls input,
+.searchBox input,
+.limitInput {
+    width: 100%;
+    min-height: 42px;
+    padding: 0 0.8rem;
+    border: 1px solid var(--di-border);
+    border-radius: 11px;
+    background: #f9fbff;
+    color: var(--di-text);
+    outline: none;
+}
+
+.filters input:focus,
+.filters select:focus,
+.bulkControls input:focus,
+.searchBox input:focus,
+.limitInput:focus {
+    border-color: var(--di-blue);
+    box-shadow: 0 0 0 3px rgba(0, 91, 255, 0.1);
+}
+
+.dateField {
+    position: relative;
+}
+
+.dateInputControl {
+    display: flex;
+}
+
+.dateInputControl > input {
+    min-width: 0;
+    border-radius: 11px 0 0 11px;
+}
+
+.calendarButton {
+    position: relative;
+    width: 42px;
+    min-height: 42px;
+    flex: 0 0 42px;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    border: 1px solid var(--di-border);
+    border-left: 0;
+    border-radius: 0 11px 11px 0;
+    color: var(--di-blue);
+    background: rgba(0, 91, 255, 0.06);
+}
+
+.calendarButton:hover {
+    background: rgba(0, 91, 255, 0.12);
+}
+
+.calendarButton i {
+    pointer-events: none;
+}
+
+.calendarButton .nativeDatePicker {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    min-height: 100%;
+    padding: 0;
+    border: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.dateField input[aria-invalid='true'] {
+    border-color: #e94d63;
+}
+
+.dateError {
+    position: absolute;
+    z-index: 2;
+    top: calc(100% + 0.25rem);
+    left: 0;
+    padding: 0.3rem 0.45rem;
+    border-radius: 7px;
+    color: #b83145;
+    background: #fff0f2;
+    box-shadow: 0 5px 14px rgba(185, 49, 69, 0.12);
+    font-size: 0.64rem;
+    white-space: nowrap;
+}
+
+.secondaryButton,
+.bulkControls button {
+    border: none;
+    border-radius: 11px;
+    cursor: pointer;
+    font-weight: 750;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.bulkControls button i {
+    margin-right: 0.45rem;
+}
+
+.bulkControls button:hover {
+    transform: translateY(-1px);
+}
+
+.bulkControls button:disabled,
+.rowActions button:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+.metrics {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.metricCard {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    padding: 1.25rem;
+    border: 1px solid var(--di-border);
+    border-radius: 18px;
+    background: white;
+    box-shadow: 0 10px 28px rgba(0, 45, 130, 0.07);
+    overflow: hidden;
+}
+
+.metricCard::after {
+    content: '';
+    position: absolute;
+    width: 76px;
+    height: 76px;
+    border-radius: 50%;
+    right: -32px;
+    bottom: -38px;
+    background: currentColor;
+    opacity: 0.07;
+}
+
+.metricIcon {
+    width: 46px;
+    height: 46px;
+    flex: 0 0 46px;
+    display: grid;
+    place-items: center;
+    border-radius: 14px;
+    color: currentColor;
+    background: color-mix(in srgb, currentColor 11%, white);
+    font-size: 1.2rem;
+}
+
+.metricCard > div:last-child {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.metricCard span {
+    color: var(--di-muted);
+    font-size: 0.74rem;
+    font-weight: 650;
+}
+
+.metricCard strong {
+    margin-top: 0.18rem;
+    color: var(--di-text);
+    font-size: clamp(1.35rem, 2.2vw, 1.9rem);
+    line-height: 1.15;
+}
+
+.metricCard small {
+    margin-top: 0.25rem;
+    color: var(--di-muted);
+    font-size: 0.68rem;
+}
+
+.blue { color: #005bff; }
+.purple { color: #7b3ff2; }
+.gold { color: #eaa00b; }
+.red { color: #e94d63; }
+
+.chartRow {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.chartCard,
+.quotaCard {
+    padding: 1.35rem;
+    border: 1px solid var(--di-border);
+    border-radius: 20px;
+    background: white;
+    box-shadow: 0 12px 34px rgba(0, 45, 130, 0.075);
+}
+
+.cardHeading,
+.quotaHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+.cardHeading h2,
+.quotaHeader h2 {
+    margin-top: 0.28rem;
+    color: var(--di-text);
+    font-size: 1.02rem;
+}
+
+.cardHeading > i {
+    color: var(--di-blue);
+    font-size: 1.2rem;
+}
+
+.doughnutWrap {
+    height: 290px;
+    padding: 1rem 0 0;
+}
+
+.trendWrap {
+    height: 290px;
+    padding-top: 1rem;
+}
+
+.quotaHeader p {
+    margin-top: 0.38rem;
+    color: var(--di-muted);
+    font-size: 0.78rem;
+}
+
+.bulkControls {
+    display: flex;
+    align-items: end;
+    gap: 0.6rem;
+}
+
+.bulkControls > div {
+    width: 180px;
+}
+
+.bulkControls small {
+    display: block;
+    margin-bottom: 0.32rem;
+    color: var(--di-muted);
+    font-size: 0.66rem;
+}
+
+.bulkControls input {
+    min-height: 40px;
+}
+
+.bulkControls button {
+    min-height: 40px;
+    padding: 0 1rem;
+    color: white;
+    background: linear-gradient(135deg, #7b3ff2, #9b5cff);
+    box-shadow: 0 8px 18px rgba(123, 63, 242, 0.22);
+}
+
+.classPrompt,
+.emptyChart,
+.loadingState {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--di-muted);
+}
+
+.classPrompt {
+    min-height: 220px;
+    flex-direction: column;
+    text-align: center;
+}
+
+.classPrompt i {
+    margin-bottom: 0.7rem;
+    color: #9bb1d1;
+    font-size: 2rem;
+}
+
+.classPrompt h3 {
+    color: var(--di-text);
+    font-size: 1rem;
+}
+
+.classPrompt p {
+    margin-top: 0.35rem;
+    font-size: 0.78rem;
+}
+
+.emptyChart {
+    height: 100%;
+    flex-direction: column;
+    gap: 0.5rem;
+    font-size: 0.78rem;
+}
+
+.emptyChart i {
+    color: #b3c3dc;
+    font-size: 1.8rem;
+}
+
+.loadingState {
+    min-height: 150px;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.72);
+    font-size: 0.82rem;
+}
+
+.tableTools {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.55rem;
+    margin: 1.25rem 0 0.8rem;
+}
+
+.searchBox {
+    position: relative;
+    width: min(340px, 100%);
+}
+
+.searchBox i {
+    position: absolute;
+    left: 0.8rem;
+    top: 50%;
+    color: var(--di-muted);
+    transform: translateY(-50%);
+}
+
+.searchBox input {
+    min-height: 40px;
+    padding-left: 2.25rem;
+}
+
+.secondaryButton {
+    min-height: 40px;
+    padding: 0 1rem;
+    color: var(--di-blue);
+    border: 1px solid rgba(0, 91, 255, 0.22);
+    background: rgba(0, 91, 255, 0.06);
+}
+
+.tableWrap {
+    overflow-x: auto;
+    border: 1px solid var(--di-border);
+    border-radius: 14px;
+}
+
+.tableWrap table {
+    width: 100%;
+    min-width: 850px;
+    border-collapse: collapse;
+}
+
+.tableWrap th {
+    padding: 0.82rem 0.75rem;
+    color: #657695;
+    background: #f5f8fd;
+    font-size: 0.67rem;
+    font-weight: 800;
+    text-align: left;
+    text-transform: uppercase;
+    letter-spacing: 0.045em;
+}
+
+.tableWrap td {
+    padding: 0.8rem 0.75rem;
+    border-top: 1px solid #eaf0f9;
+    color: var(--di-text);
+    font-size: 0.78rem;
+}
+
+.tableWrap tbody tr:hover {
+    background: #fbfdff;
+}
+
+.studentCell {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+}
+
+.studentCell > div {
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+    display: grid;
+    place-items: center;
+    border-radius: 11px;
+    color: white;
+    background: linear-gradient(135deg, #005bff, #33b6ff);
+    font-weight: 800;
+}
+
+.studentCell span {
+    display: flex;
+    flex-direction: column;
+    min-width: 150px;
+}
+
+.studentCell small {
+    margin-top: 0.15rem;
+    color: var(--di-muted);
+}
+
+.progressMeta {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.35rem;
+    font-size: 0.7rem;
+}
+
+.progressMeta strong {
+    color: var(--di-blue);
+}
+
+.progressTrack {
+    width: 180px;
+    height: 7px;
+    border-radius: 999px;
+    background: #e9f0fb;
+    overflow: hidden;
+}
+
+.progressTrack span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #005bff, #33b6ff);
+}
+
+.progressTrack .progressDanger {
+    background: linear-gradient(90deg, #e94d63, #ff8292);
+}
+
+.remainingBadge {
+    display: inline-flex;
+    padding: 0.32rem 0.55rem;
+    border-radius: 999px;
+    color: #137a53;
+    background: #e9fbf3;
+    font-size: 0.7rem;
+    font-weight: 750;
+}
+
+.remainingBadge.exhausted {
+    color: #b83145;
+    background: #fff0f2;
+}
+
+.limitInput {
+    width: 86px;
+    min-height: 36px;
+}
+
+.rowActions {
+    display: flex;
+    gap: 0.35rem;
+}
+
+.rowActions button {
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    border: none;
+    border-radius: 9px;
+    color: var(--di-blue);
+    background: rgba(0, 91, 255, 0.08);
+    cursor: pointer;
+}
+
+.rowActions button:last-child {
+    color: #7b3ff2;
+    background: rgba(123, 63, 242, 0.08);
+}
+
+@media (max-width: 1180px) {
+    .filters {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .metrics {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .chartRow {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 720px) {
+    .hero {
+        min-height: auto;
+        padding: 1.5rem;
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .heroBadge {
+        align-self: flex-start;
+    }
+
+    .filters,
+    .metrics {
+        grid-template-columns: 1fr;
+    }
+
+    .quotaHeader {
+        flex-direction: column;
+    }
+
+    .bulkControls {
+        width: 100%;
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .bulkControls > div {
+        width: 100%;
+    }
+
+    .tableTools {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .searchBox {
+        width: 100%;
+    }
+
+    .doughnutWrap,
+    .trendWrap {
+        height: 260px;
+    }
+}

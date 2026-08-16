@@ -12,7 +12,6 @@ import AddMemberModal from './components/AddMemberModal';
 import FolderConfigModal from './components/FolderConfigModal';
 import ClassroomFormModal from './components/ClassroomFormModal';
 import StudentDetailsModal from './components/StudentDetailsModal';
-import { displayCourseName } from '../../utils/displayText';
 
 export default function ClassroomManagement() {
     const navigate = useNavigate();
@@ -33,7 +32,6 @@ export default function ClassroomManagement() {
     const [folderAssignmentId, setFolderAssignmentId] = useState(null);
 
     // CLASSROOM CRUD STATES
-    const [courses, setCourses] = useState([]);
     const [showClassFormModal, setShowClassFormModal] = useState(false);
     const [classFormMode, setClassFormMode] = useState('create'); // 'create' | 'edit'
     const [editingClass, setEditingClass] = useState(null);
@@ -68,19 +66,9 @@ export default function ClassroomManagement() {
         }
     };
 
-    const fetchCourses = async () => {
-        try {
-            const data = await axiosClient.get('/teacher/classroom/courses');
-            setCourses(data || []);
-        } catch (error) {
-            console.error("Failed to load courses:", error);
-        }
-    };
-
-    // 1. Fetch initial list of classes and courses from DB
+    // Fetch initial list of classes from DB
     useEffect(() => {
         fetchClasses();
-        fetchCourses();
     }, []);
 
     // CLASS CRUD HANDLERS
@@ -110,7 +98,7 @@ export default function ClassroomManagement() {
             fetchClasses();
         } catch (error) {
             console.error("Save class error:", error);
-            Swal.fire('Thất bại', error.message || 'Lỗi xảy ra khi lưu lớp học.', 'error');
+            Swal.fire('Thất bại', 'Không thể lưu thông tin. Vui lòng thử lại.', 'error');
         } finally {
             setLoading(false);
         }
@@ -135,7 +123,7 @@ export default function ClassroomManagement() {
                     fetchClasses();
                 } catch (error) {
                     console.error("Delete class error:", error);
-                    Swal.fire('Lỗi', error.message || 'Không thể xóa lớp học.', 'error');
+                    Swal.fire('Lỗi', 'Không thể thực hiện thao tác. Vui lòng thử lại.', 'error');
                 } finally {
                     setLoading(false);
                 }
@@ -237,7 +225,7 @@ export default function ClassroomManagement() {
             const details = await axiosClient.get(`/teacher/classroom/${selectedClass.classId}`);
             setDetailedClass(details);
         } catch (err) {
-            Swal.fire('Thông báo', err.message || 'Có lỗi khi thêm thành viên.', 'warning');
+            Swal.fire('Thông báo', 'Không thể thực hiện thao tác. Vui lòng thử lại.', 'warning');
         }
     };
 
@@ -284,7 +272,7 @@ export default function ClassroomManagement() {
                 await fetchDeadlines();
             } catch (err) {
                 console.error(err);
-                Swal.fire('Lỗi', err.response?.data?.message || err.message || 'Không thể xóa bài tập.', 'error');
+                Swal.fire('Lỗi', 'Không thể thực hiện thao tác. Vui lòng thử lại.', 'error');
             } finally {
                 setLoading(false);
             }
@@ -320,11 +308,6 @@ export default function ClassroomManagement() {
 
                     <div className={styles.classBanner}>
                         <div>
-                            {displayCourseName(detailedClass?.courseName || selectedClass.courseName) && (
-                                <span className={styles.levelBadge}>
-                                    {displayCourseName(detailedClass?.courseName || selectedClass.courseName)}
-                                </span>
-                            )}
                             <h2>{detailedClass?.className || selectedClass.className}</h2>
                             <p className={styles.metaText}>
                                 <i className="bi bi-people-fill"></i> {detailedClass?.members?.length || 0} thành viên
@@ -404,7 +387,6 @@ export default function ClassroomManagement() {
                 show={showClassFormModal}
                 onClose={() => setShowClassFormModal(false)}
                 onSave={handleSaveClass}
-                courses={courses}
                 classData={editingClass}
             />
 

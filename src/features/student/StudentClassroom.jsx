@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import axiosClient from '../../api/axiosClient';
 import styles from './StudentClassroom.module.css';
 import Swal from 'sweetalert2';
-import { displayCourseName } from '../../utils/displayText';
 
 export default function StudentClassroom() {
     const navigate = useNavigate();
@@ -67,19 +66,13 @@ export default function StudentClassroom() {
                         <div className={styles.emptyMsg}>Chưa tham gia lớp nào</div>
                     ) : (
                         classes.map(cls => (
-                            (() => {
-                                const courseName = displayCourseName(cls.courseName);
-                                return (
                             <div 
                                 key={cls.classId} 
                                 className={`${styles.classItem} ${selectedClass?.classId === cls.classId ? styles.classItemActive : ''}`}
                                 onClick={() => setSelectedClass(cls)}
                             >
                                 <h5>{cls.className}</h5>
-                                {courseName && <small>{courseName}</small>}
                             </div>
-                                );
-                            })()
                         ))
                     )}
                 </div>
@@ -95,9 +88,6 @@ export default function StudentClassroom() {
                     <>
                         <div className={styles.classHeader}>
                             <h2>{selectedClass.className}</h2>
-                            {displayCourseName(selectedClass.courseName) && (
-                                <span className={styles.badge}>{displayCourseName(selectedClass.courseName)}</span>
-                            )}
                         </div>
 
                         <div className={styles.deadlineSection}>

@@ -1,6 +1,5 @@
 import React from 'react';
 import Skeleton from '../../../components/common/Skeleton';
-import { displayCourseName } from '../../../utils/displayText';
 
 export default function ClassroomGrid({ classes = [], onSelect, onCreate, onEdit, onDelete, loading, styles }) {
     return (
@@ -24,11 +23,9 @@ export default function ClassroomGrid({ classes = [], onSelect, onCreate, onEdit
             ) : (
                 <div className={styles.grid}>
                     {classes.map(cls => {
-                        const courseName = displayCourseName(cls.courseName);
                         return (
                         <div key={cls.classId} className={styles.classCard} onClick={() => onSelect(cls)}>
                             <div className={styles.classHeader}>
-                                {courseName && <span className={styles.levelBadge}>{courseName}</span>}
                                 <div className={styles.cardActions}>
                                     <button 
                                         className={styles.miniBtnEdit} 

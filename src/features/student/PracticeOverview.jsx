@@ -100,7 +100,7 @@ export default function PracticeOverview() {
                                         <span className={styles.exerciseType}>{ex.type || 'Luyện nói tự do'}</span>
                                         <div
                                             className={styles.exerciseTitle}
-                                            dangerouslySetInnerHTML={{ __html: renderContent(ex.contentJson) }}
+                                            dangerouslySetInnerHTML={{ __html: renderContent(ex.formattedContent) }}
                                         />
                                     </div>
                                     <button className={styles.startBtn}>

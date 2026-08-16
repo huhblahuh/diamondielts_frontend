@@ -24,7 +24,9 @@ axiosClient.interceptors.request.use(
 axiosClient.interceptors.response.use(
     (response) => response.data || response,
     (error) => {
-        if (error.response?.status === 401 && localStorage.getItem('token')) {
+        const status = error.response?.status;
+        const responseData = error.response?.data;
+        if (status === 401 && localStorage.getItem('token')) {
             localStorage.removeItem('token');
             localStorage.removeItem('user');
 
@@ -33,8 +35,18 @@ axiosClient.interceptors.response.use(
             }
         }
 
-        const msg = error.response?.data?.errorMessage || error.response?.data?.message || 'Network error occurred';
-        return Promise.reject({ message: msg, status: error.response?.status });
+        const fallbackMessage = status === 401
+            ? 'Thông tin đăng nhập không hợp lệ hoặc phiên làm việc đã hết hạn.'
+            : status === 403
+                ? 'Bạn không thể thực hiện thao tác này.'
+                : 'Không thể thực hiện yêu cầu. Vui lòng thử lại sau.';
+        const message = responseData?.message || fallbackMessage;
+        return Promise.reject({
+            ...(responseData || {}),
+            message,
+            status,
+            response: error.response
+        });
     }
 );
 

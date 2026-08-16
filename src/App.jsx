@@ -9,6 +9,7 @@ const Login = lazy(() => import('./features/auth/Login'));
 // Teacher Pages
 const TeacherDashboard = lazy(() => import('./pages/teacher/DashboardPage'));
 const UserManagementPage = lazy(() => import('./pages/admin/UserManagementPage'));
+const QuotaDashboardPage = lazy(() => import('./pages/admin/QuotaDashboardPage'));
 const TeacherClassrooms = lazy(() => import('./pages/teacher/ClassroomsPage'));
 const TeacherExercises = lazy(() => import('./pages/teacher/ExercisesPage'));
 const AssignmentBuilder = lazy(() => import('./pages/teacher/AssignmentBuilderPage'));
@@ -29,7 +30,8 @@ function App() {
     if (!token) return "/login";
     try {
       const user = JSON.parse(localStorage.getItem('user') || '{}');
-      if (user.role === 'Teacher' || user.role === 'Admin') return "/teacher/dashboard";
+      if (user.role === 'Admin') return "/admin/dashboard";
+      if (user.role === 'Teacher') return "/teacher/dashboard";
       return "/student/dashboard";
     } catch(e) {
       return "/login";
@@ -52,6 +54,21 @@ function App() {
           }
         />
 
+        {/* ══════ ADMIN ROUTES ══════ */}
+        <Route element={<ProtectedRoute allowedRoles={['Admin']} />}>
+            <Route path="/admin" element={<Layout />}>
+              <Route index element={<TeacherDashboard />} />
+              <Route path="dashboard" element={<TeacherDashboard />} />
+              <Route path="users" element={<UserManagementPage />} />
+              <Route path="quota-dashboard" element={<QuotaDashboardPage />} />
+              <Route path="classrooms" element={<TeacherClassrooms />} />
+              <Route path="assignment/:assignmentId" element={<AssignmentReview />} />
+              <Route path="assignment/edit/:assignmentId" element={<AssignmentBuilder />} />
+              <Route path="create-speaking" element={<AssignmentBuilder />} />
+              <Route path="exercises" element={<TeacherExercises />} />
+            </Route>
+        </Route>
+
         {/* ══════ TEACHER ROUTES ══════ */}
         {/* Layout tự xử lý Suspense skeleton cho từng page */}
         <Route element={<ProtectedRoute allowedRoles={['Teacher', 'Admin']} />}>
@@ -63,9 +80,6 @@ function App() {
               <Route path="assignment/edit/:assignmentId" element={<AssignmentBuilder />} />
               <Route path="create-speaking" element={<AssignmentBuilder />} />
               <Route path="exercises" element={<TeacherExercises />} />
-              <Route element={<ProtectedRoute allowedRoles={['Admin']} />}>
-                <Route path="users" element={<UserManagementPage />} />
-              </Route>
             </Route>
         </Route>
  

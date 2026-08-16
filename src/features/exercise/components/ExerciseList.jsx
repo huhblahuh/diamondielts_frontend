@@ -5,6 +5,20 @@ import styles from '../ExerciseManagement.module.css';
 import Pagination from '../../../components/Pagination';
 
 const PAGE_SIZE = 10;
+const VALID_SKILLS = ['SPEAKING', 'LISTENING', 'READING', 'WRITING'];
+const SPEAKING_TYPES = ['Part 1', 'Part 2', 'Part 3'];
+const GENERAL_TYPES = [
+    'Part 1', 'Part 2', 'Part 3', 'Part 4',
+    'Task 1', 'Task 2',
+    'Passage 1', 'Passage 2', 'Passage 3'
+];
+
+const escapeHtml = (value) => value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
 
 export default function ExerciseList({
     exercises = [],
@@ -25,10 +39,10 @@ export default function ExerciseList({
     }, [activeFilter]);
 
     // Parse content JSON to get a clean snippet of the question/passage
-    const getQuestionSnippet = (contentJson) => {
-        if (!contentJson) return 'N/A';
+    const getQuestionSnippet = (formattedContent) => {
+        if (!formattedContent) return 'N/A';
         try {
-            const parsed = JSON.parse(contentJson);
+            const parsed = JSON.parse(formattedContent);
             const rawText = parsed.passageHtml || parsed.question || parsed.textPrompt || '';
             const cleanText = rawText.replace(/<[^>]*>/g, '').trim();
             if (cleanText.length > 85) {
@@ -36,7 +50,7 @@ export default function ExerciseList({
             }
             return cleanText || 'N/A';
         } catch (e) {
-            const cleanText = contentJson.replace(/<[^>]*>/g, '').trim();
+            const cleanText = formattedContent.replace(/<[^>]*>/g, '').trim();
             if (cleanText.length > 85) {
                 return cleanText.substring(0, 85) + '...';
             }
@@ -44,51 +58,61 @@ export default function ExerciseList({
         }
     };
 
-    const handleDownloadTemplate = async () => {
-        try {
-            const response = await exerciseService.downloadTemplate();
-            const blob = new Blob([response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-            const url = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.setAttribute('download', 'IeltsAI_Exercise_Template.xlsx');
-            document.body.appendChild(link);
-            link.click();
-            link.parentNode.removeChild(link);
-        } catch (err) {
-            console.error(err);
-            Swal.fire('Thất bại', 'Không thể tải file mẫu.', 'error');
-        }
+    const handleDownloadTemplate = () => {
+        window.open('https://diamondielts.blob.core.windows.net/public-asset/staticTemplate/IeltsAI_Exercise_Template.xlsx', '_blank');
     };
 
     const handleImportExcel = async () => {
         const { value: file } = await Swal.fire({
-            title: '📥 Nhập đề bài từ Excel',
+            title: '<div style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-size: 1.2rem; font-weight: 700; color: #0f172a;"><i class="bi bi-file-earmark-excel-fill" style="color: #10b981;"></i> Nhập đề bài từ Excel</div>',
             input: 'file',
             inputAttributes: {
                 'accept': '.xlsx',
                 'aria-label': 'Tải lên tệp Excel của bạn'
             },
-            inputLabel: 'Chọn file Excel (.xlsx)',
+            inputLabel: 'Chọn tệp tin Excel (.xlsx) từ máy tính:',
             html: `
-                <div style="font-size: 0.85rem; color: #334155; margin-top: 0.5rem; text-align: left;">
-                    <div style="margin-bottom: 1rem; text-align: center;">
-                        <button id="swal-download-template" type="button" class="swal2-confirm swal2-styled" style="background-color: #4f46e5; margin: 0; padding: 0.5rem 1rem; font-size: 0.8rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 0.35rem; cursor: pointer; border: none;">
-                            <i class="bi bi-cloud-arrow-down-fill"></i> Tải Excel Mẫu tại đây
-                        </button>
+                <div style="font-size: 0.85rem; color: #334155; margin-top: 0.75rem; text-align: left;">
+                    <div style="background: linear-gradient(135deg, #f0fdf4 0%, #e0f2fe 100%); border: 1px solid #bae6fd; border-radius: 12px; padding: 1rem; margin-bottom: 1.25rem;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;">
+                            <div>
+                                <div style="font-weight: 700; color: #0f172a; font-size: 0.9rem; margin-bottom: 0.2rem;">
+                                    <i class="bi bi-file-earmark-arrow-down-fill" style="color: #0284c7; margin-right: 6px;"></i>Chưa có tệp Excel mẫu?
+                                </div>
+                                <div style="font-size: 0.8rem; color: #475569;">Tải ngay mẫu chuẩn để điền dữ liệu chính xác.</div>
+                            </div>
+                            <button id="swal-download-template" type="button" style="background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%); color: #ffffff; border: none; padding: 0.55rem 1.1rem; font-size: 0.82rem; font-weight: 600; border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 0.4rem; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25); transition: all 0.2s ease;">
+                                <i class="bi bi-cloud-arrow-down-fill" style="font-size: 0.95rem;"></i> Tải Mẫu Excel
+                            </button>
+                        </div>
                     </div>
-                    <p style="margin-bottom: 0.35rem; font-weight: 600; color: #1e293b;">Quy tắc điền nội dung trong file:</p>
-                    <ul style="padding-left: 1.2rem; margin: 0 0 0.75rem 0; line-height: 1.45;">
-                        <li><strong>Cột A (SkillType):</strong> Nhập tên kỹ năng bằng chữ in hoa (Ví dụ: <code style="background:#f1f5f9; padding:2px 4px; border-radius:4px; color:#ef4444; font-weight:bold;">SPEAKING</code>).</li>
-                        <li><strong>Cột B (Type):</strong> Nhập dạng bài tương ứng (Ví dụ: <code style="background:#f1f5f9; padding:2px 4px; border-radius:4px;">Part 1</code>, <code style="background:#f1f5f9; padding:2px 4px; border-radius:4px;">Part 2</code>, hoặc <code style="background:#f1f5f9; padding:2px 4px; border-radius:4px;">Part 3</code>).</li>
-                        <li><strong>Cột C (QuestionContent):</strong> Nhập nội dung chi tiết của câu hỏi/prompt tự luyện.</li>
-                    </ul>
-                    <p style="margin: 0; font-size: 0.8rem; color: #64748b; font-style: italic; border-left: 3px solid #e2e8f0; padding-left: 0.5rem;">* Lưu ý: Tệp Excel phải bỏ qua dòng đầu tiên chứa tiêu đề cột (Header row) khi bắt đầu đọc dữ liệu.</p>
+
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1rem; margin-bottom: 0.75rem;">
+                        <div style="font-weight: 700; color: #1e293b; font-size: 0.88rem; margin-bottom: 0.65rem; display: flex; align-items: center; gap: 0.4rem;">
+                            <i class="bi bi-info-circle-fill" style="color: #6366f1;"></i> Quy tắc cấu trúc dữ liệu Excel:
+                        </div>
+                        <div style="display: grid; gap: 0.5rem; font-size: 0.82rem;">
+                            <div style="background: #ffffff; padding: 0.55rem 0.8rem; border-radius: 8px; border: 1px solid #f1f5f9; display: flex; align-items: center; justify-content: space-between;">
+                                <span style="font-weight: 600; color: #334155;">Cột A (SkillType)</span>
+                                <span style="background: #e0e7ff; color: #3730a3; padding: 2px 8px; border-radius: 6px; font-weight: 700; font-family: monospace;">SPEAKING</span>
+                            </div>
+                            <div style="background: #ffffff; padding: 0.55rem 0.8rem; border-radius: 8px; border: 1px solid #f1f5f9; display: flex; align-items: center; justify-content: space-between;">
+                                <span style="font-weight: 600; color: #334155;">Cột B (Type)</span>
+                                <span style="background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 6px; font-weight: 600; font-size: 0.78rem;">Part 1 / Part 2 / Part 3</span>
+                            </div>
+                            <div style="background: #ffffff; padding: 0.55rem 0.8rem; border-radius: 8px; border: 1px solid #f1f5f9; display: flex; align-items: center; justify-content: space-between;">
+                                <span style="font-weight: 600; color: #334155;">Cột C (QuestionContent)</span>
+                                <span style="color: #64748b; font-style: italic;">Chi tiết câu hỏi / đề bài</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             `,
             showCancelButton: true,
             confirmButtonText: 'Tải lên & Nhập',
-            cancelButtonText: 'Hủy',
+            cancelButtonText: 'Hủy bỏ',
+            confirmButtonColor: '#4f46e5',
+            cancelButtonColor: '#94a3b8',
             didOpen: () => {
                 const btn = document.getElementById('swal-download-template');
                 if (btn) {
@@ -97,7 +121,7 @@ export default function ExerciseList({
             },
             inputValidator: (value) => {
                 if (!value) {
-                    return 'Vui lòng chọn một tệp tin!';
+                    return 'Vui lòng chọn một tệp tin Excel!';
                 }
             }
         });
@@ -129,7 +153,201 @@ export default function ExerciseList({
             } catch (err) {
                 console.error(err);
                 Swal.close();
-                Swal.fire('Thất bại', err.response?.data || 'Không thể tải file lên hoặc phân tích cú pháp Excel.', 'error');
+                Swal.fire('Thất bại', 'Không thể xử lý file. Vui lòng kiểm tra và thử lại.', 'error');
+            }
+        }
+    };
+
+    const handleImportScript = async () => {
+        if (!topicId) {
+            await Swal.fire('Chú ý', 'Vui lòng chọn chủ đề trước khi nhập script.', 'warning');
+            return;
+        }
+
+        const defaultSample = JSON.stringify([
+            {
+                "SkillType": "SPEAKING",
+                "Type": "Part 1",
+                "QuestionContent": "Do you live in a house or an apartment?"
+            },
+            {
+                "SkillType": "SPEAKING",
+                "Type": "Part 2",
+                "QuestionContent": "Describe a home you would like to live in."
+            },
+            {
+                "SkillType": "SPEAKING",
+                "Type": "Part 3",
+                "QuestionContent": "Why are housing prices increasing in many cities?"
+            }
+        ], null, 2);
+
+        const { value: scriptItems } = await Swal.fire({
+            title: '<div style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-size: 1.2rem; font-weight: 700; color: #0f172a;"><i class="bi bi-code-square" style="color: #6366f1;"></i> Nhập câu hỏi từ JSON Script</div>',
+            html: `
+                <div style="text-align: left; margin-top: 0.5rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                        <span style="font-size: 0.85rem; font-weight: 600; color: #475569;">Dán đoạn mã JSON bên dưới:</span>
+                        <button id="btn-insert-sample" type="button" style="background: #e0e7ff; color: #4338ca; border: none; padding: 0.35rem 0.75rem; border-radius: 6px; font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
+                            <i class="bi bi-magic"></i> Chèn JSON Mẫu
+                        </button>
+                    </div>
+                    <textarea id="swal-script-input" rows="10" spellcheck="false" style="width: 100%; box-sizing: border-box; font-family: Consolas, Monaco, 'Courier New', monospace; font-size: 0.82rem; padding: 0.75rem; border-radius: 8px; border: 1px solid #cbd5e1; background: #0f172a; color: #38bdf8; outline: none; line-height: 1.4;" placeholder='[\n  {\n    "SkillType": "SPEAKING",\n    "Type": "Part 1",\n    "QuestionContent": "Nội dung câu hỏi..."\n  }\n]'></textarea>
+                    
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.75rem; margin-top: 0.75rem; font-size: 0.8rem; color: #475569;">
+                        <div style="font-weight: 700; color: #1e293b; margin-bottom: 0.35rem;"><i class="bi bi-exclamation-circle-fill" style="color: #6366f1;"></i> Quy tắc Validate Backend:</div>
+                        <ul style="margin: 0; padding-left: 1.2rem; display: grid; gap: 0.2rem;">
+                            <li><strong>SkillType:</strong> SPEAKING, LISTENING, READING, WRITING</li>
+                            <li><strong>Speaking:</strong> Part 1, Part 2, Part 3</li>
+                            <li><strong>Kỹ năng khác:</strong> Part 1–4, Task 1–2, Passage 1–3</li>
+                            <li><strong>QuestionContent:</strong> Không được để trống</li>
+                        </ul>
+                    </div>
+                </div>
+            `,
+            width: '650px',
+            showCancelButton: true,
+            confirmButtonText: 'Nhập dữ liệu',
+            cancelButtonText: 'Hủy bỏ',
+            confirmButtonColor: '#6366f1',
+            cancelButtonColor: '#94a3b8',
+            didOpen: () => {
+                const sampleBtn = document.getElementById('btn-insert-sample');
+                const textarea = document.getElementById('swal-script-input');
+                if (sampleBtn && textarea) {
+                    sampleBtn.addEventListener('click', () => {
+                        textarea.value = defaultSample;
+                    });
+                }
+            },
+            preConfirm: () => {
+                const input = document.getElementById('swal-script-input')?.value;
+                if (!input || !input.trim()) {
+                    Swal.showValidationMessage('Vui lòng nhập nội dung JSON Script!');
+                    return false;
+                }
+                let parsed;
+                try {
+                    parsed = JSON.parse(input);
+                } catch (e) {
+                    Swal.showValidationMessage('Đoạn script không đúng cú pháp JSON! Kiểm tra lại dấu ngoặc, phẩy...');
+                    return false;
+                }
+
+                if (!Array.isArray(parsed) || parsed.length === 0) {
+                    Swal.showValidationMessage('Script JSON phải là một mảng (array) các câu hỏi!');
+                    return false;
+                }
+
+                const normalizedItems = [];
+
+                for (let i = 0; i < parsed.length; i++) {
+                    const item = parsed[i];
+                    if (!item || typeof item !== 'object' || Array.isArray(item)) {
+                        Swal.showValidationMessage(`Mục #${i + 1}: Dữ liệu phải là một object câu hỏi.`);
+                        return false;
+                    }
+
+                    const skill = typeof item.SkillType === 'string'
+                        ? item.SkillType.trim().toUpperCase()
+                        : '';
+                    const type = typeof item.Type === 'string'
+                        ? item.Type.trim()
+                        : '';
+                    const question = typeof item.QuestionContent === 'string'
+                        ? item.QuestionContent.trim()
+                        : '';
+
+                    if (!skill || !VALID_SKILLS.includes(skill)) {
+                        Swal.showValidationMessage(`Mục #${i + 1}: SkillType '${item.SkillType || ''}' không hợp lệ. Hợp lệ: SPEAKING, LISTENING, READING, WRITING.`);
+                        return false;
+                    }
+
+                    if (!type) {
+                        Swal.showValidationMessage(`Mục #${i + 1}: Thiếu trường Type (Part).`);
+                        return false;
+                    }
+
+                    const validTypes = skill === 'SPEAKING' ? SPEAKING_TYPES : GENERAL_TYPES;
+                    const normalizedType = validTypes.find(validType =>
+                        validType.toLowerCase() === type.toLowerCase()
+                    );
+                    if (!normalizedType) {
+                        Swal.showValidationMessage(`Mục #${i + 1}: Type '${type}' không hợp lệ. Hợp lệ: ${validTypes.join(', ')}.`);
+                        return false;
+                    }
+
+                    if (!question) {
+                        Swal.showValidationMessage(`Mục #${i + 1}: QuestionContent không được để trống.`);
+                        return false;
+                    }
+
+                    normalizedItems.push({
+                        skillType: skill,
+                        type: normalizedType,
+                        questionContent: question
+                    });
+                }
+
+                return normalizedItems;
+            }
+        });
+
+        if (scriptItems) {
+            Swal.fire({
+                title: 'Đang xử lý...',
+                text: `Hệ thống đang tạo ${scriptItems.length} bài tập...`,
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+
+            let createdCount = 0;
+            try {
+                for (const item of scriptItems) {
+                    await exerciseService.create({
+                        skillType: item.skillType,
+                        type: item.type,
+                        topicId,
+                        formattedContent: JSON.stringify({
+                            passageHtml: `<p>${escapeHtml(item.questionContent)}</p>`,
+                            blocks: []
+                        })
+                    });
+                    createdCount++;
+                }
+                Swal.close();
+
+                await Swal.fire({
+                    icon: 'success',
+                    title: 'Thành công!',
+                    text: `Đã nhập thành công ${createdCount} bài tập từ script!`,
+                    confirmButtonText: 'Đồng ý'
+                });
+
+                if (onRefresh) onRefresh();
+            } catch (err) {
+                console.error(err);
+                Swal.close();
+                let errorMessage = 'Không thể xử lý script. Vui lòng kiểm tra lại dữ liệu.';
+                if (err.response?.data) {
+                    const d = err.response.data;
+                    if (typeof d === 'string') errorMessage = d;
+                    else if (d.Message) errorMessage = d.Message;
+                    else if (d.message) errorMessage = d.message;
+                    else if (d.title) errorMessage = d.title;
+                    else if (d.errors) errorMessage = Object.values(d.errors).flat().join('\n');
+                } else if (err.message) {
+                    errorMessage = err.message;
+                }
+                if (createdCount > 0) {
+                    errorMessage = `Đã tạo ${createdCount}/${scriptItems.length} bài tập trước khi yêu cầu bị gián đoạn. ${errorMessage}`;
+                }
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Nhập Script Thất Bại',
+                    text: errorMessage,
+                    confirmButtonColor: '#ef4444'
+                });
             }
         }
     };
@@ -139,7 +357,6 @@ export default function ExerciseList({
         ? exercises
         : exercises.filter(ex => ex.skillType?.toUpperCase() === activeFilter);
 
-    // Pagination calculations
     const totalPages = Math.max(1, Math.ceil(filteredExercises.length / PAGE_SIZE));
     const safePage = Math.min(currentPage, totalPages);
     const pagedExercises = filteredExercises.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
@@ -203,6 +420,26 @@ export default function ExerciseList({
                         <i className="bi bi-plus-lg"></i> Thêm Đề Mới
                     </button>
                     <button
+                        onClick={handleImportScript}
+                        style={{
+                            background: 'linear-gradient(to right, #6366f1, #8b5cf6)',
+                            color: '#ffffff',
+                            border: 'none',
+                            padding: '0.5rem 1.1rem',
+                            borderRadius: '8px',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            fontSize: '0.8rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.35rem',
+                            boxShadow: '0 4px 6px -1px rgba(99, 102, 241, 0.2)',
+                            transition: 'all 0.15s ease'
+                        }}
+                    >
+                        <i className="bi bi-code-square"></i> Nhập bằng Script
+                    </button>
+                    <button
                         onClick={handleImportExcel}
                         style={{
                             background: 'linear-gradient(to right, #10b981, #059669)',
@@ -245,8 +482,6 @@ export default function ExerciseList({
                     </button>
                 </div>
             </div>
-
-            {/* Filter Buttons */}
             <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
                 {filters.map(f => (
                     <button
@@ -311,8 +546,8 @@ export default function ExerciseList({
                                     <td style={{ padding: '0.6rem 0.8rem' }}>
                                         <strong style={{ color: '#334155', fontSize: '0.85rem' }}>{ex.type}</strong>
                                     </td>
-                                    <td style={{ padding: '0.6rem 0.8rem', color: '#475569', maxWidth: '350px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }} title={getQuestionSnippet(ex.contentJson)}>
-                                        {getQuestionSnippet(ex.contentJson)}
+                                    <td style={{ padding: '0.6rem 0.8rem', color: '#475569', maxWidth: '350px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }} title={getQuestionSnippet(ex.formattedContent)}>
+                                        {getQuestionSnippet(ex.formattedContent)}
                                     </td>
                                     <td style={{ padding: '0.6rem 0.8rem', textAlign: 'center' }}>
                                         <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'center' }}>

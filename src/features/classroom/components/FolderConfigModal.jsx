@@ -4,6 +4,41 @@ import axiosClient from '../../../api/axiosClient';
 import SpotTaskCreator from './SpotTaskCreator';
 import ExerciseSelector from './ExerciseSelector';
 
+const parseItemContent = (formattedContent) => {
+    if (!formattedContent) return {};
+    if (typeof formattedContent === 'object') return formattedContent;
+
+    try {
+        const parsed = JSON.parse(formattedContent);
+        return parsed && typeof parsed === 'object' ? parsed : { content: String(parsed || '') };
+    } catch {
+        return { content: formattedContent };
+    }
+};
+
+const getItemPrompt = (content) => {
+    const candidates = [
+        content.description,
+        content.htmlContent,
+        content.passageHtml,
+        content.prompt,
+        content.question,
+        content.textPrompt,
+        content.topic,
+        content.content,
+        content.title
+    ];
+
+    return candidates.find(value => typeof value === 'string' && value.trim()) || '';
+};
+
+const escapeHtml = (value) => String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+
 export default function FolderConfigModal({ show, onClose, assignmentId, classId, oldExercises = [], onSaved, styles }) {
     const [folderTitle, setFolderTitle] = useState('');
     const [folderDueDate, setFolderDueDate] = useState('');
@@ -11,6 +46,7 @@ export default function FolderConfigModal({ show, onClose, assignmentId, classId
     const [folderAllowLate, setFolderAllowLate] = useState(false);
     const [folderIsPublished, setFolderIsPublished] = useState(false);
     const [folderItems, setFolderItems] = useState([]);
+    const [expandedItemId, setExpandedItemId] = useState(null);
 
     const [showInlineCreator, setShowInlineCreator] = useState(false);
     const [showOldSelector, setShowOldSelector] = useState(false);
@@ -70,19 +106,19 @@ export default function FolderConfigModal({ show, onClose, assignmentId, classId
                                 : `[Bài tập cũ #${item.exerciseId}]${attemptsSuffix}`;
                         } else if (item.itemType === 'AI_SPEAKING') {
                             let parsed = {};
-                            try { parsed = JSON.parse(item.contentJson || '{}'); } catch (e) { }
+                            try { parsed = JSON.parse(item.formattedContent || '{}'); } catch (e) { }
                             label = `🗣️ [Tự do] ${parsed.part || 'Part 1'} - ${(parsed.prompt || '').substring(0, 30)}...${item.maxAttempts ? ` (Tối đa ${item.maxAttempts} lần)` : ''}`;
                         } else if (item.itemType === 'AI_WRITING') {
                             let parsed = {};
-                            try { parsed = JSON.parse(item.contentJson || '{}'); } catch (e) { }
+                            try { parsed = JSON.parse(item.formattedContent || '{}'); } catch (e) { }
                             label = `✍️ [Tự do] ${parsed.task || 'Task 1'} - ${(parsed.prompt || '').substring(0, 30)}...`;
                         } else if (item.itemType === 'GENERAL') {
                             let parsed = {};
-                            try { parsed = JSON.parse(item.contentJson || '{}'); } catch (e) { }
+                            try { parsed = JSON.parse(item.formattedContent || '{}'); } catch (e) { }
                             label = `📝 [Tự do] ${parsed.title || 'General'} - ${(parsed.prompt || '').substring(0, 30)}...`;
                         } else if (item.itemType === 'fileSubmission') {
                             let parsed = {};
-                            try { parsed = JSON.parse(item.contentJson || '{}'); } catch (e) { }
+                            try { parsed = JSON.parse(item.formattedContent || '{}'); } catch (e) { }
                             label = `📁 [Nộp File] ${(parsed.description || '').replace(/<[^>]*>/g, '').substring(0, 30)}... (${item.payloads?.length || 0} files)`;
                         }
                         return {
@@ -90,13 +126,14 @@ export default function FolderConfigModal({ show, onClose, assignmentId, classId
                             dbId: item.itemId,
                             exerciseId: item.exerciseId,
                             itemType: item.itemType,
-                            contentJson: item.contentJson,
+                            formattedContent: item.formattedContent,
                             maxAttempts: item.maxAttempts,
                             payloads: item.payloads || [],
                             _displayLabel: label
                         };
                     });
                     setFolderItems(mappedItems);
+                    setExpandedItemId(null);
                 } catch (err) {
                     console.error("Error loading assignment details:", err);
                     Swal.fire('Lỗi', 'Không thể tải chi tiết deadline.', 'error');
@@ -110,6 +147,7 @@ export default function FolderConfigModal({ show, onClose, assignmentId, classId
                 setFolderAllowLate(false);
                 setFolderIsPublished(false);
                 setFolderItems([]);
+                setExpandedItemId(null);
 
                 const d = new Date();
                 d.setDate(d.getDate() + 7);
@@ -153,7 +191,7 @@ export default function FolderConfigModal({ show, onClose, assignmentId, classId
                 id: Date.now() + Math.random() + newItemsList.length,
                 exerciseId: ex.exerciseId,
                 itemType: ex.skillType,
-                contentJson: ex.contentJson || "{}",
+                formattedContent: ex.formattedContent || "{}",
                 maxAttempts: isSpeaking ? maxAttempts : null,
                 _displayLabel: `${prefix} [Ngân hàng] ${ex.type || 'Custom'} - ${ex.skillType}${attemptsSuffix}`
             });
@@ -182,6 +220,148 @@ export default function FolderConfigModal({ show, onClose, assignmentId, classId
 
     const handleRemoveItem = (localId) => {
         setFolderItems(prev => prev.filter(i => i.id !== localId));
+        setExpandedItemId(prev => prev === localId ? null : prev);
+    };
+
+    const handleImportScript = async () => {
+        const defaultSample = JSON.stringify([
+            {
+                SkillType: 'SPEAKING',
+                Type: 'Part 1',
+                QuestionContent: 'Do you live in a house or an apartment?',
+                MaxAttempts: 3
+            },
+            {
+                SkillType: 'SPEAKING',
+                Type: 'Part 2',
+                QuestionContent: 'Describe a place where you would like to live.',
+                MaxAttempts: 2
+            }
+        ], null, 2);
+
+        const { value: importedItems } = await Swal.fire({
+            title: '<div style="display:flex;align-items:center;justify-content:center;gap:.5rem;font-size:1.2rem;font-weight:700;color:#0f172a"><i class="bi bi-code-square" style="color:#6366f1"></i> Nhập bài tập bằng Script</div>',
+            html: `
+                <div style="text-align:left;margin-top:.5rem">
+                    <div style="display:flex;justify-content:space-between;align-items:center;gap:.75rem;margin-bottom:.5rem">
+                        <span style="font-size:.85rem;font-weight:600;color:#475569">Dán mảng JSON bài tập bên dưới:</span>
+                        <button id="folder-script-sample" type="button" style="background:#e0e7ff;color:#4338ca;border:0;padding:.35rem .75rem;border-radius:6px;font-size:.78rem;font-weight:600;cursor:pointer;white-space:nowrap">
+                            <i class="bi bi-magic"></i> Chèn JSON mẫu
+                        </button>
+                    </div>
+                    <textarea id="folder-script-input" rows="13" spellcheck="false" style="width:100%;box-sizing:border-box;font-family:Consolas,Monaco,'Courier New',monospace;font-size:.82rem;padding:.75rem;border-radius:8px;border:1px solid #cbd5e1;background:#0f172a;color:#38bdf8;outline:none;line-height:1.45" placeholder='[{ "SkillType": "SPEAKING", "Type": "Part 1", "QuestionContent": "...", "MaxAttempts": 3 }]'></textarea>
+                    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:.75rem;margin-top:.75rem;font-size:.8rem;color:#475569">
+                        <div style="font-weight:700;color:#1e293b;margin-bottom:.35rem"><i class="bi bi-info-circle-fill" style="color:#6366f1"></i> Cấu trúc hỗ trợ</div>
+                        <ul style="margin:0;padding-left:1.2rem;display:grid;gap:.2rem">
+                            <li><strong>SkillType:</strong> SPEAKING</li>
+                            <li><strong>Type:</strong> Part 1, Part 2 hoặc Part 3</li>
+                            <li><strong>QuestionContent:</strong> nội dung đề bài, không được trống</li>
+                            <li><strong>MaxAttempts:</strong> số lượt nộp tối đa, mặc định là 3</li>
+                        </ul>
+                    </div>
+                </div>
+            `,
+            width: '680px',
+            showCancelButton: true,
+            confirmButtonText: 'Thêm vào thư mục',
+            cancelButtonText: 'Hủy bỏ',
+            confirmButtonColor: '#6366f1',
+            cancelButtonColor: '#94a3b8',
+            didOpen: () => {
+                const sampleButton = document.getElementById('folder-script-sample');
+                const textarea = document.getElementById('folder-script-input');
+                sampleButton?.addEventListener('click', () => {
+                    textarea.value = defaultSample;
+                    textarea.focus();
+                });
+            },
+            preConfirm: () => {
+                const input = document.getElementById('folder-script-input')?.value?.trim();
+                if (!input) {
+                    Swal.showValidationMessage('Vui lòng nhập nội dung JSON Script.');
+                    return false;
+                }
+
+                let parsed;
+                try {
+                    parsed = JSON.parse(input);
+                } catch {
+                    Swal.showValidationMessage('Script không đúng cú pháp JSON. Hãy kiểm tra dấu ngoặc và dấu phẩy.');
+                    return false;
+                }
+
+                if (!Array.isArray(parsed) || parsed.length === 0) {
+                    Swal.showValidationMessage('Script phải là một mảng JSON có ít nhất một bài tập.');
+                    return false;
+                }
+
+                if (parsed.length > 100) {
+                    Swal.showValidationMessage('Mỗi lần chỉ được nhập tối đa 100 bài tập.');
+                    return false;
+                }
+
+                const normalized = [];
+                const validParts = ['Part 1', 'Part 2', 'Part 3'];
+
+                for (let index = 0; index < parsed.length; index++) {
+                    const item = parsed[index];
+                    if (!item || typeof item !== 'object' || Array.isArray(item)) {
+                        Swal.showValidationMessage(`Mục #${index + 1}: dữ liệu phải là một object.`);
+                        return false;
+                    }
+
+                    const skillType = String(item.SkillType ?? item.skillType ?? '').trim().toUpperCase();
+                    const rawType = String(item.Type ?? item.type ?? '').trim();
+                    const questionContent = String(item.QuestionContent ?? item.questionContent ?? '').trim();
+                    const normalizedPart = validParts.find(part => part.toLowerCase() === rawType.toLowerCase());
+                    const rawMaxAttempts = item.MaxAttempts ?? item.maxAttempts ?? 3;
+                    const maxAttempts = Number(rawMaxAttempts);
+
+                    if (skillType !== 'SPEAKING') {
+                        Swal.showValidationMessage(`Mục #${index + 1}: SkillType hiện chỉ hỗ trợ SPEAKING.`);
+                        return false;
+                    }
+                    if (!normalizedPart) {
+                        Swal.showValidationMessage(`Mục #${index + 1}: Type phải là Part 1, Part 2 hoặc Part 3.`);
+                        return false;
+                    }
+                    if (!questionContent) {
+                        Swal.showValidationMessage(`Mục #${index + 1}: QuestionContent không được để trống.`);
+                        return false;
+                    }
+                    if (!Number.isInteger(maxAttempts) || maxAttempts < 1) {
+                        Swal.showValidationMessage(`Mục #${index + 1}: MaxAttempts phải là số nguyên lớn hơn hoặc bằng 1.`);
+                        return false;
+                    }
+
+                    normalized.push({
+                        id: Date.now() + Math.random() + index,
+                        exerciseId: null,
+                        itemType: 'SPEAKING',
+                        formattedContent: JSON.stringify({
+                            part: normalizedPart,
+                            prompt: `<p>${escapeHtml(questionContent)}</p>`
+                        }),
+                        maxAttempts,
+                        payloads: [],
+                        _displayLabel: `[Speaking] ${normalizedPart} - ${questionContent.substring(0, 30)}${questionContent.length > 30 ? '...' : ''} (Tối đa ${maxAttempts} lần)`
+                    });
+                }
+
+                return normalized;
+            }
+        });
+
+        if (!importedItems) return;
+
+        setFolderItems(prev => [...prev, ...importedItems]);
+        await Swal.fire({
+            icon: 'success',
+            title: 'Đã thêm bài tập',
+            text: `Đã thêm ${importedItems.length} bài tập từ script vào thư mục.`,
+            timer: 1600,
+            showConfirmButton: false
+        });
     };
 
     const saveFolder = async (shouldPublish, overrideItems = null) => {
@@ -249,7 +429,7 @@ export default function FolderConfigModal({ show, onClose, assignmentId, classId
         const formattedItems = itemsToSave.map(it => ({
             exerciseId: it.exerciseId || null,
             itemType: it.itemType,
-            contentJson: it.contentJson || "{}",
+            formattedContent: it.formattedContent || "{}",
             maxAttempts: (it.maxAttempts !== undefined && it.maxAttempts !== null) ? it.maxAttempts : null,
             payloads: it.payloads || []
         }));
@@ -287,7 +467,7 @@ export default function FolderConfigModal({ show, onClose, assignmentId, classId
             onClose();
         } catch (err) {
             console.error("Error saving folder:", err);
-            Swal.fire('Lỗi', err.message || 'Không thể lưu thư mục deadline.', 'error');
+            Swal.fire('Lỗi', 'Không thể lưu thông tin. Vui lòng thử lại.', 'error');
         } finally {
             setLoading(false);
         }
@@ -402,6 +582,13 @@ export default function FolderConfigModal({ show, onClose, assignmentId, classId
                                     <button
                                         type="button"
                                         className={styles.btnActionOutline}
+                                        onClick={handleImportScript}
+                                    >
+                                        <i className="bi bi-code-square"></i> Nhập bằng Script
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className={styles.btnActionOutline}
                                         onClick={() => {
                                             setShowInlineCreator(prev => !prev);
                                             setShowOldSelector(false);
@@ -428,8 +615,14 @@ export default function FolderConfigModal({ show, onClose, assignmentId, classId
                                         Chưa có bài tập nào trong thư mục này. Hãy tạo mới hoặc chèn từ Ngân Hàng đề bên trên.
                                     </div>
                                 ) : (
-                                    folderItems.map((it) => {
+                                    folderItems.map((it, itemIndex) => {
                                         const type = (it.itemType || '').toUpperCase();
+                                        const parsedContent = parseItemContent(it.formattedContent);
+                                        const prompt = getItemPrompt(parsedContent);
+                                        const isExpanded = expandedItemId === it.id;
+                                        const sourceLabel = it.exerciseId ? `Ngân hàng · #${it.exerciseId}` : 'Tạo trong thư mục';
+                                        const partOrTask = parsedContent.part || parsedContent.task;
+                                        const attachments = it.payloads || [];
                                         let badgeClass = styles.badgeGeneral;
                                         let badgeLabel = 'General';
 
@@ -451,21 +644,87 @@ export default function FolderConfigModal({ show, onClose, assignmentId, classId
                                         }
 
                                         return (
-                                            <div key={it.id} className={styles.folderTaskCard}>
-                                                <div className={styles.folderTaskInfo}>
-                                                    <span className={`${styles.folderTaskBadge} ${badgeClass}`}>
-                                                        {badgeLabel}
-                                                    </span>
-                                                    <span className={styles.folderTaskText}>{it._displayLabel}</span>
+                                            <div
+                                                key={it.id}
+                                                className={`${styles.folderTaskCard} ${isExpanded ? styles.folderTaskCardExpanded : ''}`}
+                                            >
+                                                <div className={styles.folderTaskHeader}>
+                                                    <button
+                                                        type="button"
+                                                        className={styles.folderTaskToggle}
+                                                        onClick={() => setExpandedItemId(isExpanded ? null : it.id)}
+                                                        aria-expanded={isExpanded}
+                                                        aria-controls={`folder-task-detail-${it.id}`}
+                                                    >
+                                                        <span className={styles.folderTaskIndex}>{itemIndex + 1}</span>
+                                                        <span className={styles.folderTaskInfo}>
+                                                            <span className={styles.folderTaskMetaRow}>
+                                                                <span className={`${styles.folderTaskBadge} ${badgeClass}`}>
+                                                                    {badgeLabel}
+                                                                </span>
+                                                                <span className={styles.folderTaskSource}>{sourceLabel}</span>
+                                                            </span>
+                                                            <span className={styles.folderTaskText}>{it._displayLabel}</span>
+                                                        </span>
+                                                        <i className={`bi ${isExpanded ? 'bi-chevron-up' : 'bi-chevron-down'} ${styles.folderTaskChevron}`}></i>
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        className={styles.btnActionDanger}
+                                                        onClick={() => handleRemoveItem(it.id)}
+                                                        title="Xóa khỏi thư mục"
+                                                        aria-label={`Xóa bài tập ${itemIndex + 1} khỏi thư mục`}
+                                                    >
+                                                        <i className="bi bi-trash"></i>
+                                                    </button>
                                                 </div>
-                                                <button
-                                                    type="button"
-                                                    className={styles.btnActionDanger}
-                                                    onClick={() => handleRemoveItem(it.id)}
-                                                    title="Xóa khỏi thư mục"
-                                                >
-                                                    <i className="bi bi-trash"></i>
-                                                </button>
+
+                                                {isExpanded && (
+                                                    <div
+                                                        id={`folder-task-detail-${it.id}`}
+                                                        className={styles.folderTaskDetails}
+                                                    >
+                                                        <div className={styles.folderTaskDetailMeta}>
+                                                            {partOrTask && (
+                                                                <span><i className="bi bi-bookmark-fill"></i> {partOrTask}</span>
+                                                            )}
+                                                            {(type === 'AI_SPEAKING' || type === 'SPEAKING') && (
+                                                                <span>
+                                                                    <i className="bi bi-arrow-repeat"></i>{' '}
+                                                                    {it.maxAttempts ? `Tối đa ${it.maxAttempts} lượt nộp` : 'Không giới hạn lượt nộp'}
+                                                                </span>
+                                                            )}
+                                                            <span><i className="bi bi-box-arrow-in-down"></i> {sourceLabel}</span>
+                                                        </div>
+
+                                                        <div className={styles.folderTaskPromptLabel}>Nội dung / Yêu cầu</div>
+                                                        {prompt ? (
+                                                            <div
+                                                                className={styles.folderTaskPrompt}
+                                                                dangerouslySetInnerHTML={{ __html: prompt }}
+                                                            />
+                                                        ) : (
+                                                            <div className={styles.folderTaskEmptyDetail}>Không có nội dung chi tiết.</div>
+                                                        )}
+
+                                                        {attachments.length > 0 && (
+                                                            <div className={styles.folderTaskAttachments}>
+                                                                <div className={styles.folderTaskPromptLabel}>
+                                                                    Tài liệu đính kèm ({attachments.length})
+                                                                </div>
+                                                                <ul>
+                                                                    {attachments.map((file, fileIndex) => (
+                                                                        <li key={`${file.dataValue || file.fileName || 'file'}-${fileIndex}`}>
+                                                                            <i className="bi bi-paperclip"></i>
+                                                                            <span>{file.originalFileName || file.fileName || `Tài liệu ${fileIndex + 1}`}</span>
+                                                                            {file.dataType && <small>{file.dataType}</small>}
+                                                                        </li>
+                                                                    ))}
+                                                                </ul>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
                                             </div>
                                         );
                                     })

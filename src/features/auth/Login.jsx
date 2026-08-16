@@ -4,6 +4,7 @@ import axiosClient from '../../api/axiosClient';
 import Swal from 'sweetalert2';
 import backgroundImg from '../../assets/backgroundLogin.webp';
 import siteLogo from '../../assets/site-logo.webp';
+import userQuotaService from '../../api/services/userQuota.service';
 
 export default function Login() {
     const [formData, setFormData] = useState({
@@ -33,12 +34,23 @@ export default function Login() {
             const data = await axiosClient.post('/auth/login', formData);
             
             if (data.success) {
-                // Persist simple credentials
+                // Persist the token first so the authenticated quota request
+                // can identify the current student from JWT.
                 localStorage.setItem('token', data.token);
+                let speakingQuota = null;
+                if (data.role === 'Student') {
+                    try {
+                        speakingQuota =
+                            await userQuotaService.getMySpeakingQuota();
+                    } catch {
+                        // Login remains successful; Layout will retry loading.
+                    }
+                }
                 localStorage.setItem('user', JSON.stringify({
                     userId: data.userId,
                     fullName: data.fullName,
-                    role: data.role
+                    role: data.role,
+                    speakingQuota,
                 }));
 
                 Swal.fire({
@@ -49,7 +61,9 @@ export default function Login() {
                     showConfirmButton: false
                 }).then(() => {
                     // Chuyển hướng động dựa trên Role
-                    if (data.role === 'Teacher' || data.role === 'Admin') {
+                    if (data.role === 'Admin') {
+                        window.location.href = '/admin/dashboard';
+                    } else if (data.role === 'Teacher') {
                         window.location.href = '/teacher/dashboard';
                     } else {
                         window.location.href = '/student/dashboard';
@@ -61,7 +75,7 @@ export default function Login() {
             Swal.fire({
                 icon: 'error',
                 title: 'Lỗi đăng nhập',
-                text: error.message || 'Đã xảy ra lỗi không mong muốn.'
+                text: 'Không thể đăng nhập. Vui lòng kiểm tra thông tin và thử lại.'
             });
         } finally {
             setLoading(false);

@@ -11,7 +11,7 @@ export default function SpeakingSubmissionItem({
     setSpeakingResults,
     formatDateTime
 }) {
-    const parsedContent = item.contentJson ? JSON.parse(item.contentJson) : {};
+    const parsedContent = item.formattedContent ? JSON.parse(item.formattedContent) : {};
 
     return (
         <div className={styles.itemCard}>
@@ -19,11 +19,11 @@ export default function SpeakingSubmissionItem({
             <div className={styles.itemHeader}>
                 <div className={styles.itemInfo}>
                     <h4>Hạng mục {index + 1}: {parsedContent.title || parsedContent.part || 'Bài tập Speaking AI'}</h4>
-                    <div 
-                        className={styles.itemDesc} 
-                        dangerouslySetInnerHTML={{ 
-                            __html: parsedContent.description || parsedContent.prompt || 'Nhấn nút bên dưới để vào phòng thu âm và làm câu hỏi phát âm AI.' 
-                        }} 
+                    <div
+                        className={styles.itemDesc}
+                        dangerouslySetInnerHTML={{
+                            __html: parsedContent.description || parsedContent.prompt || 'Nhấn nút bên dưới để vào phòng thu âm và làm câu hỏi phát âm AI.'
+                        }}
                     />
 
                     <div className={item.maxAttempts && itemHistory.length >= item.maxAttempts ? styles.attemptLimitBadgeError : styles.attemptLimitBadge}>
@@ -124,19 +124,41 @@ export default function SpeakingSubmissionItem({
                     <p className={styles.historyTitle}>
                         <i className="bi bi-clock-history"></i> Lịch sử bài làm đã nộp ({itemHistory.length})
                     </p>
-                    {itemHistory.map((att) => (
-                        <div key={att.submissionId} className={styles.historyItem}>
-                            <div className={styles.historyLeft}>
-                                <span className={styles.attemptNum}>Lần nộp #{att.attemptNumber}</span>
-                                <span className={styles.submitTime}>
-                                    <i className="bi bi-clock"></i> Đã nộp vào: {formatDateTime(att.createdAt)}
-                                </span>
+                    {itemHistory.map((att) => {
+                        const handleViewAttempt = async () => {
+                            try {
+                                setActiveSpeakingItemId(item.itemId);
+                                setSpeakingResults(prev => ({ ...prev, [item.itemId]: null }));
+                                const data = await axiosClient.get(`/student/submissions/${att.submissionId}`);
+                                setSpeakingResults(prev => ({ ...prev, [item.itemId]: data.feedback }));
+                            } catch (err) {
+                                console.error("Error viewing attempt:", err);
+                                Swal.fire('Lỗi', 'Không thể tải chi tiết bài nộp này', 'error');
+                            }
+                        };
+
+                        return (
+                            <div
+                                key={att.submissionId}
+                                className={styles.historyItem}
+                                style={{ cursor: 'pointer', transition: 'all 0.2s' }}
+                                onClick={handleViewAttempt}
+                                title="Bấm để xem lại bài nộp và kết quả chi tiết"
+                            >
+                                <div className={styles.historyLeft}>
+                                    <span className={styles.attemptNum}>Lần nộp #{att.attemptNumber}</span>
+                                    <span className={styles.submitTime}>
+                                        <i className="bi bi-clock"></i> Đã nộp vào: {formatDateTime(att.createdAt)}
+                                    </span>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                    <span className={styles.statusBadgeSubmitted}>
+                                        Band {att.overallScore?.toFixed(1) || '--'}
+                                    </span>
+                                </div>
                             </div>
-                            <span className={styles.statusBadgeSubmitted}>
-                                Band {att.overallScore?.toFixed(1) || '--'}
-                            </span>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             )}
         </div>

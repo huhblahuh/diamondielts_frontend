@@ -1,7 +1,6 @@
 import React from 'react';
 import TiptapEditor from '../../../components/TiptapEditor';
 import styles from '../CreateAssignment.module.css';
-import { displayCourseName } from '../../../utils/displayText';
 
 export default function AssignmentForm({ title, setTitle, description, setDescription, dueDate, setDueDate, classId, setClassId, isEdit, classes = [] }) {
     return (
@@ -30,7 +29,7 @@ export default function AssignmentForm({ title, setTitle, description, setDescri
                     <select className={styles.select} value={classId} onChange={e=>setClassId(e.target.value)}>
                         {classes.map(cls => (
                             <option key={cls.classId} value={cls.classId.toString()}>
-                                {cls.className}{displayCourseName(cls.courseName) ? ` (${displayCourseName(cls.courseName)})` : ''}
+                                {cls.className}
                             </option>
                         ))}
                     </select>

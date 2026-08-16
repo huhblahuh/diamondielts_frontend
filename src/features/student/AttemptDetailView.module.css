@@ -127,9 +127,9 @@
 /* ── Score Bar (top section) ── */
 .topSection {
     display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
     padding-bottom: 18px;
     border-bottom: 1px solid var(--border);
     margin-bottom: 18px;
@@ -137,19 +137,21 @@
 
 /* Overall Badge */
 .overallPill {
-    background: var(--color-overall);
+    background: #0A2472;
     color: white;
-    padding: 5px 14px;
-    border-radius: 8px;
+    padding: 6px 20px;
+    border-radius: 10px;
     font-weight: 700;
     display: flex;
     align-items: center;
     gap: 6px;
     flex-shrink: 0;
+    inline-size: 100%;
+    justify-content: center;
 }
 
 .overallLabel {
-    font-size: 10px;
+    font-size: 14px;
     font-weight: 500;
     text-transform: uppercase;
     opacity: 0.75;
@@ -157,7 +159,7 @@
 }
 
 .overallScore {
-    font-size: 16px;
+    font-size: 24px;
     font-weight: 800;
     letter-spacing: -0.3px;
 }
@@ -165,40 +167,84 @@
 /* Sub-metric pills */
 .subMetricPills {
     display: flex;
-    align-items: center;
-    gap: 6px;
-    flex-wrap: wrap;
+    align-items: stretch;
+    flex-wrap: nowrap;
+    width: 100%;
+    overflow-x: hidden;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+}
+
+.subMetricPills::-webkit-scrollbar {
+    display: none;
 }
 
 .metricPill {
-    display: inline-flex;
+    position: relative;
+    display: flex;
+    flex: 1 1 0;
+    flex-direction: column;
     align-items: center;
-    gap: 6px;
-    padding: 5px 12px;
-    border-radius: 8px;
+    justify-content: center;
+    gap: 7px;
+    min-width: 0;
+    padding: 8px 10px;
     font-size: 13px;
     font-weight: 600;
     background: transparent;
-    border: 1.5px solid var(--border);
+    border: 0;
     cursor: pointer;
     transition: all 0.18s ease;
-    line-height: 1;
+    line-height: 1.05;
+    min-height: 70px;
+    text-align: center;
+}
+
+.metricPill::before,
+.metricPill::after {
+    content: '';
+    position: absolute;
+    top: 18%;
+    bottom: 18%;
+    width: 1px;
+    border-radius: 999px;
+    background: rgba(148, 163, 184, 0.35);
+    transition: top 0.2s ease, bottom 0.2s ease, width 0.2s ease, background 0.2s ease;
+}
+
+.metricPill::before { left: 0; }
+.metricPill::after { right: 0; }
+
+.metricPill:hover::before,
+.metricPill:hover::after,
+.metricPill.active::before,
+.metricPill.active::after {
+    top: -3px;
+    bottom: -3px;
+    width: 2px;
+    background: currentColor;
+    clip-path: polygon(50% 0, 100% 7%, 100% 93%, 50% 100%, 0 93%, 0 7%);
 }
 
 .metricPillName {
-    font-size: 12px;
+    font-size: clamp(12px, 1.45vw, 16px);
     font-weight: 600;
     letter-spacing: 0.1px;
 }
 
 .metricPillVal {
-    padding: 2px 7px;
+    padding: 4px 9px;
     border-radius: 5px;
-    background: #f1f5f9;
-    font-size: 12px;
+    font-size: clamp(13px, 1.45vw, 16px);
     font-weight: 700;
     color: #4b5563;
     transition: background 0.18s ease, color 0.18s ease;
+}
+
+@media (max-width: 680px) {
+    .metricPill {
+        padding-inline: 5px;
+    }
 }
 
 /* Pill colour variants */
@@ -243,6 +289,25 @@
 .pillSuggest.active {
     border-color: #8b5cf6;
     background: #f5f3ff;
+}
+
+.processingWarning {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    margin: 0 0 16px;
+    padding: 10px 12px;
+    border: 1px solid #fbbf24;
+    border-radius: 9px;
+    background: #fffbeb;
+    color: #92400e;
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+.processingWarning i {
+    margin-top: 1px;
+    flex-shrink: 0;
 }
 
 /* ── Transcript Header ── */
@@ -356,6 +421,50 @@
     border-radius: 4px;
 }
 
+.inlineFix {
+    display: inline;
+    padding: 0.08em 0.18em;
+    text-decoration: none;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+}
+
+.inlineFix > span:first-child {
+    color: #be123c;
+    text-decoration: line-through;
+    text-decoration-thickness: 1px;
+}
+
+.inlineFix strong {
+    color: #15803d;
+    font-weight: 750;
+}
+
+.inlineFixArrow {
+    color: #94a3b8;
+    font-size: 0.82em;
+    font-weight: bold;
+    text-decoration: none;
+    margin: 0 0.2em;
+}
+
+.selectedIssueCard ~ .issueCard {
+    display: none;
+}
+
+.issueCard:not(.selectedIssueCard) {
+    display: none;
+}
+
+.selectedIssueDescription {
+    margin: 0.75rem 0 0;
+    color: #475569;
+    font-size: 0.9rem;
+    line-height: 1.55;
+}
+
 .pronunciationBoard {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
@@ -390,7 +499,6 @@
 .pronWordGood { background: #f0fdf4; border-color: #bbf7d0; }
 .pronWordOk { background: #fff7ed; border-color: #fed7aa; }
 .pronWordWeak { background: #fff1f2; border-color: #fecdd3; }
-.pronWordNeutral { background: #f8fafc; border-color: #cbd5e1; }
 
 .pronWordTop {
     display: flex;
@@ -525,7 +633,7 @@
 .phonemeInlineBad,
 .phonemeInlineWarn {
     display: inline-flex;
-    min-width: 12px;
+    min-width: 6px;
     justify-content: center;
 }
 
@@ -545,7 +653,6 @@
 .pronWordGood .pronInlineText { color: #16a34a; }
 .pronWordOk .pronInlineText { color: #d97706; }
 .pronWordWeak .pronInlineText { color: #dc2626; }
-.pronWordNeutral .pronInlineText { color: #64748b; }
 
 /* Suggest notes */
 .suggestNote {
@@ -619,6 +726,8 @@
     -webkit-appearance: none;
     appearance: none;
     flex: 1;
+    min-width: 0;
+    width: 100%;
     height: 4px;
     border-radius: 2px;
     outline: none;
@@ -727,6 +836,82 @@
     color: #24292e;
 }
 
+.issueList {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.issueCard {
+    padding: 14px;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+    box-shadow: 0 3px 10px rgba(15, 23, 42, 0.045);
+}
+
+.issueCardHeader {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin-bottom: 11px;
+}
+
+.issueIndex {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 9px;
+    background: #eef2ff;
+    color: #4f46e5;
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.issueLabel {
+    color: #475569;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.55px;
+    text-transform: uppercase;
+}
+
+.issueBlock {
+    padding: 10px 11px;
+    border-left: 3px solid #fda4af;
+    border-radius: 0 8px 8px 0;
+    background: #fff1f2;
+    color: #4b1d25;
+    font-size: 13px;
+    line-height: 1.55;
+}
+
+.issueBlock + .issueBlock {
+    margin-top: 8px;
+}
+
+.issueImprovement {
+    border-left-color: #86efac;
+    background: #f0fdf4;
+    color: #14532d;
+}
+
+.issueBlockLabel {
+    display: block;
+    margin-bottom: 3px;
+    color: #be123c;
+    font-size: 10px;
+    font-weight: 850;
+    letter-spacing: 0.65px;
+    text-transform: uppercase;
+}
+
+.issueImprovement .issueBlockLabel {
+    color: #15803d;
+}
+
 /* Solution box */
 .solutionBox {
     font-size: 14.5px;
@@ -771,15 +956,28 @@
 ═══════════════════════════════════════════════ */
 .popover {
     position: absolute;
-    z-index: 1000;
+    z-index: 10000;
+    --color-fluency: #0070f3;
+    --color-fluency-bg: #e3f2fd;
+    --color-lexical: #10a37f;
+    --color-grammar: #f05152;
+    --color-pron: #f5a623;
+    --color-pron-bg: #fff8eb;
+    --text-main: #0e101a;
     background: white;
     border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.13);
-    padding: 12px 14px;
-    width: 240px;
-    font-size: 0.8rem;
+    border-radius: 12px;
+    box-shadow: 0 14px 34px rgba(15, 23, 42, 0.18);
+    padding: 14px;
+    width: min(320px, calc(100vw - 24px));
+    max-height: min(70vh, 480px);
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    font-size: 0.82rem;
     color: #334155;
+    pointer-events: auto;
+    touch-action: manipulation;
     animation: popIn 0.15s ease-out;
 }
 
@@ -801,6 +999,7 @@
     font-weight: 700;
     color: var(--text-main);
     font-size: 0.8rem;
+    letter-spacing: 0.35px;
 }
 
 .popClose {
@@ -819,6 +1018,25 @@
     font-size: 0.8rem;
     line-height: 1.6;
     padding: 2px 0;
+}
+
+.popContent {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+}
+
+.popDescription {
+    color: #475569;
+    font-size: 0.78rem;
+    font-weight: 750;
+    line-height: 1.5;
+}
+
+.popPronCompare {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 7px;
 }
 
 .wrongTxt {
@@ -883,18 +1101,6 @@
     gap: 8px;
     flex-wrap: wrap;
     color: #64748b;
-}
-
-.pronMiniBadge {
-    display: inline-flex;
-    align-items: center;
-    height: 22px;
-    padding: 0 9px;
-    border-radius: 999px;
-    background: #f1f5f9;
-    color: #64748b;
-    font-size: 0.72rem;
-    font-weight: 700;
 }
 
 .pronFixList {

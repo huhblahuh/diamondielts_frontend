@@ -58,7 +58,7 @@ export default function CreateAssignment() {
                         const mappedItems = (assignData.items || []).map(item => {
                             let label = `Item #${item.itemId}`;
                             let parsedSettings = {};
-                            try { parsedSettings = JSON.parse(item.contentJson || '{}'); } catch(e){}
+                            try { parsedSettings = JSON.parse(item.formattedContent || '{}'); } catch(e){}
 
                             if (item.exerciseId) {
                                 const ex = (exData || []).find(e => e.exerciseId === item.exerciseId);
@@ -79,7 +79,7 @@ export default function CreateAssignment() {
                                 dbId: item.itemId,
                                 exerciseId: item.exerciseId,
                                 itemType: item.itemType,
-                                contentJson: item.contentJson,
+                                formattedContent: item.formattedContent,
                                 payloads: item.payloads || [],
                                 _displayLabel: label
                             };
@@ -109,7 +109,7 @@ export default function CreateAssignment() {
             const formattedItems = items.map(it => ({
                 exerciseId: it.exerciseId || null,
                 itemType: it.itemType,
-                contentJson: it.contentJson || "{}",
+                formattedContent: it.formattedContent || "{}",
                 payloads: it.payloads || []
             }));
 
@@ -131,7 +131,7 @@ export default function CreateAssignment() {
             setTimeout(() => navigate(-1), 1200);
         } catch (err) {
             console.error("Submit error", err);
-            Swal.fire('Lỗi', err.message || 'Gặp lỗi khi lưu.', 'error');
+            Swal.fire('Lỗi', 'Không thể lưu thông tin. Vui lòng thử lại.', 'error');
         } finally {
             setSubmitting(false);
         }
@@ -188,7 +188,7 @@ export default function CreateAssignment() {
                             id: Date.now() + index + Math.random(),
                             exerciseId: ex.exerciseId,
                             itemType: ex.skillType,
-                            contentJson: "{}",
+                            formattedContent: "{}",
                             _displayLabel: `[Ngân hàng] ${ex.type} - ${ex.skillType}`
                         }));
                         setItems([...items, ...newItems]);

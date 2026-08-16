@@ -736,3 +736,9 @@
     margin: 0 auto;
     padding: 1.5rem;
 }
+
+@media (max-width: 640px) {
+    .resultsActive .mainWorkspace {
+        padding: 0;
+    }
+}

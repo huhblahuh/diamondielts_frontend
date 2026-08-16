@@ -28,7 +28,7 @@ export default function AssignmentBuilder({ items, setItems, onOpenBank }) {
         const newItem = {
             id: Date.now(),
             itemType: 'SPEAKING',
-            contentJson: JSON.stringify({ 
+            formattedContent: JSON.stringify({
                 part: speakingPart,
                 prompt: speakingPrompt 
             }),
@@ -45,7 +45,7 @@ export default function AssignmentBuilder({ items, setItems, onOpenBank }) {
         const newItem = {
             id: Date.now(),
             itemType: 'FILE_UPLOAD',
-            contentJson: JSON.stringify({ allowedExtensions: ['pdf', 'docx', 'zip'] }),
+            formattedContent: JSON.stringify({ allowedExtensions: ['pdf', 'docx', 'zip'] }),
             _displayLabel: `📁 Yêu cầu Nộp File (PDF/Docx)`
         };
         setItems([...items, newItem]);
@@ -84,8 +84,7 @@ export default function AssignmentBuilder({ items, setItems, onOpenBank }) {
             }]);
             Swal.fire({ icon: 'success', title: 'Tải lên thành công', timer: 1000, showConfirmButton: false });
         } catch (err) {
-            const errorMsg = err.response?.data || err.message || 'Không thể tải file lên hệ thống.';
-            Swal.fire('Thất bại', typeof errorMsg === 'string' ? errorMsg : 'Đã có lỗi xảy ra khi tải lên file.', 'error');
+            Swal.fire('Thất bại', 'Không thể tải file lên. Vui lòng thử lại.', 'error');
         } finally {
             setIsUploading(false);
             e.target.value = '';
@@ -105,7 +104,7 @@ export default function AssignmentBuilder({ items, setItems, onOpenBank }) {
         const newItem = {
             id: Date.now(),
             itemType: 'fileSubmission',
-            contentJson: JSON.stringify({ 
+            formattedContent: JSON.stringify({
                 description: fileSubmissionDescription 
             }),
             payloads: fileSubmissionPayloads,

@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import Swal from 'sweetalert2';
 import modalStyles from './ClassroomFormModal.module.css';
-import { displayCourseName } from '../../../utils/displayText';
 
-export default function ClassroomFormModal({ show, onClose, onSave, courses = [], classData = null }) {
+export default function ClassroomFormModal({ show, onClose, onSave, classData = null }) {
     const styles = modalStyles;
     const [formData, setFormData] = useState({
         className: '',
-        courseId: '',
         startDate: '',
         endDate: '',
         status: 'Active'
@@ -27,7 +25,6 @@ export default function ClassroomFormModal({ show, onClose, onSave, courses = []
 
                 setFormData({
                     className: classData.className || '',
-                    courseId: classData.courseId || (courses.length > 0 ? courses[0].courseId : ''),
                     startDate: formatToInputDate(classData.startDate),
                     endDate: formatToInputDate(classData.endDate),
                     status: classData.status || 'Active'
@@ -39,7 +36,6 @@ export default function ClassroomFormModal({ show, onClose, onSave, courses = []
 
                 setFormData({
                     className: '',
-                    courseId: courses.length > 0 ? courses[0].courseId : '',
                     startDate: today.toISOString().split('T')[0],
                     endDate: threeMonthsLater.toISOString().split('T')[0],
                     status: 'Active'
@@ -47,7 +43,7 @@ export default function ClassroomFormModal({ show, onClose, onSave, courses = []
             }
             setErrors({});
         }
-    }, [show, classData, courses]);
+    }, [show, classData]);
 
     if (!show) return null;
 
@@ -62,7 +58,6 @@ export default function ClassroomFormModal({ show, onClose, onSave, courses = []
     const validateForm = () => {
         const errs = {};
         if (!formData.className.trim()) errs.className = 'Vui lòng nhập tên lớp học';
-        if (!formData.courseId) errs.courseId = 'Vui lòng chọn khóa học';
         if (!formData.startDate) errs.startDate = 'Vui lòng chọn ngày bắt đầu';
         if (!formData.endDate) errs.endDate = 'Vui lòng chọn ngày kết thúc';
         
@@ -78,10 +73,7 @@ export default function ClassroomFormModal({ show, onClose, onSave, courses = []
         e.preventDefault();
         if (!validateForm()) return;
         
-        onSave({
-            ...formData,
-            courseId: parseInt(formData.courseId)
-        });
+        onSave(formData);
     };
 
     return (
@@ -104,25 +96,6 @@ export default function ClassroomFormModal({ show, onClose, onSave, courses = []
                                 className={errors.className ? styles.inputError : ''}
                             />
                             {errors.className && <small className={styles.errorText}>{errors.className}</small>}
-                        </div>
-
-                        <div className={styles.formGroup}>
-                            <label>Khóa Học <span className={styles.required}>*</span></label>
-                            <select 
-                                name="courseId"
-                                value={formData.courseId}
-                                onChange={handleInputChange}
-                                className={errors.courseId ? styles.inputError : ''}
-                            >
-                                <option value="">-- Chọn Khóa Học --</option>
-                                {courses.map(c => (
-                                    <option key={c.courseId} value={c.courseId}>
-                                        {displayCourseName(c.name) || c.level}
-                                        {displayCourseName(c.name) && c.level ? ` (${c.level})` : ''}
-                                    </option>
-                                ))}
-                            </select>
-                            {errors.courseId && <small className={styles.errorText}>{errors.courseId}</small>}
                         </div>
 
                         <div className={styles.formGrid} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>

@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import * as SpeechSDK from 'microsoft-cognitiveservices-speech-sdk';
 import axiosClient from '../../api/axiosClient';
 import styles from './SpeakingPractice.module.css';
 import Swal from 'sweetalert2';
 import AttemptDetailView from './AttemptDetailView';
-import { buildSpeechChunk, createPronunciationAssessmentConfig } from './speechChunkUtils';
+import { SpeakingAssessmentPipeline } from './speakingAssessmentPipeline';
 
 export default function SpeakingPractice({
     isAssignmentMode = false,
@@ -42,23 +41,22 @@ export default function SpeakingPractice({
     const [rightSidebarOpen, setRightSidebarOpen] = useState(false);
     const [selectedPartFilter, setSelectedPartFilter] = useState('All');
 
-    // Azure SDK Refs
-    const recognizerRef = useRef(null);
-    const chunksRef = useRef([]);
+    // Soniox realtime transcript and local WebM capture.
+    const assessmentPipelineRef = useRef(null);
     const timerRef = useRef(null);
-    const startTimeRef = useRef(0);
-    const mediaRecorderRef = useRef(null);
-    const audioChunksRef = useRef([]);
+    const recordingStartedAtRef = useRef(null);
+    const startInProgressRef = useRef(false);
+    const stopInProgressRef = useRef(false);
 
-    const detectPartNumber = (type, contentJson) => {
+    const detectPartNumber = (type, formattedContent) => {
         const typeLower = (type || '').toLowerCase();
         if (typeLower.includes('part 2') || typeLower.includes('part2') || typeLower.includes('speaking2')) return 2;
         if (typeLower.includes('part 3') || typeLower.includes('part3') || typeLower.includes('speaking3')) return 3;
         if (typeLower.includes('part 1') || typeLower.includes('part1') || typeLower.includes('speaking1')) return 1;
 
-        if (contentJson) {
+        if (formattedContent) {
             try {
-                const parsed = typeof contentJson === 'string' ? JSON.parse(contentJson) : contentJson;
+                const parsed = typeof formattedContent === 'string' ? JSON.parse(formattedContent) : formattedContent;
                 const pType = (parsed.type || parsed.part || '').toString().toLowerCase();
                 if (pType.includes('part 2') || pType.includes('part2') || pType.includes('2')) return 2;
                 if (pType.includes('part 3') || pType.includes('part3') || pType.includes('3')) return 3;
@@ -68,12 +66,12 @@ export default function SpeakingPractice({
                 if (pContent.includes('part 2') || pContent.includes('part2')) return 2;
                 if (pContent.includes('part 3') || pContent.includes('part3')) return 3;
                 if (pContent.includes('part 1') || pContent.includes('part1')) return 1;
-            } catch (e) {}
+            } catch (e) { }
         }
         return 1;
     };
 
-    const partNum = exercise ? detectPartNumber(exercise.type, exercise.contentJson) : 1;
+    const partNum = exercise ? detectPartNumber(exercise.type, exercise.formattedContent) : 1;
 
     const getRecordingTimeLimit = (part) => {
         if (part === 2) return 150; // 2 minutes 30 seconds
@@ -112,7 +110,7 @@ export default function SpeakingPractice({
                         setExercise({
                             itemId: activeSpeakingItem.itemId,
                             type: typeUpper === 'AI_SPEAKING' ? 'AI_SPEAKING' : 'SPEAKING',
-                            contentJson: activeSpeakingItem.contentJson,
+                            formattedContent: activeSpeakingItem.formattedContent,
                             maxAttempts: activeSpeakingItem.maxAttempts,
                             topicName: assignment?.title,
                             topicId: null
@@ -152,14 +150,23 @@ export default function SpeakingPractice({
 
     useEffect(() => {
         return () => {
-            if (recognizerRef.current) {
-                recognizerRef.current.close();
-            }
+            assessmentPipelineRef.current?.dispose();
             if (timerRef.current) clearInterval(timerRef.current);
+            timerRef.current = null;
         };
     }, []);
 
     const startRecording = async () => {
+        // Prevent rapid double-clicks from starting multiple pipelines/timers.
+        if (
+            startInProgressRef.current
+            || stopInProgressRef.current
+            || assessmentPipelineRef.current
+        ) return;
+
+        startInProgressRef.current = true;
+        setStatus('starting');
+
         try {
             // Kiểm tra giới hạn số lượt làm bài trước khi ghi âm
             try {
@@ -173,7 +180,7 @@ export default function SpeakingPractice({
                         title: 'Giới hạn số lần làm bài',
                         text: isAssignmentMode
                             ? `Bạn đã đạt tới giới hạn số lần nộp bài cho phép (${checkData.maxAttempts} lần) cho phần này.`
-                            : `Bạn đã đạt tới giới hạn số lần làm bài tự luyện cho phép (${checkData.maxAttempts} lần).`,
+                            : 'Bạn đã hết lượt luyện Speaking tự do.',
                         confirmButtonColor: '#ef4444'
                     });
                     setStatus('idle');
@@ -184,165 +191,152 @@ export default function SpeakingPractice({
                 console.error("Failed to check attempt limit:", err);
             }
 
-            // Gọi api lấy speech token động bảo mật từ backend
+            // Gọi api lấy speech token động bảo mật từ backend theo Part (Task)
             let tokenData;
             try {
-                tokenData = await axiosClient.get('/student/PracticeSpeaking/token');
+                tokenData = await axiosClient.get(`/student/PracticeSpeaking/token?speakingTask=${partNum}`);
             } catch (err) {
                 console.error("Failed to fetch Speech Token:", err);
-                Swal.fire('Lỗi', 'Không thể lấy token xác thực micro từ máy chủ. Vui lòng thử lại!', 'error');
+                Swal.fire('Lỗi', 'Không thể bắt đầu ghi âm. Vui lòng thử lại sau.', 'error');
                 setStatus('idle');
                 setIsRecording(false);
                 return;
             }
 
-            const speechConfig = SpeechSDK.SpeechConfig.fromAuthorizationToken(tokenData.token, tokenData.region);
-            speechConfig.speechRecognitionLanguage = "en-US";
+            const pipeline = new SpeakingAssessmentPipeline({
+                credentials: tokenData,
+                question: getCleanTextQuestion(exercise?.formattedContent),
+                partNumber: partNum
+            });
+            assessmentPipelineRef.current = pipeline;
+            await pipeline.start();
 
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            const audioConfig = SpeechSDK.AudioConfig.fromStreamInput(stream);
+            setIsRecording(true);
+            setStatus('recording');
+            setTimer(0);
+            recordingStartedAtRef.current = performance.now();
 
-            const pronunciationConfig = createPronunciationAssessmentConfig();
+            if (timerRef.current) clearInterval(timerRef.current);
+            timerRef.current = setInterval(() => {
+                const startedAt = recordingStartedAtRef.current;
+                if (startedAt === null) return;
 
-            const recognizer = new SpeechSDK.SpeechRecognizer(speechConfig, audioConfig);
-            pronunciationConfig.applyTo(recognizer);
-
-            chunksRef.current = [];
-
-            recognizer.recognized = (s, e) => {
-                if (e.result.reason === SpeechSDK.ResultReason.RecognizedSpeech) {
-                    chunksRef.current.push(buildSpeechChunk(e.result));
-                }
-            };
-
-            recognizerRef.current = recognizer;
-
-            const mediaRecorder = new MediaRecorder(stream);
-            audioChunksRef.current = [];
-
-            mediaRecorder.ondataavailable = (e) => {
-                if (e.data.size > 0) audioChunksRef.current.push(e.data);
-            };
-
-            startTimeRef.current = Date.now();
-            mediaRecorder.start();
-            mediaRecorderRef.current = mediaRecorder;
-
-            recognizer.startContinuousRecognitionAsync(
-                () => {
-                    setIsRecording(true);
-                    setStatus('recording');
-                    setTimer(0);
-                    timerRef.current = setInterval(() => setTimer(prev => prev + 1), 1000);
-                },
-                (err) => {
-                    console.error(err);
-                    Swal.fire('Lỗi', 'Không thể khởi động micro', 'error');
-                }
-            );
+                const elapsedSeconds = Math.floor((performance.now() - startedAt) / 1000);
+                setTimer(Math.min(elapsedSeconds, timeLimit));
+            }, 250);
 
         } catch (err) {
             console.error(err);
-            Swal.fire('Lỗi', 'Lỗi khởi tạo Speech SDK', 'error');
+            assessmentPipelineRef.current = null;
+            setStatus('idle');
+            Swal.fire('Lỗi', 'Không thể bắt đầu ghi âm. Vui lòng thử lại.', 'error');
+        } finally {
+            startInProgressRef.current = false;
         }
     };
 
-    const stopRecording = () => {
-        if (!recognizerRef.current) return;
+    const stopRecording = async () => {
+        if (stopInProgressRef.current || !assessmentPipelineRef.current) return;
+
+        stopInProgressRef.current = true;
+        const pipeline = assessmentPipelineRef.current;
 
         setStatus('processing');
         setIsRecording(false);
         if (timerRef.current) clearInterval(timerRef.current);
+        timerRef.current = null;
+        recordingStartedAtRef.current = null;
 
-        recognizerRef.current.stopContinuousRecognitionAsync(
-            async () => {
-                const duration = (Date.now() - startTimeRef.current) / 1000;
-
-                // Trích xuất transcript từ chunks và đếm số từ
-                const transcript = (chunksRef.current || []).map(c => c.DisplayText || '').join(' ').trim();
-                const wordCount = transcript ? transcript.split(/\s+/).filter(Boolean).length : 0;
-
-                // 1. Kiểm tra từ = 0 (lỗi mic)
-                if (wordCount === 0) {
-                    setStatus('idle');
-                    if (mediaRecorderRef.current && mediaRecorderRef.current.stream) {
-                        mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
-                    }
-
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'Không nhận diện được giọng nói',
-                        text: 'Vui lòng kiểm tra lại micro hoặc thiết bị thu âm của bạn. Hãy đảm bảo bạn đã cho phép trình duyệt truy cập micro và nói rõ ràng.',
-                        confirmButtonText: 'Cấp quyền & Thử lại',
-                        showCancelButton: true,
-                        cancelButtonText: 'Đóng',
-                        confirmButtonColor: '#4f46e5'
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            navigator.mediaDevices.getUserMedia({ audio: true })
-                                .then(stream => {
-                                    stream.getTracks().forEach(track => track.stop());
-                                    Swal.fire('Thành công', 'Micro đã sẵn sàng hoạt động! Hãy bắt đầu ghi âm lại nhé.', 'success');
-                                })
-                                .catch(err => {
-                                    console.error(err);
-                                    Swal.fire('Thất bại', 'Không thể truy cập micro. Vui lòng bật quyền truy cập Micro trong cài đặt trình duyệt của bạn.', 'error');
-                                });
-                        }
-                    });
-                    return;
-                }
-
-                // 2. Kiểm tra độ dài bài nói dựa trên Part
-                const minWords = partNum === 2 ? 20 : 10;
-                if (wordCount < minWords) {
-                    setStatus('idle');
-                    if (mediaRecorderRef.current && mediaRecorderRef.current.stream) {
-                        mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
-                    }
-                    Swal.fire({
-                        toast: true,
-                        position: 'top-end',
-                        icon: 'warning',
-                        title: 'Hãy nói dài hơn để có điểm số chính xác',
-                        showConfirmButton: false,
-                        timer: 4500,
-                        timerProgressBar: true,
-                        background: '#fffbeb',
-                        iconColor: '#d97706',
-                        didOpen: (toast) => {
-                            toast.style.border = '1.5px solid #fde68a';
-                            toast.style.boxShadow = '0 10px 15px -3px rgba(180, 83, 9, 0.15)';
-                            toast.style.color = '#b45309';
-                            toast.style.fontSize = '0.9rem';
-                            toast.style.fontWeight = '600';
-                        }
-                    });
-                    return;
-                }
-
-                // Dừng MediaRecorder và lấy Blob
-                if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-                    mediaRecorderRef.current.onstop = async () => {
-                        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-                        await submitToBackend(duration, audioBlob);
-
-                        // Tắt các track của micro để giải phóng thiết bị
-                        mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
-                    };
-                    mediaRecorderRef.current.stop();
-                } else {
-                    await submitToBackend(duration);
-                }
-            },
-            (err) => {
-                console.error(err);
-                setStatus('idle');
+        try {
+            const outcome = await pipeline.stop();
+            if (assessmentPipelineRef.current === pipeline) {
+                assessmentPipelineRef.current = null;
             }
-        );
+            const duration = outcome.durationSeconds;
+
+            // Trích xuất transcript từ chunks và đếm số từ
+            const transcript = outcome.transcript;
+            const wordCount = transcript ? transcript.split(/\s+/).filter(Boolean).length : 0;
+
+            // 1. Kiểm tra từ = 0 (lỗi mic)
+            if (wordCount === 0) {
+                setStatus('idle');
+
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Không nhận diện được giọng nói',
+                    text: 'Vui lòng kiểm tra lại micro hoặc thiết bị thu âm của bạn. Hãy đảm bảo bạn đã cho phép trình duyệt truy cập micro và nói rõ ràng.',
+                    confirmButtonText: 'Cấp quyền & Thử lại',
+                    showCancelButton: true,
+                    cancelButtonText: 'Đóng',
+                    confirmButtonColor: '#4f46e5'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        navigator.mediaDevices.getUserMedia({ audio: true })
+                            .then(stream => {
+                                stream.getTracks().forEach(track => track.stop());
+                                Swal.fire('Thành công', 'Micro đã sẵn sàng hoạt động! Hãy bắt đầu ghi âm lại nhé.', 'success');
+                            })
+                            .catch(err => {
+                                console.error(err);
+                                Swal.fire('Thất bại', 'Không thể truy cập micro. Vui lòng bật quyền truy cập Micro trong cài đặt trình duyệt của bạn.', 'error');
+                            });
+                    }
+                });
+                return;
+            }
+
+            // 2. Kiểm tra độ dài bài nói dựa trên Part
+            const minWords = partNum === 2 ? 20 : 10;
+            if (wordCount < minWords) {
+                setStatus('idle');
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'warning',
+                    title: 'Hãy nói dài hơn để có điểm số chính xác',
+                    showConfirmButton: false,
+                    timer: 4500,
+                    timerProgressBar: true,
+                    background: '#fffbeb',
+                    iconColor: '#d97706',
+                    didOpen: (toast) => {
+                        toast.style.border = '1.5px solid #fde68a';
+                        toast.style.boxShadow = '0 10px 15px -3px rgba(180, 83, 9, 0.15)';
+                        toast.style.color = '#b45309';
+                        toast.style.fontSize = '0.9rem';
+                        toast.style.fontWeight = '600';
+                    }
+                });
+                return;
+            }
+
+            await submitToBackend(
+                duration,
+                outcome.audioBlob,
+                outcome.transcript,
+                outcome.tokens,
+                outcome.sessionId
+            );
+        } catch (err) {
+            console.error(err);
+            if (assessmentPipelineRef.current === pipeline) {
+                assessmentPipelineRef.current = null;
+            }
+            setStatus('idle');
+            Swal.fire('Lỗi', 'Không thể xử lý bài nói. Vui lòng thử lại.', 'error');
+        } finally {
+            stopInProgressRef.current = false;
+        }
     };
 
-    const submitToBackend = async (duration, audioBlob = null) => {
+    const submitToBackend = async (
+        duration,
+        audioBlob = null,
+        sonioxTranscript = '',
+        sonioxTokens = [],
+        sessionId = ''
+    ) => {
         try {
             const formData = new FormData();
 
@@ -354,35 +348,67 @@ export default function SpeakingPractice({
                 formData.append("exerciseId", parseInt(routeExerciseId));
                 formData.append("type", exercise?.type || "");
             }
-            formData.append("question", getCleanTextQuestion(exercise?.contentJson));
+            formData.append("question", getCleanTextQuestion(exercise?.formattedContent));
             formData.append("audioDurationSeconds", duration);
-
-            // Append chunks (JSON)
-            formData.append("chunksJson", JSON.stringify(chunksRef.current));
+            formData.append("sonioxTranscript", sonioxTranscript);
+            formData.append("sonioxTokensJson", JSON.stringify(sonioxTokens));
+            formData.append("sonioxFinalized", "true");
+            formData.append("speechSessionId", sessionId || "");
 
             // Append file vật lý nếu có
             if (audioBlob) {
                 formData.append("file", audioBlob, `speaking_${Date.now()}.webm`);
             }
 
-            const resp = await axiosClient.post('/student/PracticeSpeaking/submit', formData, {
+            const resp = await axiosClient.post('/student/submissions/speaking', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
 
             setSubmissionId(resp.submissionId);
             pollResults(resp.submissionId);
             loadHistory(isAssignmentMode ? currentItemId : routeExerciseId);
+            return true;
         } catch (err) {
             console.error(err);
-            Swal.fire('Lỗi', err.response?.data?.message || 'Không thể nộp bài', 'error');
+            if (err.code === 'OFF_TOPIC') {
+                const remainingText = err.remainingRetries > 0
+                    ? `Bạn còn ${err.remainingRetries} lần thử lại.`
+                    : 'Bạn đã dùng hết số lần thử lại.';
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Bài nói đang bị lạc đề',
+                    text: `${err.reason || err.message} ${remainingText}`,
+                    confirmButtonText: 'Nói lại'
+                });
+            } else if (err.code === 'OFF_TOPIC_RETRY_LIMIT') {
+                Swal.fire(
+                    'Đã hết lượt thử lại',
+                    err.message,
+                    'warning'
+                );
+            } else {
+                Swal.fire(
+                    'Lỗi',
+                    err.message || 'Không thể nộp bài. Vui lòng thử lại.',
+                    'error'
+                );
+            }
             setStatus('idle');
+            return false;
         }
     };
 
     const pollResults = async (subId) => {
         const check = async () => {
             try {
-                const data = await axiosClient.get(`/student/PracticeSpeaking/${subId}`);
+                const data = await axiosClient.get(`/student/submissions/${subId}`);
+                if (data.feedback?.pronunciationReport) {
+                    setResults(current => ({
+                        ...(current || {}),
+                        ...data.feedback,
+                        __partial: data.status !== 'Completed'
+                    }));
+                }
                 if (data.status === 'Completed') {
                     setResults(data.feedback);
                     setStatus('completed');
@@ -392,6 +418,9 @@ export default function SpeakingPractice({
                     Swal.fire('Lỗi', 'AI không thể xử lý bài nói của bạn.', 'error');
                     setStatus('idle');
                     return true;
+                }
+                if (data.status === 'Grading') {
+                    setStatus('processing');
                 }
                 return false;
             } catch (err) {
@@ -459,7 +488,7 @@ export default function SpeakingPractice({
         try {
             setStatus('processing');
             setSubmissionId(subId); // Sét active ID để chỉ duy nhất bài làm này sáng lên trong cột lịch sử
-            const data = await axiosClient.get(`/student/PracticeSpeaking/${subId}`);
+            const data = await axiosClient.get(`/student/submissions/${subId}`);
             setResults(data.feedback);
             setStatus('completed');
         } catch (err) {
@@ -564,13 +593,8 @@ export default function SpeakingPractice({
                                     <div className={styles.partBadge}>
                                         Speaking Part <span className={styles.headerPartNum}>{partNum}</span>
                                     </div>
-                                    <div className={exercise.maxAttempts && history.length >= exercise.maxAttempts ? styles.attemptLimitBadgeError : styles.attemptLimitBadge}>
+                                    <div className={styles.attemptLimitBadge}>
                                         <i className="bi bi-info-circle"></i> Lượt làm: <strong>{history.length}</strong>
-                                        {exercise.maxAttempts ? (
-                                            <span> / Tối đa <strong>{exercise.maxAttempts}</strong> lần</span>
-                                        ) : (
-                                            <span> (Không giới hạn)</span>
-                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -579,7 +603,7 @@ export default function SpeakingPractice({
                             <div className={styles.cardBody}>
                                 <div className={styles.questionCardWrapper}>
                                     <div className={styles.questionContentCard}>
-                                        <div dangerouslySetInnerHTML={{ __html: renderContent(exercise.contentJson) }} />
+                                        <div dangerouslySetInnerHTML={{ __html: renderContent(exercise.formattedContent) }} />
                                     </div>
                                 </div>
 
@@ -606,12 +630,12 @@ export default function SpeakingPractice({
                                         {/* Record Button Area */}
                                         <div className={styles.recordArea}>
                                             <p className={styles.recordPrompt}>
-                                                {isRecording ? 'Đang ghi âm...' : status === 'processing' ? 'Đang chấm bài...' : 'Nhấn để bắt đầu ghi âm'}
+                                                {isRecording ? 'Đang ghi âm...' : status === 'starting' ? 'Đang chuẩn bị micro...' : status === 'processing' ? 'Đang chấm bài...' : 'Nhấn để bắt đầu ghi âm'}
                                             </p>
                                             <button
                                                 className={`${styles.recordBtn} ${isRecording ? styles.isRecordingBtn : ''}`}
                                                 onClick={isRecording ? stopRecording : startRecording}
-                                                disabled={status === 'processing'}
+                                                disabled={status === 'starting' || status === 'processing'}
                                             >
                                                 <i className={`bi ${isRecording ? 'bi-stop-fill' : 'bi-mic-fill'}`}></i>
                                             </button>

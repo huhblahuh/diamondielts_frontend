@@ -18,11 +18,11 @@ export default function ExerciseDesignerModal({ isOpen, onClose, topic, exercise
                 setActiveSkill(exercise.skillType);
                 setPartType(exercise.type);
                 try {
-                    const content = JSON.parse(exercise.contentJson || '{}');
+                    const content = JSON.parse(exercise.formattedContent || '{}');
                     setEditorContent(content.passageHtml || content.textPrompt || '');
                     setBlocks(content.blocks || []);
                 } catch (e) {
-                    console.error("Error parsing contentJson", e);
+                    console.error("Error parsing formattedContent", e);
                     setEditorContent('');
                     setBlocks([]);
                 }
@@ -150,17 +150,16 @@ export default function ExerciseDesignerModal({ isOpen, onClose, topic, exercise
         }
         setSaving(true);
         try {
-            const contentJson = JSON.stringify({
+            const formattedContent = JSON.stringify({
                 passageHtml: editorContent,
-                blocks: (activeSkill === 'READING' || activeSkill === 'LISTENING') ? blocks : [],
-                textPrompt: editorContent.replace(/<[^>]*>/g, '').substring(0, 150),
+                blocks: (activeSkill === 'READING' || activeSkill === 'LISTENING') ? blocks : []
             });
 
             if (exercise) {
                 await exerciseService.update(exercise.exerciseId, {
                     skillType: activeSkill,
                     type: partType,
-                    contentJson: contentJson,
+                    formattedContent: formattedContent,
                     topicId: topic.id
                 });
                 await Swal.fire({
@@ -173,7 +172,7 @@ export default function ExerciseDesignerModal({ isOpen, onClose, topic, exercise
                 await exerciseService.create({
                     skillType: activeSkill,
                     type: partType,
-                    contentJson: contentJson,
+                    formattedContent: formattedContent,
                     topicId: topic.id
                 });
                 await Swal.fire({

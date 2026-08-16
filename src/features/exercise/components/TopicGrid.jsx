@@ -46,8 +46,7 @@ export default function TopicGrid({ topics, loading, onSelectTopic, onDeleteTopi
         <div className={styles.container}>
             <div className={styles.header}>
                 <div>
-                    <h2>📚 Kho Bài Tập Tự Luyện</h2>
-                    <p>Chọn một chủ đề bên dưới để bắt đầu thiết kế câu hỏi cấp tốc.</p>
+                    <h2><i className="bi bi-journal-bookmark-fill me-2" style={{ color: '#4f46e5' }}></i>Kho Bài Tập Tự Luyện</h2>
                 </div>
             </div>
 
