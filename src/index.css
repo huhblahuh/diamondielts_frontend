@@ -55,6 +55,20 @@ body {
     overflow-x: hidden;
 }
 
+/*
+ * iOS Safari automatically zooms the viewport when a focused form control has
+ * a computed font size below 16px. Keep mobile fields at the minimum readable
+ * size while preserving the user's ability to pinch-zoom the page.
+ */
+@media (max-width: 768px) {
+    input:not([type="button"]):not([type="submit"]):not([type="reset"]),
+    select,
+    textarea,
+    [contenteditable="true"] {
+        font-size: 16px !important;
+    }
+}
+
 /* Đảm bảo toàn bộ popup SweetAlert2 luôn hiển thị trên cùng mọi modal và backdrop */
 .swal2-container {
     z-index: 999999999 !important;

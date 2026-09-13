@@ -1,247 +1,1283 @@
+:root {
+    --navy: #0c2d73;
+    --navy-900: #061b5e;
+    --navy-50: #f0f5ff;
+    --navy-100: #e0ecff;
+    --purple: #7c3aed;
+    --purple-50: #f6f2ff;
+    --text: #17233c;
+    --muted: #6f7f9a;
+    --soft: #98a6bd;
+    --line: #e6ebf3;
+    --surface: #ffffff;
+    --bg: #f5f8fc;
+    --green: #0f9f74;
+    --green-50: #ebfbf4;
+    --amber: #b7791f;
+    --amber-50: #fff8e8;
+    --rose: #e11d48;
+    --rose-50: #fff1f2;
+    --shadow-sm: 0 4px 14px rgba(12, 45, 115, 0.05);
+    --shadow-md: 0 10px 28px rgba(12, 45, 115, 0.08);
+}
+
 .container {
-    display: flex;
-    gap: 1.5rem;
-    height: calc(100vh - 64px - 3rem);
+    width: 100%;
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 0 0 2.5rem;
+    box-sizing: border-box;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
     animation: fadeIn 0.3s ease;
 }
 
 @keyframes fadeIn {
     from {
         opacity: 0;
-        transform: translateY(10px);
+        transform: translateY(8px);
     }
-
     to {
         opacity: 1;
         transform: translateY(0);
     }
 }
 
-.sidebar {
-    width: 280px;
-    background: white;
-    border-radius: 16px;
-    border: 1px solid #e2e8f0;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    flex-shrink: 0;
-}
-
-.sidebarTitle {
-    margin: 0;
-    padding: 1.25rem;
-    font-size: 1rem;
-    border-bottom: 1px solid #f1f5f9;
-    font-weight: 700;
-    color: #1e293b;
-    background: #f8fafc;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.classList {
-    flex: 1;
-    overflow-y: auto;
-    padding: 0.75rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-.classItem {
-    padding: 1rem;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: all 0.2s;
-    border: 1px solid transparent;
-}
-
-.classItem:hover {
-    background: #f1f5f9;
-}
-
-.classItemActive {
-    background: #eef2ff;
-    border-color: #c7d2fe;
-}
-
-.classItem h5 {
-    margin: 0 0 0.2rem 0;
-    color: #1e293b;
-    font-size: 0.95rem;
-    font-weight: 600;
-}
-
-.classItem small {
-    color: #64748b;
-    font-size: 0.8rem;
-}
-
-.content {
-    flex: 1;
-    background: white;
-    border-radius: 16px;
-    border: 1px solid #e2e8f0;
-    display: flex;
-    flex-direction: column;
-    overflow-y: auto;
-    padding: 1.5rem;
-}
-
-.welcomePlaceHolder {
+/* ── Loading & Empty Full Container States ── */
+.loadingClasses {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    height: 100%;
-    color: #94a3b8;
+    padding: 5rem 1rem;
+    color: var(--muted);
+    font-size: 14px;
+    font-weight: 500;
+    gap: 0.85rem;
 }
 
-.welcomePlaceHolder i {
-    font-size: 3rem;
-    margin-bottom: 1rem;
+.loadingSpinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--line);
+    border-top-color: var(--navy);
+    border-radius: 50%;
+    animation: spin 0.75s linear infinite;
 }
 
-.classHeader {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 1.5rem;
-    padding-bottom: 1.5rem;
-    border-bottom: 1px solid #f1f5f9;
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
 }
 
-.classHeader h2 {
-    margin: 0;
-    font-size: 1.5rem;
-    font-weight: 800;
-    color: #1e293b;
-}
-
-.badge {
-    background: #e0e7ff;
-    color: #4f46e5;
-    padding: 0.4rem 0.75rem;
+.emptyContainer {
+    background: var(--surface);
+    border: 1px solid var(--line);
     border-radius: 20px;
-    font-size: 0.75rem;
-    font-weight: 700;
-    text-transform: uppercase;
+    padding: 4.5rem 2rem;
+    text-align: center;
+    color: var(--muted);
+    margin-top: 1rem;
+    box-shadow: var(--shadow-sm);
 }
 
-.deadlineSection {
+.emptyIcon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: var(--navy-50);
+    color: var(--navy);
+    font-size: 2rem;
+    display: grid;
+    place-items: center;
+    margin: 0 auto 1.25rem;
+}
+
+.emptyContainer h3 {
+    margin: 0 0 0.5rem;
+    color: var(--text);
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.emptyContainer p {
+    margin: 0;
+    font-size: 14px;
+    color: var(--muted);
+    max-width: 480px;
+    margin: 0 auto;
+    line-height: 1.5;
+}
+
+/* ── Content Card Wrapper ── */
+.content {
+    background: var(--surface);
+    border-radius: 22px;
+    border: 1px solid var(--line);
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    padding: 1.75rem 2rem;
+    box-shadow: var(--shadow-sm);
 }
 
-.secHeader h4 {
-    margin: 0;
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: #334155;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.secHeader h4 i {
-    color: #ef4444;
-}
-
-.deadlineGrid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 1rem;
-}
-
-.dlCard {
+/* ── Class Header (Unified Hero Banner) ── */
+.classHeader {
+    position: relative;
+    overflow: hidden;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 1.25rem;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    transition: all 0.2s;
+    min-height: 110px;
+    padding: 1.25rem 2rem;
+    margin-bottom: 1.5rem;
+    border-radius: var(--di-radius, 22px);
+    background:
+        radial-gradient(circle at 86% 16%, rgba(255, 200, 61, 0.2), transparent 24%),
+        linear-gradient(120deg, #061B5E 0%, #0A2F8A 55%, #1877F2 100%);
+    color: #ffffff;
+    box-shadow: 0 12px 40px rgba(0, 91, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-sizing: border-box;
 }
 
-.dlCard:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
-    border-color: #cbd5e1;
+.classHeader .heroArtwork {
+    flex: 0 0 190px;
+    width: 190px;
+    height: 110px;
+    margin: -0.6rem -0.5rem -0.6rem 1rem;
 }
 
-.cardOverdue {
-    background: #fef2f2;
-    border-color: #fecaca;
+.classHeader::before {
+    content: "";
+    position: absolute;
+    width: 200px;
+    height: 200px;
+    right: -40px;
+    top: -90px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 50%;
+    box-shadow: 0 0 0 26px rgba(255, 255, 255, 0.04);
+    pointer-events: none;
 }
 
-.dlInfo h5 {
-    margin: 0 0 0.4rem 0;
-    font-size: 1.05rem;
-    font-weight: 700;
-    color: #1e293b;
+.classHeader::after {
+    content: "";
+    position: absolute;
+    inset: auto 0 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(247, 183, 49, 0.9), transparent);
+    pointer-events: none;
 }
 
-.dlMeta {
-    margin: 0 0 0.4rem 0;
-    font-size: 0.85rem;
-    color: #64748b;
+.classHeaderTop {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    gap: 1.5rem;
+    position: relative;
+    z-index: 2;
+}
+
+.headerInfo {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    min-width: 0;
+}
+
+.classTagline {
+    margin: 0.3rem 0 0;
+    color: rgba(255, 255, 255, 0.88);
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.booksDecoration {
+    display: flex;
+    position: relative;
+    width: 110px;
+    height: 70px;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.classNameSelector {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    max-width: 100%;
+    min-width: 0;
+}
+
+.classNameTitle {
+    margin: 0;
+    font-size: 1.65rem;
+    font-weight: 800;
+    color: #ffffff;
+    letter-spacing: -0.02em;
+    line-height: 1.25;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.classNameSelect {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.classNameSelectorInteractive::after {
+    content: '';
+    width: 0;
+    height: 0;
+    margin-left: 0.6rem;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 6px solid #ffffff;
+    pointer-events: none;
+}
+
+/* ── Bar Selection (Always Visible in Class Header) ── */
+.classSelectBar {
     display: flex;
     align-items: center;
-    gap: 0.3rem;
+    background: var(--navy-50);
+    border: 1px solid #d4e3fc;
+    border-radius: 12px;
+    padding: 0.45rem 0.85rem;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    box-sizing: border-box;
 }
 
-.dlCounts {
-    font-size: 0.8rem;
-    color: #94a3b8;
-    font-weight: 500;
+.classSelectBar:hover,
+.classSelectBar:focus-within {
+    background: var(--surface);
+    border-color: var(--navy);
+    box-shadow: 0 4px 14px rgba(12, 45, 115, 0.1);
 }
 
-.btnDo {
-    padding: 0.6rem 1.2rem;
-    border-radius: 8px;
+.selectWrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    min-width: 160px;
+}
+
+.classSelect {
+    appearance: none;
+    -webkit-appearance: none;
+    background: transparent;
     border: none;
-    background: #1e293b;
-    color: white;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    padding-right: 1.6rem;
+    cursor: pointer;
+    outline: none;
+    font-family: inherit;
+    width: 100%;
+}
+
+.classSelect:disabled {
+    cursor: default;
+    padding-right: 0;
+}
+
+.selectChevron {
+    position: absolute;
+    right: 0;
+    pointer-events: none;
+    color: var(--navy);
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+/* ── Class Selection Bar Pills (Multi-class Horizontal Switcher) ── */
+.classSelectionBar {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    overflow-x: auto;
+    padding: 0.1rem 0;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    -webkit-overflow-scrolling: touch;
+}
+
+.classSelectionBar::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+}
+
+.selectionPill {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.45rem 1rem;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.18s ease;
+    white-space: nowrap;
+    font-family: inherit;
+}
+
+.selectionPill:hover {
+    background: var(--navy-50);
+    color: var(--navy);
+    border-color: #c7d9fe;
+    transform: translateY(-1px);
+}
+
+.selectionPillActive {
+    background: linear-gradient(135deg, var(--navy) 0%, #1d4ed8 100%) !important;
+    color: #ffffff !important;
+    border-color: var(--navy) !important;
+    box-shadow: 0 4px 14px rgba(12, 45, 115, 0.22);
+}
+
+/* ── Toolbar (Search & Filter Tabs) ── */
+.toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.filterTabs {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: #f8fafc;
+    padding: 0.3rem;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+}
+
+.filterBtn {
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    padding: 0.4rem 0.85rem;
+    border-radius: 9px;
+    font-size: 13px;
     font-weight: 600;
     cursor: pointer;
-    font-size: 0.9rem;
-    transition: background 0.2s;
+    transition: all 0.18s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: inherit;
     white-space: nowrap;
 }
 
-.btnDo:hover {
-    background: #0f172a;
+.filterBtn:hover {
+    color: var(--text);
+    background: rgba(255, 255, 255, 0.6);
+}
+
+.filterBtnActive {
+    background: var(--surface) !important;
+    color: var(--navy) !important;
+    font-weight: 700;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.filterCount {
+    background: #e2e8f0;
+    color: var(--text);
+    padding: 0.1rem 0.45rem;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.filterBtnActive .filterCount {
+    background: var(--navy-50);
+    color: var(--navy);
+}
+
+.searchBox {
+    position: relative;
+    display: flex;
+    align-items: center;
+    min-width: 250px;
+}
+
+.mobileSearchRow {
+    display: contents;
+}
+
+.mobileFilterTrigger,
+.mobileFilterMenu {
+    display: none;
+}
+
+.searchIcon {
+    position: absolute;
+    left: 0.85rem;
+    color: var(--soft);
+    font-size: 13px;
+    pointer-events: none;
+}
+
+.searchInput {
+    width: 100%;
+    padding: 0.5rem 2.2rem 0.5rem 2.2rem;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    background: #f8fafc;
+    color: var(--text);
+    font-size: 13px;
+    font-family: inherit;
+    outline: none;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+}
+
+.searchInput:focus {
+    background: var(--surface);
+    border-color: var(--navy);
+    box-shadow: 0 0 0 3px rgba(12, 45, 115, 0.08);
+}
+
+.searchInput::placeholder {
+    color: var(--soft);
+}
+
+.clearSearchBtn {
+    position: absolute;
+    right: 0.65rem;
+    background: transparent;
+    border: none;
+    color: var(--soft);
+    cursor: pointer;
+    font-size: 12px;
+    padding: 0.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.clearSearchBtn:hover {
+    color: var(--text);
+}
+
+/* ── Deadline Section & Responsive Grid ── */
+.deadlineSection {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.loadingDeadlines {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 4rem 1rem;
+    color: var(--muted);
+    font-size: 14px;
+    font-weight: 500;
 }
 
 .emptyDeadlines {
     text-align: center;
-    padding: 3rem;
+    padding: 4rem 1.5rem;
     background: #f8fafc;
-    border-radius: 12px;
-    color: #64748b;
-    font-weight: 500;
+    border-radius: 18px;
+    border: 1px dashed var(--line);
+    color: var(--muted);
+}
+
+.emptyDeadlinesIcon {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: var(--green-50);
+    color: var(--green);
+    font-size: 1.6rem;
+    display: grid;
+    place-items: center;
+    margin: 0 auto 0.85rem;
+}
+
+.emptyDeadlines h4 {
+    margin: 0 0 0.35rem;
+    color: var(--text);
+    font-size: 17px;
+    font-weight: 700;
+}
+
+.emptyDeadlines p {
+    margin: 0 0 1rem;
+    font-size: 13px;
+    color: var(--muted);
+}
+
+.btnResetFilter {
+    padding: 0.45rem 1.15rem;
+    border-radius: 999px;
+    border: 1px solid var(--navy);
+    background: var(--surface);
+    color: var(--navy);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.18s ease;
+}
+
+.btnResetFilter:hover {
+    background: var(--navy);
+    color: #ffffff;
+}
+
+/* ── Modern 3-Column Responsive Grid ── */
+.deadlineGrid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    align-items: stretch;
+    min-width: 0;
+}
+
+@media (max-width: 1080px) {
+    .deadlineGrid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 }
 
 @media (max-width: 768px) {
+    .deadlineGrid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ── Individual Assignment Card ── */
+.dlCard {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.25rem;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
+    transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    cursor: pointer;
+    position: relative;
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+.dlCard:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+    border-color: #bad3fc;
+}
+
+.cardOverdue {
+    background: #fffafa;
+    border-color: #fecaca;
+}
+
+.cardOverdue:hover {
+    border-color: #f87171;
+}
+
+.cardHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.statusBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+}
+
+.status_open {
+    background: var(--green-50);
+    color: var(--green);
+    border: 1px solid rgba(15, 159, 116, 0.18);
+}
+
+.status_urgent {
+    background: var(--amber-50);
+    color: var(--amber);
+    border: 1px solid rgba(183, 121, 31, 0.18);
+}
+
+.status_overdue {
+    background: var(--rose-50);
+    color: var(--rose);
+    border: 1px solid rgba(225, 29, 72, 0.18);
+}
+
+.status_neutral {
+    background: #f1f5f9;
+    color: var(--muted);
+    border: 1px solid var(--line);
+}
+
+.itemCountBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    background: #f8fafc;
+    padding: 0.2rem 0.55rem;
+    border-radius: 6px;
+    border: 1px solid var(--line);
+}
+
+.cardBody {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    flex: 1;
+    min-width: 0;
+}
+
+.dlTitle {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.45;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    letter-spacing: -0.01em;
+}
+
+.dlMeta {
+    margin: 0;
+    font-size: 12px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.dlMeta i {
+    color: var(--soft);
+}
+
+.dlMeta strong {
+    color: var(--text);
+    font-weight: 600;
+}
+
+.cardFooter {
+    margin-top: 0.15rem;
+}
+
+.btnDo {
+    width: 100%;
+    padding: 0.6rem 1rem;
+    border-radius: 10px;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    box-sizing: border-box;
+    font-family: inherit;
+}
+
+.btnStart {
+    background: linear-gradient(135deg, var(--navy) 0%, #1d4ed8 100%);
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(12, 45, 115, 0.15);
+}
+
+.btnStart:hover {
+    background: linear-gradient(135deg, #09245f 0%, #1e40af 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(12, 45, 115, 0.22);
+}
+
+.btnReview {
+    background: #f1f5f9;
+    color: var(--text);
+    border: 1px solid var(--line);
+}
+
+.btnReview:hover {
+    background: #e2e8f0;
+    color: #000000;
+    transform: translateY(-1px);
+}
+
+/* ── Pagination ── */
+.paginationWrapper {
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--line);
+    display: flex;
+    justify-content: center;
+}
+
+/* ── Mobile Responsive Optimizations ── */
+@media (max-width: 768px) {
     .container {
-        flex-direction: column;
-        height: auto;
+        padding: 0 0 1.5rem;
     }
 
-    .sidebar {
+    .content {
+        padding: 1.25rem;
+        border-radius: 16px;
+    }
+
+    .classHeaderTop {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.85rem;
+    }
+
+    .classNameTitle {
+        font-size: 20px;
+    }
+
+    .classSelectBar {
         width: 100%;
-        height: 200px;
+        justify-content: space-between;
+        padding: 0.55rem 0.85rem;
+    }
+
+    .selectWrapper {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .toolbar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+    }
+
+    .filterTabs {
+        width: 100%;
+        overflow-x: auto;
+        box-sizing: border-box;
+    }
+
+    .filterBtn {
+        flex: 1;
+        justify-content: center;
+        padding: 0.45rem 0.5rem;
+        font-size: 12px;
+    }
+
+    .searchBox {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .searchInput {
+        padding: 0.55rem 2.2rem 0.55rem 2.2rem;
+        font-size: 13px;
     }
 
     .dlCard {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 1rem;
+        padding: 1.15rem;
+        border-radius: 16px;
+    }
+
+    .dlTitle {
+        font-size: 14px;
     }
 
     .btnDo {
+        padding: 0.65rem 1rem;
+        font-size: 13px;
+    }
+}
+
+/* Tablet Devices (<= 1024px) */
+@media (max-width: 1024px) {
+    .classHeader {
+        min-height: 90px;
+        padding: 1rem 1.25rem;
+        margin-bottom: 1rem;
+        border-radius: 18px;
+    }
+}
+
+/* Mobile Assignment screen — tailored to the supplied visual reference. */
+@media (max-width: 768px) {
+    .container {
+        position: relative;
+        overflow-x: hidden;
+        min-height: calc(100dvh - 76px);
+        max-width: none;
+        padding: 0 0 2rem;
+        background: #f8fbff;
+    }
+
+    /* Long, smooth color blend extending down the page */
+    .container::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 340px;
+        background: linear-gradient(180deg, 
+            #061B5E 0%, 
+            #0A2F8A 100px, 
+            rgba(24, 119, 242, 0.75) 170px, 
+            rgba(24, 119, 242, 0.35) 240px, 
+            rgba(248, 251, 255, 0.1) 300px, 
+            #f8fbff 340px
+        );
+        pointer-events: none;
+        z-index: 0;
+    }
+
+    .content {
+        position: relative;
+        z-index: 1;
+        min-height: auto;
+        padding: 0 1.25rem 2.5rem;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        box-shadow: none;
+    }
+
+    .classHeader {
+        position: relative;
+        z-index: 1;
+        min-height: auto;
+        margin: 0 0 0.85rem;
+        padding: 1.35rem 1.25rem 1.1rem;
+        overflow: visible;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        box-shadow: none;
+    }
+
+    .classHeader::before,
+    .classHeader::after {
+        display: none;
+    }
+
+    .classHeader .heroArtwork {
+        position: absolute;
+        right: -1rem;
+        top: -1.1rem;
+        width: 132px;
+        height: 88px;
+        margin: 0;
+        opacity: 0.58;
+    }
+
+    .classHeaderTop {
+        position: relative;
+        z-index: 2;
+        flex-direction: row;
+        align-items: stretch;
+        gap: 0;
+    }
+
+    .classNameTitle {
+        position: relative;
+        z-index: 2;
+        max-width: calc(100vw - 110px);
+        color: #ffffff;
+        font-size: clamp(1.2rem, 5vw, 1.45rem);
+        font-weight: 800;
+        line-height: 1.25;
+        letter-spacing: -0.025em;
+    }
+
+    .classNameSelectorInteractive::after {
+        position: relative;
+        z-index: 3;
+        margin-left: 0.45rem;
+        border-top-color: #ffffff;
+    }
+
+    .classTagline {
+        position: relative;
+        z-index: 2;
+        margin-top: 0.55rem;
+        color: rgba(255, 255, 255, 0.88);
+        max-width: calc(100vw - 110px);
+        font-size: 12px;
+        line-height: 1.35;
+        overflow-wrap: anywhere;
+    }
+
+    .booksDecoration {
+        position: absolute;
+        z-index: 1;
+        top: -42px;
+        right: -28px;
+        width: 118px;
+        height: 118px;
+        display: block;
+        opacity: 0.95;
+        filter: drop-shadow(0 12px 16px rgba(37, 99, 235, 0.18));
+        pointer-events: none;
+    }
+
+    .booksDecoration::before,
+    .booksDecoration::after {
+        content: '';
+        position: absolute;
+        border: 16px solid rgba(59, 130, 246, 0.1);
+        border-radius: 50%;
+    }
+
+    .booksDecoration::before {
+        width: 96px;
+        height: 96px;
+        inset: -18px -12px auto auto;
+    }
+
+    .booksDecoration::after {
+        width: 56px;
+        height: 56px;
+        inset: 2px 8px auto auto;
+    }
+
+    .bookBack,
+    .bookFront {
+        position: absolute;
+        right: -15px;
+        width: 88px;
+        height: 22px;
+        border: 5px solid #68a1ff;
+        border-right-width: 11px;
+        border-radius: 8px 3px 3px 8px;
+        background: linear-gradient(180deg, #ffffff, #e8f1ff);
+        transform: rotate(9deg) skewX(-12deg);
+        box-shadow: inset 0 -4px 5px rgba(37, 99, 235, 0.1);
+    }
+
+    .bookBack {
+        top: 64px;
+    }
+
+    .bookFront {
+        top: 39px;
+        right: -8px;
+        border-color: #367cf4;
+        background: linear-gradient(180deg, #5a94ff 0 48%, #eaf2ff 49%);
+    }
+
+    .toolbar {
+        position: relative;
+        gap: 0;
+        margin-bottom: 1.25rem;
+    }
+
+    .filterTabs {
+        display: none;
+    }
+
+    .mobileSearchRow {
+        position: relative;
+        display: flex;
         width: 100%;
+        gap: 0.65rem;
+    }
+
+    .searchBox {
+        flex: 1;
+        width: auto;
+        min-width: 0;
+    }
+
+    .searchInput {
+        height: 44px;
+        padding: 0 2.35rem 0 2.6rem;
+        border-color: #dbe6f5;
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.58);
+        color: #1a2e57;
+        font-size: 13.5px;
+        box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(12px);
+    }
+
+    .searchIcon {
+        left: 0.9rem;
+        color: #8190ae;
+        font-size: 14px;
+    }
+
+    .mobileFilterTrigger {
+        position: relative;
+        width: 44px;
+        height: 44px;
+        flex: 0 0 44px;
+        display: grid;
+        place-items: center;
+        border: 1px solid #dbe6f5;
+        border-radius: 14px;
+        color: #536483;
+        background: rgba(255, 255, 255, 0.82);
+        font-size: 1rem;
+        box-shadow: 0 8px 22px rgba(20, 61, 120, 0.06);
+        cursor: pointer;
+    }
+
+    .mobileFilterTriggerActive {
+        color: #0b5ff5;
+        border-color: #bad2ff;
+        background: #f7faff;
+    }
+
+    .mobileFilterDot {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        width: 7px;
+        height: 7px;
+        border: 2px solid #fff;
+        border-radius: 50%;
+        background: #0b66f8;
+        box-sizing: content-box;
+    }
+
+    .mobileFilterMenu {
+        position: absolute;
+        z-index: 20;
+        top: calc(100% + 8px);
+        right: 0;
+        width: 190px;
+        display: grid;
+        max-height: min(420px, calc(100dvh - 180px));
+        overflow-y: auto;
+        padding: 0.4rem;
+        border: 1px solid #dce7f6;
+        border-radius: 15px;
+        background: rgba(255, 255, 255, 0.97);
+        box-shadow: 0 18px 45px rgba(24, 58, 110, 0.18);
+        backdrop-filter: blur(18px);
+    }
+
+    .mobileFilterHeading {
+        margin: 0;
+        padding: 0.45rem 0.7rem 0.25rem;
+        color: #91a0ba;
+        font-size: 0.64rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    .mobileFilterDivider {
+        height: 1px;
+        margin: 0.35rem 0.55rem 0.15rem;
+        background: #e7edf7;
+    }
+
+    .mobileFilterMenu button {
+        display: grid;
+        grid-template-columns: 1fr auto 18px;
+        align-items: center;
+        gap: 0.55rem;
+        min-height: 42px;
+        padding: 0 0.7rem;
+        border: 0;
+        border-radius: 10px;
+        color: #324568;
+        background: transparent;
+        font-size: 0.82rem;
+        text-align: left;
+        cursor: pointer;
+    }
+
+    .mobileFilterMenu button[aria-checked='true'] {
+        color: #075ce8;
+        background: #eef5ff;
+        font-weight: 700;
+    }
+
+    .mobileFilterMenu strong {
+        color: #8b99b3;
+        font-size: 0.72rem;
+    }
+
+    .deadlineSection,
+    .deadlineGrid {
+        gap: 1rem;
+    }
+
+    .dlCard {
+        position: relative;
+        min-height: 104px;
+        justify-content: center;
+        gap: 0;
+        padding: 1.25rem 4.5rem 1.25rem 1.35rem;
+        border-color: rgba(220, 231, 246, 0.75);
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.92);
+        box-shadow: 0 12px 34px rgba(62, 106, 169, 0.09);
+        backdrop-filter: blur(16px);
+    }
+
+    .dlCard:hover {
+        transform: none;
+    }
+
+    .dlCard:active {
+        transform: scale(0.99);
+    }
+
+    .cardOverdue,
+    .cardOverdue:hover {
+        background: rgba(255, 255, 255, 0.92);
+        border-color: rgba(220, 231, 246, 0.75);
+    }
+
+    .cardHeader {
+        display: none;
+    }
+
+    .cardBody {
+        flex: 0;
+        gap: 0.65rem;
+    }
+
+    .dlTitle {
+        display: -webkit-box;
+        overflow: hidden;
+        color: #071b4d;
+        font-size: 15px;
+        font-weight: 700;
+        line-height: 1.32;
+        white-space: normal;
+        text-overflow: ellipsis;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        letter-spacing: -0.015em;
+    }
+
+    .dlMeta {
+        gap: 0.55rem;
+        color: #8291af;
+        font-size: 12px;
+        white-space: nowrap;
+    }
+
+    .dlMeta i {
+        color: #8da0bf;
+        font-size: 1rem;
+    }
+
+    .dlMeta strong {
+        color: #263b63;
+        font-weight: 500;
+    }
+
+    .cardFooter {
+        position: absolute;
+        top: 50%;
+        right: 1rem;
+        margin: 0;
+        transform: translateY(-50%);
+    }
+
+    .btnDo {
+        width: 42px;
+        height: 42px;
+        padding: 0;
+        border: 0;
+        border-radius: 50%;
+        color: #0764f7;
+        background: linear-gradient(135deg, #eef5ff, #e4efff);
+        box-shadow: none;
+        font-size: 1.05rem;
+    }
+
+    .btnDo span {
+        display: none;
+    }
+
+    .btnStart:hover,
+    .btnReview:hover {
+        color: #0764f7;
+        background: linear-gradient(135deg, #eaf3ff, #dbeaff);
+        transform: none;
+        box-shadow: none;
+    }
+
+    .paginationWrapper {
+        position: fixed;
+        z-index: 250;
+        left: 50%;
+        bottom: calc(90px + env(safe-area-inset-bottom, 0px));
+        width: max-content;
+        max-width: calc(100vw - 2rem);
+        margin: 0;
+        padding: 0;
+        border-top: 0;
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transform: translate(-50%, 10px) scale(0.97);
+        transition: opacity 0.22s ease, transform 0.22s ease, visibility 0.22s;
+    }
+
+    .paginationWrapperVisible {
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+        transform: translate(-50%, 0) scale(1);
+    }
+}
+
+@media (max-width: 390px) {
+    .content {
+        padding-inline: 1rem;
+    }
+
+    .classNameTitle {
+        font-size: 1.2rem;
+    }
+
+    .classTagline {
+        font-size: 12px;
+    }
+
+    .dlCard {
+        padding-left: 1.1rem;
+        padding-right: 4rem;
     }
 }

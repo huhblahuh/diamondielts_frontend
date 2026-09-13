@@ -30,10 +30,7 @@ function SubTable({ submissions, subPage, setSubPage, formatDate, styles, onView
                             <tr key={sub.submissionId}>
                                 <td style={{ fontWeight: 600 }}>{sub.assignmentTitle}</td>
                                 <td>
-                                    <span className={`${styles.typeBadge} ${
-                                        sub.itemType === 'SPEAKING' ? styles.typeSpeaking :
-                                        sub.itemType === 'WRITING' ? styles.typeWriting : styles.typeOther
-                                    }`}>
+                                    <span className={`${styles.typeBadge} ${sub.itemType === 'SPEAKING' ? styles.typeSpeaking : styles.typeOther}`}>
                                         {sub.itemType}
                                     </span>
                                 </td>
@@ -50,7 +47,7 @@ function SubTable({ submissions, subPage, setSubPage, formatDate, styles, onView
                                         sub.status === 'Evaluated' || sub.status === 'Completed'
                                             ? styles.statusCompleted : styles.statusPending
                                     }`}>
-                                        {sub.status === 'Evaluated' ? 'Đã chấm AI' :
+                                        {sub.status === 'Evaluated' ? 'Đã chấm tự động' :
                                          sub.status === 'Submitted' ? 'Chờ chấm' : sub.status}
                                     </span>
                                 </td>

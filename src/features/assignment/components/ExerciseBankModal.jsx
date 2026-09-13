@@ -4,7 +4,7 @@ import Swal from 'sweetalert2';
 
 export default function ExerciseBankModal({ exercises, onClose, onSelect }) {
     const [searchTerm, setSearchTerm] = useState('');
-    const [selectedSkill, setSelectedSkill] = useState('ALL');
+    const [selectedSkill, setSelectedSkill] = useState('SPEAKING');
     const [selectedItems, setSelectedItems] = useState({}); // { [exerciseId]: true }
     const [currentPage, setCurrentPage] = useState(1);
     const PAGE_SIZE = 6; // Hiển thị 6 bài trên mỗi trang để vừa khít màn hình
@@ -83,10 +83,7 @@ export default function ExerciseBankModal({ exercises, onClose, onSelect }) {
                         className={styles.select}
                         style={{ width: '160px', padding: '0.5rem 0.75rem', fontSize: '0.85rem' }}
                     >
-                        <option value="ALL">Tất cả kỹ năng</option>
                         <option value="SPEAKING">Speaking</option>
-                        <option value="WRITING">Writing</option>
-                        <option value="FILE_UPLOAD">File Upload</option>
                     </select>
                 </div>
 

@@ -13,15 +13,35 @@ const quotaDashboardService = {
             },
         }),
 
-    getFreeSpeakingQuotas: (classId, search = '') =>
+    getFreeSpeakingQuotas: (classId, search = '', timeFrame) =>
         axiosClient.get(
             `/admin/quota-dashboard/classes/${classId}/free-speaking`,
-            { params: { search: search || undefined } },
+            {
+                params: {
+                    search: search || undefined,
+                    timeFrame: timeFrame || undefined,
+                },
+            },
         ),
+
+    getUserFreeSpeakingQuotas: ({ classId, search = '', timeFrame }) =>
+        axiosClient.get('/admin/quota-dashboard/users/free-speaking', {
+            params: {
+                classId: classId || undefined,
+                search: search || undefined,
+                timeFrame: timeFrame || undefined,
+            },
+        }),
 
     updateFreeSpeakingQuotas: (classId, payload) =>
         axiosClient.put(
             `/admin/quota-dashboard/classes/${classId}/free-speaking`,
+            payload,
+        ),
+
+    setUserFreeSpeakingQuota: (userId, payload) =>
+        axiosClient.put(
+            `/admin/quota-dashboard/users/${userId}/free-speaking`,
             payload,
         ),
 };

@@ -16,14 +16,16 @@ export default function FileSubmissionItem({
     handleRemoveSubmission,
     handleSaveEditedSubmission,
     handleSubmitHomework,
-    formatDateTime
+    formatDateTime,
+    onToggle,
+    isExpanded = false
 }) {
-    const parsedContent = item.formattedContent ? JSON.parse(item.formattedContent) : {};
+    const parsedContent = item.content && typeof item.content === 'object' ? item.content : {};
 
     return (
         <div className={styles.itemCard}>
             {/* Tiêu đề & Loại bài tập */}
-            <div className={styles.itemHeader}>
+            <div className={`${styles.itemHeader} ${onToggle ? styles.itemHeaderToggle : ''}`} onClick={onToggle}>
                 <div className={styles.itemInfo}>
                     <h4>Hạng mục {index + 1}: {parsedContent.title || 'Nộp tài liệu tự luận'}</h4>
                     <p className={styles.itemDesc}>{parsedContent.description || 'Vui lòng làm bài và tải lên file bài làm theo đúng yêu cầu bên dưới.'}</p>
@@ -31,6 +33,19 @@ export default function FileSubmissionItem({
                 <span className={styles.itemBadge}>
                     <i className="bi bi-folder-symlink"></i> File Submission
                 </span>
+                {onToggle && (
+                    <button
+                        type="button"
+                        className={styles.itemToggleButton}
+                        onClick={(event) => {
+                            event.stopPropagation();
+                            onToggle();
+                        }}
+                        aria-label={isExpanded ? 'Thu gọn hạng mục' : 'Mở rộng hạng mục'}
+                    >
+                        <i className={`bi bi-chevron-down ${styles.itemSummaryChevron} ${isExpanded ? styles.itemSummaryChevronExpanded : ''}`}></i>
+                    </button>
+                )}
             </div>
 
             {/* Tài liệu đính kèm mẫu từ Giáo viên (Nếu có) */}

@@ -1,4 +1,4 @@
-import {
+import React, {
     useCallback,
     useEffect,
     useMemo,
@@ -6,7 +6,6 @@ import {
     useState,
 } from 'react';
 import {
-    ArcElement,
     CategoryScale,
     Chart as ChartJS,
     Legend,
@@ -15,13 +14,13 @@ import {
     PointElement,
     Tooltip,
 } from 'chart.js';
-import { Doughnut, Line } from 'react-chartjs-2';
+import { Line } from 'react-chartjs-2';
 import Swal from 'sweetalert2';
 import quotaDashboardService from '../../api/services/quotaDashboard.service';
+import DailyCostReport from '../../features/admin/daily-cost-report/DailyCostReport';
 import styles from './QuotaDashboardPage.module.css';
 
 ChartJS.register(
-    ArcElement,
     CategoryScale,
     LineElement,
     LinearScale,
@@ -31,6 +30,14 @@ ChartJS.register(
 );
 
 const numberFormatter = new Intl.NumberFormat('vi-VN');
+const hourFormatter = new Intl.NumberFormat('vi-VN', {
+    maximumFractionDigits: 4,
+});
+const quotaTimeFrames = [
+    { value: 'Daily', label: 'Hàng ngày' },
+    { value: 'Weekly', label: 'Hàng tuần' },
+    { value: 'Monthly', label: 'Hàng tháng' },
+];
 
 function toDateInput(date) {
     const year = date.getFullYear();
@@ -170,7 +177,7 @@ function initialDates() {
 }
 
 function getErrorMessage(error, fallback) {
-    return error?.response?.data?.message || fallback;
+    return error?.message || fallback;
 }
 
 export default function QuotaDashboardPage() {
@@ -187,6 +194,7 @@ export default function QuotaDashboardPage() {
     const [quotaDrafts, setQuotaDrafts] = useState({});
     const [selectedStudents, setSelectedStudents] = useState([]);
     const [bulkLimit, setBulkLimit] = useState('10');
+    const [quotaTimeFrame, setQuotaTimeFrame] = useState('Monthly');
     const [quotaSearch, setQuotaSearch] = useState('');
     const [loadingOverview, setLoadingOverview] = useState(true);
     const [loadingQuotas, setLoadingQuotas] = useState(false);
@@ -216,18 +224,18 @@ export default function QuotaDashboardPage() {
         }
     }, []);
 
-    const loadQuotas = useCallback(async (classId, search = '') => {
-        if (!classId) {
-            setQuotas([]);
-            setQuotaDrafts({});
-            return;
-        }
+    const loadQuotas = useCallback(async (
+        classId,
+        search = '',
+        timeFrame = 'Monthly',
+    ) => {
         setLoadingQuotas(true);
         try {
-            const data = await quotaDashboardService.getFreeSpeakingQuotas(
+            const data = await quotaDashboardService.getUserFreeSpeakingQuotas({
                 classId,
                 search,
-            );
+                timeFrame,
+            });
             setQuotas(data);
             setQuotaDrafts(
                 Object.fromEntries(data.map((item) => [item.userId, item.limit])),
@@ -247,7 +255,10 @@ export default function QuotaDashboardPage() {
     useEffect(() => {
         const initialize = async () => {
             try {
-                const classData = await quotaDashboardService.getClasses();
+                const [classData] = await Promise.all([
+                    quotaDashboardService.getClasses(),
+                    loadQuotas('', '', 'Monthly'),
+                ]);
                 setClasses(classData);
             } catch (error) {
                 Swal.fire(
@@ -258,7 +269,7 @@ export default function QuotaDashboardPage() {
             }
         };
         initialize();
-    }, []);
+    }, [loadQuotas]);
 
     useEffect(() => {
         if (!filters.from || !filters.to || filters.to < filters.from) {
@@ -281,7 +292,15 @@ export default function QuotaDashboardPage() {
             return { ...current, [name]: value };
         });
         if (name === 'classId') {
-            loadQuotas(value);
+            loadQuotas(value, '', quotaTimeFrame);
+        }
+    };
+
+    const handleQuotaTimeFrameChange = (event) => {
+        const nextTimeFrame = event.target.value;
+        setQuotaTimeFrame(nextTimeFrame);
+        if (filters.classId) {
+            loadQuotas(filters.classId, quotaSearch, nextTimeFrame);
         }
     };
 
@@ -294,7 +313,7 @@ export default function QuotaDashboardPage() {
                 payload,
             );
             await Promise.all([
-                loadQuotas(filters.classId, quotaSearch),
+                loadQuotas(filters.classId, quotaSearch, quotaTimeFrame),
                 loadOverview(filters),
             ]);
             Swal.fire({
@@ -325,6 +344,7 @@ export default function QuotaDashboardPage() {
             {
                 mode: 'set',
                 limit,
+                timeFrame: quotaTimeFrame,
                 studentIds: selectedStudents.length > 0
                     ? selectedStudents
                     : null,
@@ -336,31 +356,49 @@ export default function QuotaDashboardPage() {
         );
     };
 
-    const saveStudentQuota = (studentId) => {
+    const saveStudentQuota = async (studentId) => {
         const limit = Number(quotaDrafts[studentId]);
         if (!Number.isFinite(limit) || limit < 0) {
             Swal.fire('Limit không hợp lệ', 'Limit phải là số không âm.', 'warning');
             return;
         }
-        updateQuota(
-            {
-                mode: 'set',
+        setSaving(true);
+        try {
+            await quotaDashboardService.setUserFreeSpeakingQuota(studentId, {
                 limit,
-                studentIds: [studentId],
+                timeFrame: quotaTimeFrame,
                 reason: 'Điều chỉnh quota cá nhân từ Admin Dashboard',
-            },
-            'Đã lưu quota cá nhân',
-        );
+            });
+            await Promise.all([
+                loadQuotas(filters.classId, quotaSearch, quotaTimeFrame),
+                loadOverview(filters),
+            ]);
+            Swal.fire({
+                icon: 'success',
+                title: 'Đã lưu quota cá nhân',
+                timer: 1600,
+                showConfirmButton: false,
+            });
+        } catch (error) {
+            Swal.fire(
+                'Cập nhật thất bại',
+                getErrorMessage(error, 'Không thể cập nhật quota.'),
+                'error',
+            );
+        } finally {
+            setSaving(false);
+        }
     };
 
     const resetStudentUsage = (studentId) => {
         updateQuota(
             {
                 mode: 'resetUsed',
+                timeFrame: quotaTimeFrame,
                 studentIds: [studentId],
-                reason: 'Reset lượt đã sử dụng từ Admin Dashboard',
+                reason: 'Reset điểm quota đã sử dụng từ Admin Dashboard',
             },
-            'Đã reset lượt sử dụng',
+            'Đã reset điểm quota đã sử dụng',
         );
     };
 
@@ -380,65 +418,68 @@ export default function QuotaDashboardPage() {
         );
     };
 
-    const partChartData = {
-        labels: overview?.gptTokensByPart?.map((item) => item.label) || [],
-        datasets: [{
-            data: overview?.gptTokensByPart?.map((item) => item.tokens) || [],
-            backgroundColor: ['#005BFF', '#7B3FF2', '#F7B731', '#A8B6CC'],
-            borderWidth: 0,
-            hoverOffset: 8,
-        }],
-    };
-
     const tokenTrendData = {
         labels: overview?.trend?.map((item) => item.label) || [],
-        datasets: [{
-            label: 'GPT token',
-            data: overview?.trend?.map((item) => item.gptTokens) || [],
-            borderColor: '#005BFF',
-            backgroundColor: 'rgba(0, 91, 255, 0.12)',
-            pointBackgroundColor: '#005BFF',
-            pointBorderColor: '#ffffff',
-            pointBorderWidth: 2,
-            pointRadius: 4,
-            pointHoverRadius: 6,
-            borderWidth: 3,
-            tension: 0.35,
-        }],
+        datasets: [
+            {
+                label: 'Input token',
+                data: overview?.trend?.map((item) => item.inputTokens) || [],
+                borderColor: '#005BFF',
+                backgroundColor: 'rgba(0, 91, 255, 0.12)',
+                pointBackgroundColor: '#005BFF',
+                pointBorderColor: '#ffffff',
+                pointBorderWidth: 2,
+                pointRadius: 4,
+                pointHoverRadius: 6,
+                borderWidth: 3,
+                tension: 0.35,
+            },
+            {
+                label: 'Output token',
+                data: overview?.trend?.map((item) => item.outputTokens) || [],
+                borderColor: '#7B3FF2',
+                backgroundColor: 'rgba(123, 63, 242, 0.12)',
+                pointBackgroundColor: '#7B3FF2',
+                pointBorderColor: '#ffffff',
+                pointBorderWidth: 2,
+                pointRadius: 4,
+                pointHoverRadius: 6,
+                borderWidth: 3,
+                tension: 0.35,
+            },
+        ],
     };
 
-    const submissionTrendData = {
+    const speechTrendData = {
         labels: overview?.trend?.map((item) => item.label) || [],
-        datasets: [{
-            label: 'Lượt nộp',
-            data: overview?.trend?.map((item) => item.submissions) || [],
-            borderColor: '#EAA00B',
-            backgroundColor: 'rgba(247, 183, 49, 0.14)',
-            pointBackgroundColor: '#EAA00B',
-            pointBorderColor: '#ffffff',
-            pointBorderWidth: 2,
-            pointRadius: 4,
-            pointHoverRadius: 6,
-            borderWidth: 3,
-            tension: 0.35,
-        }],
-    };
-
-    const azureSpeechTrendData = {
-        labels: overview?.trend?.map((item) => item.label) || [],
-        datasets: [{
-            label: 'Azure Speech (giây)',
-            data: overview?.trend?.map((item) => item.azureSpeechSeconds) || [],
-            borderColor: '#7B3FF2',
-            backgroundColor: 'rgba(123, 63, 242, 0.12)',
-            pointBackgroundColor: '#7B3FF2',
-            pointBorderColor: '#ffffff',
-            pointBorderWidth: 2,
-            pointRadius: 4,
-            pointHoverRadius: 6,
-            borderWidth: 3,
-            tension: 0.35,
-        }],
+        datasets: [
+            {
+                label: 'Azure Speech (giờ)',
+                data: overview?.trend?.map((item) => item.azureSpeechHours) || [],
+                borderColor: '#005BFF',
+                backgroundColor: 'rgba(0, 91, 255, 0.12)',
+                pointBackgroundColor: '#005BFF',
+                pointBorderColor: '#ffffff',
+                pointBorderWidth: 2,
+                pointRadius: 4,
+                pointHoverRadius: 6,
+                borderWidth: 3,
+                tension: 0.35,
+            },
+            {
+                label: 'Soniox (giờ)',
+                data: overview?.trend?.map((item) => item.sonioxSpeechHours) || [],
+                borderColor: '#EAA00B',
+                backgroundColor: 'rgba(247, 183, 49, 0.14)',
+                pointBackgroundColor: '#EAA00B',
+                pointBorderColor: '#ffffff',
+                pointBorderWidth: 2,
+                pointRadius: 4,
+                pointHoverRadius: 6,
+                borderWidth: 3,
+                tension: 0.35,
+            },
+        ],
     };
 
     const chartOptions = {
@@ -452,7 +493,7 @@ export default function QuotaDashboardPage() {
             tooltip: {
                 callbacks: {
                     label: (context) =>
-                        ` ${context.label}: ${numberFormatter.format(context.raw)}`,
+                        ` ${context.dataset.label}: ${numberFormatter.format(context.raw)}`,
                 },
             },
         },
@@ -473,22 +514,18 @@ export default function QuotaDashboardPage() {
         },
     };
 
-    const submissionTrendOptions = {
+    const speechTrendOptions = {
         ...chartOptions,
         interaction: { mode: 'index', intersect: false },
-        scales: {
-            x: { grid: { display: false } },
-            y: {
-                beginAtZero: true,
-                grid: { color: 'rgba(19, 33, 60, 0.06)' },
-                ticks: { precision: 0 },
+        plugins: {
+            ...chartOptions.plugins,
+            tooltip: {
+                callbacks: {
+                    label: (context) =>
+                        ` ${context.dataset.label}: ${hourFormatter.format(context.raw)}`,
+                },
             },
         },
-    };
-
-    const azureSpeechTrendOptions = {
-        ...chartOptions,
-        interaction: { mode: 'index', intersect: false },
         scales: {
             x: { grid: { display: false } },
             y: {
@@ -496,7 +533,7 @@ export default function QuotaDashboardPage() {
                 grid: { color: 'rgba(19, 33, 60, 0.06)' },
                 ticks: {
                     callback: (value) =>
-                        `${numberFormatter.format(value)} giây`,
+                        `${hourFormatter.format(value)} giờ`,
                 },
             },
         },
@@ -508,21 +545,6 @@ export default function QuotaDashboardPage() {
 
     return (
         <div className={styles.page}>
-            <section className={styles.hero}>
-                <div>
-                    <span className={styles.eyebrow}>ADMIN CONTROL CENTER</span>
-                    <h1>Quota & Resource Intelligence</h1>
-                    <p>
-                        Theo dõi chi phí Speaking, phân tích token theo từng Part
-                        và điều phối lượt luyện theo lớp.
-                    </p>
-                </div>
-                <div className={styles.heroBadge}>
-                    <i className="bi bi-shield-lock-fill" />
-                    Chỉ dành cho Admin
-                </div>
-            </section>
-
             <section className={styles.filters}>
                 <label>
                     <span>Lớp học</span>
@@ -573,136 +595,104 @@ export default function QuotaDashboardPage() {
             {loadingOverview ? (
                 <div className={styles.loadingState}>Đang tổng hợp dữ liệu…</div>
             ) : (
-                <>
-                    <section className={styles.metrics}>
-                        <MetricCard
-                            icon="bi-stars"
-                            label="GPT token"
-                            value={numberFormatter.format(overview?.totalGptTokens || 0)}
-                            detail={`Xu hướng theo ${filters.groupBy === 'day' ? 'ngày' : 'tháng'}`}
-                            tone="blue"
-                        />
-                        <MetricCard
-                            icon="bi-mic-fill"
-                            label="Lượt nộp Speaking"
-                            value={numberFormatter.format(overview?.totalSubmissions || 0)}
-                            detail={`Xu hướng theo ${filters.groupBy === 'day' ? 'ngày' : 'tháng'}`}
-                            tone="purple"
-                        />
-                    </section>
+                <section className={styles.chartRow}>
+                    <article className={styles.chartCard}>
+                        <div className={styles.cardHeading}>
+                            <div>
+                                <span>THỜI LƯỢNG SPEECH</span>
+                                <h2>Azure và Soniox theo {filters.groupBy === 'day' ? 'ngày' : 'tháng'}</h2>
+                                <p className={styles.chartSummary}>
+                                    Azure {hourFormatter.format(overview?.totalAzureSpeechHours || 0)} giờ
+                                    {' · '}
+                                    Soniox {hourFormatter.format(overview?.totalSonioxSpeechHours || 0)} giờ
+                                </p>
+                            </div>
+                            <i className="bi bi-soundwave" />
+                        </div>
+                        <div className={styles.trendWrap}>
+                            <Line data={speechTrendData} options={speechTrendOptions} />
+                        </div>
+                    </article>
 
-                    <section className={styles.chartRow}>
-                        <article className={styles.chartCard}>
-                            <div className={styles.cardHeading}>
-                                <div>
-                                    <span>PHÂN BỔ TOKEN</span>
-                                    <h2>GPT token theo Speaking Part</h2>
-                                </div>
-                                <i className="bi bi-pie-chart-fill" />
+                    <article className={styles.chartCard}>
+                        <div className={styles.cardHeading}>
+                            <div>
+                                <span>GPT TOKEN</span>
+                                <h2>Input và output theo {filters.groupBy === 'day' ? 'ngày' : 'tháng'}</h2>
+                                <p className={styles.chartSummary}>
+                                    Input {numberFormatter.format(overview?.totalInputTokens || 0)}
+                                    {' · '}
+                                    Output {numberFormatter.format(overview?.totalOutputTokens || 0)}
+                                    {' · '}
+                                    Tổng {numberFormatter.format(overview?.totalGptTokens || 0)} token
+                                </p>
                             </div>
-                            <div className={styles.doughnutWrap}>
-                                {(overview?.totalGptTokens || 0) > 0 ? (
-                                    <Doughnut
-                                        data={partChartData}
-                                        options={chartOptions}
-                                    />
-                                ) : (
-                                    <EmptyChart text="Chưa có token trong khoảng đã chọn" />
-                                )}
-                            </div>
-                        </article>
-
-                        <article className={styles.chartCard}>
-                            <div className={styles.cardHeading}>
-                                <div>
-                                    <span>XU HƯỚNG NỘP BÀI</span>
-                                    <h2>Lượt nộp theo {filters.groupBy === 'day' ? 'ngày' : 'tháng'}</h2>
-                                </div>
-                                <i className="bi bi-graph-up-arrow" />
-                            </div>
-                            <div className={styles.trendWrap}>
-                                <Line
-                                    data={submissionTrendData}
-                                    options={submissionTrendOptions}
-                                />
-                            </div>
-                        </article>
-                    </section>
-
-                    <section className={styles.chartRow}>
-                        <article className={styles.chartCard}>
-                            <div className={styles.cardHeading}>
-                                <div>
-                                    <span>AZURE SPEECH</span>
-                                    <h2>Số giây sử dụng theo {filters.groupBy === 'day' ? 'ngày' : 'tháng'}</h2>
-                                </div>
-                                <i className="bi bi-soundwave" />
-                            </div>
-                            <div className={styles.trendWrap}>
-                                <Line
-                                    data={azureSpeechTrendData}
-                                    options={azureSpeechTrendOptions}
-                                />
-                            </div>
-                        </article>
-
-                        <article className={styles.chartCard}>
-                            <div className={styles.cardHeading}>
-                                <div>
-                                    <span>XU HƯỚNG TOKEN</span>
-                                    <h2>GPT token theo {filters.groupBy === 'day' ? 'ngày' : 'tháng'}</h2>
-                                </div>
-                                <i className="bi bi-graph-up" />
-                            </div>
-                            <div className={styles.trendWrap}>
-                                <Line data={tokenTrendData} options={tokenTrendOptions} />
-                            </div>
-                        </article>
-                    </section>
-                </>
+                            <i className="bi bi-graph-up" />
+                        </div>
+                        <div className={styles.trendWrap}>
+                            <Line data={tokenTrendData} options={tokenTrendOptions} />
+                        </div>
+                    </article>
+                </section>
             )}
+
+            <DailyCostReport
+                from={filters.from}
+                to={filters.to}
+                classId={filters.classId || null}
+            />
 
             <section className={styles.quotaCard}>
                 <div className={styles.quotaHeader}>
                     <div>
                         <span className={styles.sectionLabel}>FREE SPEAKING LIMIT</span>
-                        <h2>Điều phối lượt luyện theo lớp</h2>
+                        <h2>Điều phối điểm quota theo lớp</h2>
                         <p>
                             Quota vẫn thuộc từng học viên; lớp chỉ là phạm vi thao tác hàng loạt.
                         </p>
                     </div>
-                    {filters.classId && (
-                        <div className={styles.bulkControls}>
+                    <div className={styles.bulkControls}>
                             <div>
-                                <small>{quotaLabel}</small>
-                                <input
-                                    type="number"
-                                    min="0"
-                                    step="1"
-                                    value={bulkLimit}
-                                    onChange={(event) => setBulkLimit(event.target.value)}
-                                    aria-label="Limit áp dụng hàng loạt"
-                                />
+                                <small>Chu kỳ quota</small>
+                                <select
+                                    value={quotaTimeFrame}
+                                    onChange={handleQuotaTimeFrameChange}
+                                    aria-label="Chu kỳ quota"
+                                    disabled={saving || loadingQuotas}
+                                >
+                                    {quotaTimeFrames.map((item) => (
+                                        <option key={item.value} value={item.value}>
+                                            {item.label}
+                                        </option>
+                                    ))}
+                                </select>
                             </div>
-                            <button
-                                type="button"
-                                onClick={applyBulkLimit}
-                                disabled={saving}
-                            >
-                                <i className="bi bi-lightning-charge-fill" />
-                                Áp dụng limit
-                            </button>
+                            {filters.classId && (
+                                <>
+                                    <div>
+                                        <small>{quotaLabel}</small>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            step="1"
+                                            value={bulkLimit}
+                                            onChange={(event) => setBulkLimit(event.target.value)}
+                                            aria-label="Limit áp dụng hàng loạt"
+                                        />
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={applyBulkLimit}
+                                        disabled={saving}
+                                    >
+                                        <i className="bi bi-lightning-charge-fill" />
+                                        Áp dụng limit
+                                    </button>
+                                </>
+                            )}
                         </div>
-                    )}
                 </div>
 
-                {!filters.classId ? (
-                    <div className={styles.classPrompt}>
-                        <i className="bi bi-people-fill" />
-                        <h3>Chọn một lớp để quản lý quota</h3>
-                        <p>Bảng học viên và công cụ cập nhật hàng loạt sẽ xuất hiện tại đây.</p>
-                    </div>
-                ) : (
                     <>
                         <div className={styles.tableTools}>
                             <div className={styles.searchBox}>
@@ -712,7 +702,11 @@ export default function QuotaDashboardPage() {
                                     onChange={(event) => setQuotaSearch(event.target.value)}
                                     onKeyDown={(event) => {
                                         if (event.key === 'Enter') {
-                                            loadQuotas(filters.classId, quotaSearch);
+                                            loadQuotas(
+                                                filters.classId,
+                                                quotaSearch,
+                                                quotaTimeFrame,
+                                            );
                                         }
                                     }}
                                     placeholder="Tìm học viên hoặc email"
@@ -721,7 +715,11 @@ export default function QuotaDashboardPage() {
                             <button
                                 type="button"
                                 className={styles.secondaryButton}
-                                onClick={() => loadQuotas(filters.classId, quotaSearch)}
+                                onClick={() => loadQuotas(
+                                    filters.classId,
+                                    quotaSearch,
+                                    quotaTimeFrame,
+                                )}
                             >
                                 Tìm kiếm
                             </button>
@@ -786,7 +784,7 @@ export default function QuotaDashboardPage() {
                                                 </td>
                                                 <td>
                                                     <span className={`${styles.remainingBadge} ${item.isExhausted ? styles.exhausted : ''}`}>
-                                                        {numberFormatter.format(item.remaining)} lượt
+                                                        {numberFormatter.format(item.remaining)} điểm
                                                     </span>
                                                 </td>
                                                 <td>
@@ -813,9 +811,11 @@ export default function QuotaDashboardPage() {
                                                         </button>
                                                         <button
                                                             type="button"
-                                                            title="Reset lượt đã dùng"
+                                                            title={filters.classId
+                                                                ? 'Reset điểm đã dùng'
+                                                                : 'Chọn lớp để reset điểm đã dùng'}
                                                             onClick={() => resetStudentUsage(item.userId)}
-                                                            disabled={saving}
+                                                            disabled={saving || !filters.classId}
                                                         >
                                                             <i className="bi bi-arrow-counterclockwise" />
                                                         </button>
@@ -828,30 +828,7 @@ export default function QuotaDashboardPage() {
                             )}
                         </div>
                     </>
-                )}
             </section>
-        </div>
-    );
-}
-
-function MetricCard({ icon, label, value, detail, tone }) {
-    return (
-        <article className={`${styles.metricCard} ${styles[tone]}`}>
-            <div className={styles.metricIcon}><i className={`bi ${icon}`} /></div>
-            <div>
-                <span>{label}</span>
-                <strong>{value}</strong>
-                {detail && <small>{detail}</small>}
-            </div>
-        </article>
-    );
-}
-
-function EmptyChart({ text }) {
-    return (
-        <div className={styles.emptyChart}>
-            <i className="bi bi-bar-chart" />
-            <span>{text}</span>
         </div>
     );
 }

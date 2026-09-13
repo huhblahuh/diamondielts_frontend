@@ -2,6 +2,7 @@ import React from 'react';
 import styles from './StudentAssignmentModal.module.css';
 import axiosClient from '../../api/axiosClient';
 import Swal from 'sweetalert2';
+import SpeakingQuestionCard from '../../components/SpeakingQuestionCard';
 
 export default function SpeakingSubmissionItem({
     item,
@@ -9,22 +10,17 @@ export default function SpeakingSubmissionItem({
     itemHistory,
     setActiveSpeakingItemId,
     setSpeakingResults,
-    formatDateTime
+    formatDateTime,
+    onToggle,
+    isExpanded = false
 }) {
-    const parsedContent = item.formattedContent ? JSON.parse(item.formattedContent) : {};
-
     return (
         <div className={styles.itemCard}>
             {/* Tiêu đề & Loại bài tập */}
-            <div className={styles.itemHeader}>
+            <div className={`${styles.itemHeader} ${onToggle ? styles.itemHeaderToggle : ''}`} onClick={onToggle}>
                 <div className={styles.itemInfo}>
-                    <h4>Hạng mục {index + 1}: {parsedContent.title || parsedContent.part || 'Bài tập Speaking AI'}</h4>
-                    <div
-                        className={styles.itemDesc}
-                        dangerouslySetInnerHTML={{
-                            __html: parsedContent.description || parsedContent.prompt || 'Nhấn nút bên dưới để vào phòng thu âm và làm câu hỏi phát âm AI.'
-                        }}
-                    />
+                    <h4>Hạng mục {index + 1}: {item.type || 'Bài tập Speaking'}</h4>
+                    <SpeakingQuestionCard className={styles.itemDesc} content={item.content} type={item.type} />
 
                     <div className={item.maxAttempts && itemHistory.length >= item.maxAttempts ? styles.attemptLimitBadgeError : styles.attemptLimitBadge}>
                         <i className="bi bi-info-circle"></i> Số lần nộp: <strong>{itemHistory.length}</strong>
@@ -36,8 +32,21 @@ export default function SpeakingSubmissionItem({
                     </div>
                 </div>
                 <span className={styles.speakingBadge}>
-                    <i className="bi bi-mic-fill"></i> AI Speaking
+                    <i className="bi bi-mic-fill"></i> Bài nói
                 </span>
+                {onToggle && (
+                    <button
+                        type="button"
+                        className={styles.itemToggleButton}
+                        onClick={(event) => {
+                            event.stopPropagation();
+                            onToggle();
+                        }}
+                        aria-label={isExpanded ? 'Thu gọn hạng mục' : 'Mở rộng hạng mục'}
+                    >
+                        <i className={`bi bi-chevron-down ${styles.itemSummaryChevron} ${isExpanded ? styles.itemSummaryChevronExpanded : ''}`}></i>
+                    </button>
+                )}
             </div>
 
             {/* Tài liệu đính kèm mẫu từ Giáo viên (Nếu có) */}

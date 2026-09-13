@@ -3,6 +3,14 @@ import Pagination from '../../../components/Pagination';
 
 const PAGE_SIZE = 10;
 
+const getInitials = (fullName = '') => {
+    const words = fullName.trim().split(/\s+/).filter(Boolean);
+    if (words.length === 0) return '?';
+    return words.length === 1
+        ? words[0].slice(0, 2).toUpperCase()
+        : `${words[0][0]}${words[words.length - 1][0]}`.toUpperCase();
+};
+
 export default function MemberListTab({ members = [], onRemoveUser, onViewDetails, loading, formatDate, styles }) {
     const [currentPage, setCurrentPage] = useState(1);
     const totalPages = Math.max(1, Math.ceil(members.length / PAGE_SIZE));
@@ -28,8 +36,23 @@ export default function MemberListTab({ members = [], onRemoveUser, onViewDetail
                         {loading && <tr><td colSpan="4" style={{textAlign:'center'}}>Đang tải chi tiết...</td></tr>}
                         {!loading && paged.map((mem) => (
                             <tr key={mem.userId}>
-                                <td className={(mem.role === 'Teacher' || mem.role === 'Admin') ? styles.userNameRed : styles.boldText}>
-                                    {mem.fullName}
+                                <td>
+                                    <div className={styles.memberNameCell}>
+                                        <span className={styles.memberAvatar} aria-hidden="true">
+                                            <span>{getInitials(mem.fullName)}</span>
+                                            {mem.avatarUrl && (
+                                                <img
+                                                    src={mem.avatarUrl}
+                                                    alt=""
+                                                    loading="lazy"
+                                                    onError={(event) => { event.currentTarget.style.display = 'none'; }}
+                                                />
+                                            )}
+                                        </span>
+                                        <span className={(mem.role === 'Teacher' || mem.role === 'Admin') ? styles.userNameRed : styles.boldText}>
+                                            {mem.fullName}
+                                        </span>
+                                    </div>
                                 </td>
                                 <td className={styles.muted}>{mem.email}</td>
                                 <td>

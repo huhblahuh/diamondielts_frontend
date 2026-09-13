@@ -1,0 +1,115 @@
+.card {
+    padding: 1.35rem;
+    border: 1px solid var(--di-border);
+    border-radius: 20px;
+    background: white;
+    box-shadow: 0 12px 34px rgba(0, 45, 130, 0.075);
+}
+
+.header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.header > div:first-child > span {
+    display: block;
+    color: #005bff;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+}
+
+.header h2 {
+    margin-top: 0.28rem;
+    color: var(--di-text);
+    font-size: 1.02rem;
+}
+
+.header p {
+    margin-top: 0.38rem;
+    color: var(--di-muted);
+    font-size: 0.78rem;
+}
+
+.summaryGrid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.summaryGrid > div {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    padding: 0.85rem 1rem;
+    border: 1px solid #e7eef9;
+    border-radius: 13px;
+    background: #f9fbff;
+}
+
+.summaryGrid span,
+.summaryGrid small {
+    color: var(--di-muted);
+    font-size: 0.68rem;
+}
+
+.summaryGrid strong {
+    margin: 0.2rem 0;
+    color: var(--di-text);
+    font-size: 1.15rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.summaryGrid > div:last-child strong {
+    color: #7b3ff2;
+}
+
+.chartWrap {
+    height: 360px;
+    padding-top: 0.5rem;
+}
+
+.state {
+    min-height: 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    color: var(--di-muted);
+    border-radius: 14px;
+    background: #f9fbff;
+    font-size: 0.8rem;
+}
+
+.error {
+    color: #b83145;
+    background: #fff6f7;
+}
+
+.error button {
+    padding: 0.55rem 0.8rem;
+    border: 1px solid rgba(0, 91, 255, 0.22);
+    border-radius: 9px;
+    color: #005bff;
+    background: white;
+    cursor: pointer;
+    font-weight: 700;
+}
+
+@media (max-width: 720px) {
+    .header {
+        flex-direction: column;
+    }
+
+    .summaryGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .chartWrap {
+        height: 300px;
+    }
+}

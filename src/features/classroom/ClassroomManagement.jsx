@@ -27,6 +27,7 @@ export default function ClassroomManagement() {
     // UI STATES
     const [currentTab, setCurrentTab] = useState('students'); // 'students' | 'deadlines'
     const [loading, setLoading] = useState(false);
+    const [loadingUsersPool, setLoadingUsersPool] = useState(false);
     const [showAddUserModal, setShowAddUserModal] = useState(false);
     const [showFolderModal, setShowFolderModal] = useState(false);
     const [folderAssignmentId, setFolderAssignmentId] = useState(null);
@@ -209,24 +210,49 @@ export default function ClassroomManagement() {
 
     const handleOpenAddUser = async () => {
         try {
+            setUsersPool([]);
+            setLoadingUsersPool(true);
             setShowAddUserModal(true);
             const data = await axiosClient.get('/teacher/classroom/users-pool');
             setUsersPool(data || []);
         } catch (err) {
             console.error(err);
             Swal.fire('Lỗi', 'Không thể tải danh sách thành viên', 'error');
+        } finally {
+            setLoadingUsersPool(false);
         }
     };
 
-    const handleAddUserToClass = async (userId) => {
-        try {
-            await axiosClient.post(`/teacher/classroom/${selectedClass.classId}/add-user/${userId}`);
-            Swal.fire('Thành công', 'Đã thêm thành viên vào lớp học!', 'success');
+    const handleAddUsersToClass = async (userIds) => {
+        const results = await Promise.allSettled(
+            userIds.map((userId) => axiosClient.post(
+                `/teacher/classroom/${selectedClass.classId}/add-user/${userId}`,
+            )),
+        );
+        const successCount = results.filter((result) => result.status === 'fulfilled').length;
+        const failedCount = results.length - successCount;
+
+        if (successCount > 0) {
             const details = await axiosClient.get(`/teacher/classroom/${selectedClass.classId}`);
             setDetailedClass(details);
-        } catch (err) {
-            Swal.fire('Thông báo', 'Không thể thực hiện thao tác. Vui lòng thử lại.', 'warning');
         }
+
+        if (failedCount === 0) {
+            await Swal.fire('Thành công', `Đã thêm ${successCount} thành viên vào lớp học!`, 'success');
+            return true;
+        }
+
+        if (successCount > 0) {
+            await Swal.fire(
+                'Đã thêm một phần',
+                `Đã thêm ${successCount} thành viên, ${failedCount} thành viên chưa thể thêm.`,
+                'warning',
+            );
+            return true;
+        }
+
+        await Swal.fire('Thông báo', 'Không thể thêm các thành viên đã chọn. Vui lòng thử lại.', 'warning');
+        return false;
     };
 
     const handleRemoveUserFromClass = async (userId, fullName) => {
@@ -366,8 +392,9 @@ export default function ClassroomManagement() {
                 show={showAddUserModal}
                 onClose={() => setShowAddUserModal(false)}
                 usersPool={usersPool}
+                loadingUsers={loadingUsersPool}
                 existingMembers={detailedClass?.members || []}
-                onAddUser={handleAddUserToClass}
+                onAddUsers={handleAddUsersToClass}
                 styles={styles}
             />
 

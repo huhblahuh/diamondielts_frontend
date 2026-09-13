@@ -209,7 +209,12 @@ export default function UserManagementPage() {
         } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
             errors.email = 'Email không hợp lệ';
         }
-        if (!formData.username.trim()) errors.username = 'Vui lòng nhập tên tài khoản';
+        const normalizedUsername = formData.username.trim().normalize('NFC');
+        if (!normalizedUsername) {
+            errors.username = 'Vui lòng nhập tên tài khoản';
+        } else if (normalizedUsername.length > 50 || !/^[\p{L}\p{M}\p{N}\x21-\x7E]+$/u.test(normalizedUsername)) {
+            errors.username = 'Tối đa 50 ký tự, không có khoảng trắng hoặc emoji';
+        }
         if (modalMode === 'create' && !formData.password) {
             errors.password = 'Vui lòng nhập mật khẩu';
         } else if (formData.password && formData.password.length < 6) {
@@ -479,6 +484,7 @@ export default function UserManagementPage() {
                                             type="text"
                                             name="username"
                                             value={formData.username}
+                                            maxLength={50}
                                             onChange={handleInputChange}
                                             placeholder="Tên tài khoản..."
                                             className={formErrors.username ? styles.inputError : ''}
@@ -504,7 +510,7 @@ export default function UserManagementPage() {
                                     <div className={styles.formGroup}>
                                         <label>Mật Khẩu {modalMode === 'create' ? <span className={styles.required}>*</span> : <span className={styles.optional}>(Bỏ trống nếu không đổi)</span>}</label>
                                         <input
-                                            type="password"
+                                            type={modalMode === 'edit' ? 'text' : 'password'}
                                             name="password"
                                             value={formData.password}
                                             onChange={handleInputChange}

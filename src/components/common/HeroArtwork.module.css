@@ -1,0 +1,50 @@
+.artwork {
+    width: 210px;
+    height: 120px;
+    pointer-events: none;
+    user-select: none;
+    transform: translateZ(0);
+}
+
+.artwork svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+}
+
+.floatSlow {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: heroFloat 5.8s ease-in-out infinite;
+}
+
+.floatFast {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: heroFloat 4.2s ease-in-out -1.3s infinite reverse;
+}
+
+.pulse {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: heroPulse 4s ease-in-out infinite;
+}
+
+@keyframes heroFloat {
+    0%, 100% { translate: 0 0; }
+    50% { translate: 0 -6px; }
+}
+
+@keyframes heroPulse {
+    0%, 100% { scale: 1; opacity: 1; }
+    50% { scale: 1.06; opacity: .9; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .floatSlow,
+    .floatFast,
+    .pulse {
+        animation: none;
+    }
+}

@@ -1,294 +1,275 @@
-/* ============================================================
-   AttemptDetailView — Grammarly Style CSS Module (v2)
-   ============================================================ */
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap');
 
-/* ── CSS VARIABLES (scoped to component root) ── */
 .detailContainer {
-    /* Color palette */
-    --color-overall: #0e101a;
-    --color-fluency: #0070f3;
-    --color-fluency-bg: #e3f2fd;
-    --color-lexical: #10a37f;
-    --color-lexical-bg: #dcfce7;
-    --color-grammar: #f05152;
-    --color-grammar-bg: #fee2e2;
-    --color-pron: #f5a623;
-    --color-pron-bg: #fff8eb;
-
-    /* Neutrals */
+    --color-fluency: #2071eb;
+    --color-fluency-bg: #e6f0ff;
+    --color-lexical: #18ae67;
+    --color-lexical-bg: #ddf7e8;
+    --color-grammar: #ef334c;
+    --color-grammar-bg: #ffe5e8;
+    --color-pron: #f08a00;
+    --color-pron-bg: #fff0d2;
     --bg-card: #ffffff;
-    --border: #e1e4e8;
-    --text-main: #0e101a;
-    --text-muted: #6a737d;
-    --text-sub: #64748b;
-
-    /* Layout */
-    display: flex;
-    flex-direction: column;
-    gap: 1.25rem;
-    padding: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    animation: fadeInUp 0.4s ease-out;
+    --border: #dce8f8;
+    --text-main: #17315f;
+    --text-muted: #7181a4;
+    --text-sub: #5f7398;
+    width: 100%;
+    min-width: 0;
+    padding: clamp(8px, 1.4vw, 16px);
+    background:
+        radial-gradient(circle at 9% 7%, rgba(111, 183, 255, 0.13) 0 9%, transparent 9.2%),
+        radial-gradient(circle at 82% 3%, rgba(67, 126, 244, 0.1) 0 17%, transparent 17.2%),
+        linear-gradient(180deg, #f8fbff 0%, #f4f9ff 100%);
+    color: var(--text-main);
+    font-family: 'Be Vietnam Pro', 'Inter', system-ui, sans-serif;
+    animation: fadeInUp 0.35s ease-out;
 }
 
 @keyframes fadeInUp {
-    from { opacity: 0; transform: translateY(14px); }
-    to   { opacity: 1; transform: translateY(0); }
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
-
-/* ══════════════════════════════════════════════
-   HEADER
-═══════════════════════════════════════════════ */
-.viewHeader {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0.75rem 1.25rem;
-    background: var(--bg-card);
-    border-radius: 12px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    border: 1px solid var(--border);
+.reportSurface {
+    width: min(100%, 1180px);
+    margin: 0 auto;
 }
 
-.backBtn {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    padding: 7px 16px;
-    font-size: 0.82rem;
-    font-weight: 600;
-    color: #4f46e5;
-    background-color: #f5f3ff;
-    border: 1px solid #e0e7ff;
-    border-radius: 50px;
-    cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
-    white-space: nowrap;
-}
-
-.backBtn i {
-    font-size: 0.88rem;
-    transition: transform 0.2s ease;
-}
-
-.backBtn:hover {
-    color: white;
-    background-color: #4f46e5;
-    border-color: #4f46e5;
-    box-shadow: 0 4px 14px rgba(79,70,229,0.28);
-    transform: translateY(-1px);
-}
-
-.backBtn:hover i { transform: translateX(-3px); }
-
-.viewTitle {
-    font-size: 0.92rem;
-    font-weight: 700;
-    color: var(--text-main);
-    letter-spacing: -0.1px;
-}
-
-
-/* ══════════════════════════════════════════════
-   MAIN LAYOUT  (2-column grid)
-═══════════════════════════════════════════════ */
-.bottomLayout {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 1.25rem;
-    align-items: start;
-}
-
-@media (min-width: 900px) {
-    .bottomLayout {
-        grid-template-columns: 1.65fr 1fr;
-        gap: 1.5rem;
-    }
-}
-
-
-/* ══════════════════════════════════════════════
-   TRANSCRIPT CARD  (left panel)
-═══════════════════════════════════════════════ */
-.transcriptCard {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 24px 28px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.05), 0 8px 24px rgba(0,0,0,0.03);
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-    min-height: 400px;
-    overflow: hidden;
-}
-
-/* ── Score Bar (top section) ── */
-.topSection {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 14px;
-    padding-bottom: 18px;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 18px;
-}
-
-/* Overall Badge */
-.overallPill {
-    background: #0A2472;
-    color: white;
-    padding: 6px 20px;
-    border-radius: 10px;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    flex-shrink: 0;
-    inline-size: 100%;
-    justify-content: center;
-}
-
-.overallLabel {
-    font-size: 14px;
-    font-weight: 500;
-    text-transform: uppercase;
-    opacity: 0.75;
-    letter-spacing: 0.8px;
-}
-
-.overallScore {
-    font-size: 24px;
-    font-weight: 800;
-    letter-spacing: -0.3px;
-}
-
-/* Sub-metric pills */
-.subMetricPills {
-    display: flex;
-    align-items: stretch;
-    flex-wrap: nowrap;
-    width: 100%;
-    overflow-x: hidden;
-    padding-bottom: 2px;
-    scrollbar-width: none;
-}
-
-.subMetricPills::-webkit-scrollbar {
-    display: none;
-}
-
-.metricPill {
+.overallHero {
     position: relative;
+    isolation: isolate;
+    min-height: 132px;
+    display: grid;
+    grid-template-columns: minmax(145px, 0.58fr) minmax(260px, 1.42fr);
+    align-items: center;
+    gap: clamp(24px, 4vw, 48px);
+    padding: clamp(18px, 2.6vw, 28px);
+    overflow: hidden;
+    border-radius: 18px;
+    color: #ffffff;
+    box-shadow: 0 12px 28px rgba(30, 64, 175, 0.18);
+}
+
+.overallHero::before,
+.overallHero::after {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    right: -8%;
+    bottom: -66%;
+    width: 65%;
+    aspect-ratio: 1.8;
+    border-radius: 50% 50% 0 0;
+    background: rgba(255, 255, 255, 0.13);
+    transform: rotate(-10deg);
+}
+
+.overallHero::after {
+    right: 13%;
+    bottom: -82%;
+    width: 72%;
+    background: rgba(126, 220, 255, 0.16);
+    transform: rotate(8deg);
+}
+
+.overallScoreBlock {
+    min-width: 0;
     display: flex;
-    flex: 1 1 0;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 7px;
-    min-width: 0;
-    padding: 8px 10px;
-    font-size: 13px;
-    font-weight: 600;
-    background: transparent;
-    border: 0;
-    cursor: pointer;
-    transition: all 0.18s ease;
-    line-height: 1.05;
-    min-height: 70px;
+    padding-right: clamp(20px, 3vw, 36px);
+    border-right: 1px solid rgba(255, 255, 255, 0.48);
     text-align: center;
 }
 
-.metricPill::before,
-.metricPill::after {
-    content: '';
-    position: absolute;
-    top: 18%;
-    bottom: 18%;
-    width: 1px;
-    border-radius: 999px;
-    background: rgba(148, 163, 184, 0.35);
-    transition: top 0.2s ease, bottom 0.2s ease, width 0.2s ease, background 0.2s ease;
-}
-
-.metricPill::before { left: 0; }
-.metricPill::after { right: 0; }
-
-.metricPill:hover::before,
-.metricPill:hover::after,
-.metricPill.active::before,
-.metricPill.active::after {
-    top: -3px;
-    bottom: -3px;
-    width: 2px;
-    background: currentColor;
-    clip-path: polygon(50% 0, 100% 7%, 100% 93%, 50% 100%, 0 93%, 0 7%);
-}
-
-.metricPillName {
-    font-size: clamp(12px, 1.45vw, 16px);
-    font-weight: 600;
-    letter-spacing: 0.1px;
-}
-
-.metricPillVal {
-    padding: 4px 9px;
-    border-radius: 5px;
-    font-size: clamp(13px, 1.45vw, 16px);
+.overallLabel {
+    margin-bottom: 3px;
+    color: rgba(255, 255, 255, 0.75);
+    font-size: 0.8rem;
     font-weight: 700;
-    color: #4b5563;
-    transition: background 0.18s ease, color 0.18s ease;
+    letter-spacing: 0.12em;
 }
 
-@media (max-width: 680px) {
-    .metricPill {
-        padding-inline: 5px;
-    }
+.overallScore {
+    font-size: clamp(2.9rem, 5vw, 4rem);
+    font-weight: 800;
+    line-height: 0.96;
+    letter-spacing: -0.05em;
+    font-variant-numeric: tabular-nums;
 }
 
-/* Pill colour variants */
-.pillFluency { color: var(--color-fluency); }
-.pillFluency:hover,
-.pillFluency.active {
-    border-color: var(--color-fluency);
-    background: var(--color-fluency-bg);
-}
-.pillFluency:hover .metricPillVal,
-.pillFluency.active .metricPillVal { background: white; color: var(--color-fluency); }
+.bandInsight { min-width: 0; }
 
-.pillLexical { color: var(--color-lexical); }
-.pillLexical:hover,
-.pillLexical.active {
-    border-color: var(--color-lexical);
-    background: var(--color-lexical-bg);
+.bandInsightHead {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 12px;
 }
-.pillLexical:hover .metricPillVal,
-.pillLexical.active .metricPillVal { background: white; color: var(--color-lexical); }
 
-.pillGrammar { color: var(--color-grammar); }
-.pillGrammar:hover,
-.pillGrammar.active {
-    border-color: var(--color-grammar);
-    background: var(--color-grammar-bg);
+.bandDescriptor {
+    font-size: clamp(1rem, 1.7vw, 1.25rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
 }
-.pillGrammar:hover .metricPillVal,
-.pillGrammar.active .metricPillVal { background: white; color: var(--color-grammar); }
 
-.pillPronun { color: var(--color-pron); }
-.pillPronun:hover,
-.pillPronun.active {
-    border-color: var(--color-pron);
-    background: var(--color-pron-bg);
+.bandValue {
+    flex-shrink: 0;
+    color: rgba(255, 255, 255, 0.76);
+    font-size: 0.76rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
 }
-.pillPronun:hover .metricPillVal,
-.pillPronun.active .metricPillVal { background: white; color: var(--color-pron); }
 
-.pillSuggest { color: #8b5cf6; }
-.pillSuggest:hover,
-.pillSuggest.active {
-    border-color: #8b5cf6;
-    background: #f5f3ff;
+.bandTrack {
+    height: 10px;
+    padding: 2px;
+    border-radius: 999px;
+    background: rgba(7, 29, 87, 0.2);
+    box-shadow: inset 0 2px 5px rgba(7, 29, 87, 0.2), 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+
+.bandFill {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.7), #ffffff);
+    box-shadow: 0 0 14px rgba(255, 255, 255, 0.34);
+    transition: width 0.2s ease;
+}
+
+.bandTicks {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 7px;
+    color: rgba(255, 255, 255, 0.68);
+    font-size: 0.68rem;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+}
+
+.bandNote {
+    margin: 9px 0 0;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.76rem;
+    line-height: 1.55;
+}
+
+.metricGrid {
+    --active-metric-index: 0;
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 0;
+    margin: 12px 0;
+    padding: 6px;
+    overflow: hidden;
+    border: 1px solid #d7e5fa;
+    border-radius: 22px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), #eaf2ff);
+    box-shadow: 0 8px 22px rgba(48, 93, 161, 0.11);
+}
+
+.metricSlider {
+    position: absolute;
+    z-index: 0;
+    top: 6px;
+    bottom: 6px;
+    left: 6px;
+    width: calc((100% - 12px) / 5);
+    border-radius: 17px;
+    background: linear-gradient(135deg, #238cf5 0%, #4f5bea 58%, #6b53ed 100%);
+    box-shadow: 0 7px 18px rgba(58, 84, 231, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    transform: translateX(calc(var(--active-metric-index) * 100%));
+    transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.metricCard {
+    --metric-accent: var(--color-fluency);
+    --metric-soft: var(--color-fluency-bg);
+    position: relative;
+    z-index: 1;
+    min-width: 0;
+    min-height: 62px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    padding: 7px 4px;
+    border: 0;
+    border-radius: 17px;
+    background: transparent;
+    color: var(--metric-accent);
+    font: inherit;
+    cursor: pointer;
+    transition: color 0.18s ease, transform 0.16s ease;
+}
+
+.metricCard:hover { transform: translateY(-1px); }
+
+.metricCard.active {
+    color: #ffffff;
+    text-shadow: 0 1px 3px rgba(20, 35, 100, 0.2);
+}
+
+.metricCard:focus-visible {
+    outline: 2px solid #ffffff;
+    outline-offset: -4px;
+}
+
+.metricScoreBadge {
+    font-size: 1.05rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+}
+
+.metricLabel {
+    max-width: 100%;
+    overflow: hidden;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.pillLexical { --metric-accent: var(--color-lexical); --metric-soft: var(--color-lexical-bg); }
+.pillGrammar { --metric-accent: var(--color-grammar); --metric-soft: var(--color-grammar-bg); }
+.pillPronun { --metric-accent: var(--color-pron); --metric-soft: var(--color-pron-bg); }
+.pillSuggest { --metric-accent: #7945ed; --metric-soft: #eee4ff; }
+
+.bottomLayout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    align-items: start;
+}
+
+@media (min-width: 1025px) {
+    .bottomLayout { grid-template-columns: minmax(0, 1.62fr) minmax(280px, 0.9fr); }
+}
+
+.analysisColumn {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.transcriptCard {
+    min-width: 0;
+    min-height: 400px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 18px 20px;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: var(--bg-card);
+    box-shadow: 0 8px 22px rgba(48, 93, 161, 0.09);
 }
 
 .processingWarning {
@@ -313,35 +294,41 @@
 /* ── Transcript Header ── */
 .transcriptHeader {
     display: flex;
-    flex-direction: column;
-    gap: 12px;
-    margin-bottom: 16px;
+    margin-bottom: 12px;
 }
 
 .transcriptTitle {
-    font-size: 11px;
+    width: 100%;
+    font-size: 1.05rem;
     font-weight: 700;
     color: var(--text-sub);
     display: flex;
     align-items: center;
-    gap: 7px;
+    gap: 10px;
     margin: 0;
-    text-transform: uppercase;
-    letter-spacing: 0.7px;
+    letter-spacing: -0.01em;
 }
 
 .transcriptTitle i { color: #4f46e5; }
 
+.transcriptTitle::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    margin-left: 8px;
+    background: var(--border);
+}
+
 
 /* ── Transcript body ── */
 .transcriptPanel {
-    font-size: 17px;
-    line-height: 2.15;
+    font-size: 1.02rem;
+    line-height: 1.9;
     color: var(--text-main);
     text-align: left;
     letter-spacing: 0.15px;
     padding: 4px 0;
-    min-height: 180px;
+    min-height: 196px;
     word-break: break-word;
 }
 
@@ -797,10 +784,10 @@
     position: sticky;
     top: 24px;
     background: var(--bg-card);
-    border: 1.5px solid var(--border);
-    border-radius: 14px;
-    padding: 24px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.05), 0 8px 24px rgba(0,0,0,0.03);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 18px;
+    box-shadow: 0 8px 22px rgba(48, 93, 161, 0.09);
     display: flex;
     flex-direction: column;
     gap: 14px;
@@ -813,7 +800,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 11px;
+    font-size: 0.76rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.7px;
@@ -833,7 +820,7 @@
 .panelBody {
     font-size: 14.5px;
     line-height: 1.65;
-    color: #24292e;
+    color: #344969;
 }
 
 .issueList {
@@ -1103,31 +1090,6 @@
     color: #64748b;
 }
 
-.pronFixList {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 7px;
-    margin-top: 2px;
-}
-
-.pronFixPill {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    padding: 6px 9px;
-    border-radius: 999px;
-    background: #fff1f2;
-    border: 1px solid #fecdd3;
-    color: #9f1239;
-    font-size: 0.76rem;
-    font-weight: 700;
-}
-
-.pronFixPill strong {
-    color: #dc2626;
-    font-size: 0.9rem;
-}
-
 .pronCompareGrid {
     display: grid;
     grid-template-columns: 1fr;
@@ -1158,33 +1120,6 @@
     overflow-wrap: anywhere;
 }
 
-.phonemeWrap {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-    margin-top: 10px;
-}
-
-.phonemeChip {
-    display: inline-flex;
-    align-items: center;
-    gap: 3px;
-    padding: 2px 7px;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 4px;
-    font-size: 0.7rem;
-}
-
-.phonemeChip.phonemeBad {
-    border-color: #fca5a5;
-    background: #fff1f2;
-}
-
-.phonemeText { font-weight: 700; }
-.phonemeScore { color: #94a3b8; }
-
-
 /* ══════════════════════════════════════════════
    PAUSE BADGES  (fluency tab)
 ═══════════════════════════════════════════════ */
@@ -1210,33 +1145,116 @@
 /* ══════════════════════════════════════════════
    RESPONSIVE
 ═══════════════════════════════════════════════ */
-@media (max-width: 640px) {
+@media (max-width: 900px) {
+    .overallHero {
+        grid-template-columns: minmax(110px, 0.52fr) minmax(220px, 1.48fr);
+        min-height: 124px;
+        gap: 20px;
+        padding: 18px 20px;
+    }
+
+    .overallScoreBlock { padding-right: 20px; }
+    .overallLabel { font-size: 0.72rem; }
+    .overallScore { font-size: 3rem; }
+    .bandNote { display: none; }
+}
+
+.pronComparePhonemes {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: flex-end;
+    justify-content: flex-start;
+    gap: 4px;
+    width: 100%;
+    overflow-x: auto;
+}
+
+.pronCompareExpectedPhonemes {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 4px;
+    width: 100%;
+    text-align: center;
+    overflow-x: auto;
+}
+
+.pronCompareExpectedPhonemes strong {
+    min-width: 22px;
+    flex: 0 0 22px;
+}
+
+.pronComparePhoneme {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    min-width: 22px;
+    flex: 0 0 22px;
+}
+
+.pronComparePhoneme small {
+    font-size: 0.6rem;
+    font-weight: 800;
+    line-height: 1;
+    color: currentColor;
+}
+
+.pronComparePhoneme strong {
+    color: currentColor;
+}
+
+.pronComparePhoneme.phonemeInlineGood,
+.pronComparePhoneme.phonemeInlineGood strong {
+    color: #16a34a;
+}
+
+.pronComparePhoneme.phonemeInlineWarn,
+.pronComparePhoneme.phonemeInlineWarn strong {
+    color: #d97706;
+}
+
+.pronComparePhoneme.phonemeInlineBad,
+.pronComparePhoneme.phonemeInlineBad strong {
+    color: #dc2626;
+}
+
+@media (max-width: 760px) {
+    .detailContainer { padding: 14px; }
+
+    .metricGrid {
+        display: grid;
+        margin-inline: 0;
+        padding: 5px;
+    }
+
+    .metricSlider {
+        top: 5px;
+        bottom: 5px;
+        left: 5px;
+        width: calc((100% - 10px) / 5);
+    }
+
+    .metricCard {
+        min-height: 58px;
+        padding-inline: 2px;
+    }
+
+    .metricScoreBadge {
+        font-size: 0.98rem;
+    }
+
+    .metricLabel { font-size: 0.69rem; }
+
     .transcriptCard {
-        padding: 16px;
+        padding: 14px;
         min-height: auto;
     }
 
     .errorCardsCard {
-        padding: 16px;
+        padding: 14px;
         position: static;
-    }
-
-    .viewHeader {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 8px;
-        padding: 0.75rem 1rem;
-    }
-
-    .topSection {
-        gap: 6px;
-        padding-bottom: 14px;
-        margin-bottom: 14px;
-    }
-
-    .metricPill {
-        padding: 4px 8px;
-        font-size: 11.5px;
     }
 
     .transcriptPanel {
@@ -1254,14 +1272,55 @@
         font-size: 13px;
     }
 
-    .audioTime {
-        min-width: 64px;
-        font-size: 11.5px;
-    }
+    .audioCur,
+    .audioDur { font-size: 11.5px; }
 }
 
-@media (max-width: 400px) {
-    .overallPill { padding: 4px 10px; }
-    .overallScore { font-size: 14px; }
-    .metricPillVal { padding: 1px 5px; font-size: 11px; }
+@media (max-width: 520px) {
+    .overallHero {
+        grid-template-columns: minmax(76px, 0.48fr) minmax(0, 1.52fr);
+        min-height: 112px;
+        gap: 14px;
+        padding: 14px 16px;
+        border-radius: 16px;
+    }
+
+    .overallScoreBlock {
+        padding: 0 14px 0 0;
+        border-right: 1px solid rgba(255, 255, 255, 0.4);
+        border-bottom: 0;
+    }
+
+    .overallLabel { font-size: 0.64rem; letter-spacing: 0.08em; }
+    .overallScore { font-size: 2.55rem; }
+    .bandInsightHead { margin-bottom: 10px; gap: 8px; }
+    .bandDescriptor { font-size: 0.92rem; }
+    .bandValue { font-size: 0.65rem; }
+    .bandTicks { margin-top: 5px; font-size: 0.6rem; }
+
+    .transcriptTitle { font-size: 0.98rem; }
+
+    .audioSection {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+    }
+
+    .audioCur { display: none; }
+}
+
+@media (max-width: 340px) {
+    .detailContainer { padding: 10px; }
+    .overallHero { padding: 12px 14px; }
+    .overallScore { font-size: 2.35rem; }
+    .metricGrid { padding: 4px; }
+    .metricSlider { top: 4px; bottom: 4px; left: 4px; width: calc((100% - 8px) / 5); }
+    .metricCard { min-height: 54px; }
+    .metricLabel { font-size: 0.64rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .detailContainer { animation: none; }
+    .metricCard,
+    .metricSlider,
+    .bandFill { transition: none; }
 }

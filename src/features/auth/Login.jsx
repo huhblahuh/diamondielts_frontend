@@ -5,6 +5,7 @@ import Swal from 'sweetalert2';
 import backgroundImg from '../../assets/backgroundLogin.webp';
 import siteLogo from '../../assets/site-logo.webp';
 import userQuotaService from '../../api/services/userQuota.service';
+import ForgotPassword from './ForgotPassword';
 
 export default function Login() {
     const [formData, setFormData] = useState({
@@ -13,6 +14,7 @@ export default function Login() {
     });
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+    const [showForgotPassword, setShowForgotPassword] = useState(false);
 
     const handleChange = (e) => {
         setFormData({
@@ -49,6 +51,8 @@ export default function Login() {
                 localStorage.setItem('user', JSON.stringify({
                     userId: data.userId,
                     fullName: data.fullName,
+                    username: data.username,
+                    avatarUrl: data.avatarUrl,
                     role: data.role,
                     speakingQuota,
                 }));
@@ -85,69 +89,86 @@ export default function Login() {
     return (
         <div className={styles.loginContainer} style={{ backgroundImage: `url(${backgroundImg})` }}>
             <div className={styles.loginCard}>
-                <div className={styles.loginHeader}>
-                    <img src={siteLogo} alt="Diamond Ielts" className={styles.brandLogo} />
-                    <h1>Diamond Ielts</h1>
-                </div>
-
-                <form onSubmit={handleSubmit}>
-                    <div className={styles.formGroup}>
-                        <label className={styles.label}>Email hoặc Tài khoản</label>
-                        <div className={styles.inputWrapper}>
-                            <div className={styles.iconBox}>
-                                <i className="bi bi-person-circle"></i>
-                            </div>
-                            <input 
-                                type="text" 
-                                name="email"
-                                className={styles.input}
-                                placeholder="Email hoặc Username..."
-                                value={formData.email}
-                                onChange={handleChange}
-                                disabled={loading}
-                            />
+                {showForgotPassword && (
+                    <ForgotPassword
+                        embedded
+                        onBack={() => setShowForgotPassword(false)}
+                    />
+                )}
+                <div hidden={showForgotPassword}>
+                        <div className={styles.loginHeader}>
+                            <img src={siteLogo} alt="Diamond Ielts" className={styles.brandLogo} />
+                            <h1>Diamond Ielts</h1>
                         </div>
-                    </div>
 
-                    <div className={styles.formGroup}>
-                        <label className={styles.label}>Mật khẩu</label>
-                        <div className={styles.inputWrapper}>
-                            <div className={styles.iconBox}>
-                                <i className="bi bi-lock"></i>
+                        <form onSubmit={handleSubmit}>
+                            <div className={styles.formGroup}>
+                                <label className={styles.label}>Email hoặc Tài khoản</label>
+                                <div className={styles.inputWrapper}>
+                                    <div className={styles.iconBox}>
+                                        <i className="bi bi-person-circle"></i>
+                                    </div>
+                                    <input
+                                        type="text"
+                                        name="email"
+                                        className={styles.input}
+                                        placeholder="Email hoặc Username..."
+                                        value={formData.email}
+                                        onChange={handleChange}
+                                        disabled={loading}
+                                    />
+                                </div>
                             </div>
-                            <input 
-                                type={showPassword ? "text" : "password"}
-                                name="password"
-                                className={styles.input}
-                                placeholder="Nhập mật khẩu"
-                                value={formData.password}
-                                onChange={handleChange}
-                                disabled={loading}
-                            />
-                            <button 
-                                type="button" 
-                                className={styles.eyeButton}
-                                onClick={() => setShowPassword(!showPassword)}
-                            >
-                                <i className={showPassword ? "bi bi-eye-slash" : "bi bi-eye"}></i>
+
+                            <div className={styles.formGroup}>
+                                <label className={styles.label}>Mật khẩu</label>
+                                <div className={styles.inputWrapper}>
+                                    <div className={styles.iconBox}>
+                                        <i className="bi bi-lock"></i>
+                                    </div>
+                                    <input
+                                        type={showPassword ? "text" : "password"}
+                                        name="password"
+                                        className={styles.input}
+                                        placeholder="Nhập mật khẩu"
+                                        value={formData.password}
+                                        onChange={handleChange}
+                                        disabled={loading}
+                                    />
+                                    <button
+                                        type="button"
+                                        className={styles.eyeButton}
+                                        onClick={() => setShowPassword(!showPassword)}
+                                    >
+                                        <i className={showPassword ? "bi bi-eye-slash" : "bi bi-eye"}></i>
+                                    </button>
+                                </div>
+                                <div className={styles.forgotPasswordRow}>
+                                    <button
+                                        type="button"
+                                        className={styles.linkButton}
+                                        onClick={() => setShowForgotPassword(true)}
+                                    >
+                                        Quên mật khẩu?
+                                    </button>
+                                </div>
+                            </div>
+
+                            <button type="submit" className={styles.btnLogin} disabled={loading}>
+                                {loading ? (
+                                    <>
+                                        <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                        Đang xử lý...
+                                    </>
+                                ) : (
+                                    <>
+                                        <i className="bi bi-box-arrow-in-right"></i>
+                                        Đăng nhập
+                                    </>
+                                )}
                             </button>
-                        </div>
-                    </div>
-
-                    <button type="submit" className={styles.btnLogin} disabled={loading}>
-                        {loading ? (
-                            <>
-                                <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                                Đang xử lý...
-                            </>
-                        ) : (
-                            <>
-                                <i className="bi bi-box-arrow-in-right"></i>
-                                Đăng nhập
-                            </>
-                        )}
-                    </button>
-                </form>
+                        </form>
+                </div>
 
             </div>
         </div>

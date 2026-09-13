@@ -1,6 +1,8 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'https://localhost:7053/api';
+// Default to the current origin. During development Vite proxies /api to the
+// local ASP.NET backend; deployments can still override this with VITE_API_URL.
+const API_URL = import.meta.env.VITE_API_URL || '/api';
 
 const axiosClient = axios.create({
     baseURL: API_URL,
@@ -40,12 +42,23 @@ axiosClient.interceptors.response.use(
             : status === 403
                 ? 'Bạn không thể thực hiện thao tác này.'
                 : 'Không thể thực hiện yêu cầu. Vui lòng thử lại sau.';
-        const message = responseData?.message || fallbackMessage;
+        const publicMessage = responseData
+            && typeof responseData === 'object'
+            && typeof responseData.message === 'string'
+            ? responseData.message
+            : null;
+        const publicCode = responseData
+            && typeof responseData === 'object'
+            && typeof responseData.code === 'string'
+            ? responseData.code
+            : undefined;
+        const message = publicMessage || fallbackMessage;
+
         return Promise.reject({
-            ...(responseData || {}),
+            code: publicCode,
             message,
             status,
-            response: error.response
+            canRetry: responseData?.canRetry === true,
         });
     }
 );

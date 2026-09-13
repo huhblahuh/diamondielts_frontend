@@ -101,6 +101,7 @@
 .filters input,
 .filters select,
 .bulkControls input,
+.bulkControls select,
 .searchBox input,
 .limitInput {
     width: 100%;
@@ -116,6 +117,7 @@
 .filters input:focus,
 .filters select:focus,
 .bulkControls input:focus,
+.bulkControls select:focus,
 .searchBox input:focus,
 .limitInput:focus {
     border-color: var(--di-blue);
@@ -210,79 +212,6 @@
     opacity: 0.55;
 }
 
-.metrics {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 1rem;
-}
-
-.metricCard {
-    position: relative;
-    display: flex;
-    align-items: center;
-    gap: 0.9rem;
-    padding: 1.25rem;
-    border: 1px solid var(--di-border);
-    border-radius: 18px;
-    background: white;
-    box-shadow: 0 10px 28px rgba(0, 45, 130, 0.07);
-    overflow: hidden;
-}
-
-.metricCard::after {
-    content: '';
-    position: absolute;
-    width: 76px;
-    height: 76px;
-    border-radius: 50%;
-    right: -32px;
-    bottom: -38px;
-    background: currentColor;
-    opacity: 0.07;
-}
-
-.metricIcon {
-    width: 46px;
-    height: 46px;
-    flex: 0 0 46px;
-    display: grid;
-    place-items: center;
-    border-radius: 14px;
-    color: currentColor;
-    background: color-mix(in srgb, currentColor 11%, white);
-    font-size: 1.2rem;
-}
-
-.metricCard > div:last-child {
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-}
-
-.metricCard span {
-    color: var(--di-muted);
-    font-size: 0.74rem;
-    font-weight: 650;
-}
-
-.metricCard strong {
-    margin-top: 0.18rem;
-    color: var(--di-text);
-    font-size: clamp(1.35rem, 2.2vw, 1.9rem);
-    line-height: 1.15;
-}
-
-.metricCard small {
-    margin-top: 0.25rem;
-    color: var(--di-muted);
-    font-size: 0.68rem;
-}
-
-.blue { color: #005bff; }
-.purple { color: #7b3ff2; }
-.gold { color: #eaa00b; }
-.red { color: #e94d63; }
-
 .chartRow {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -318,14 +247,15 @@
     font-size: 1.2rem;
 }
 
-.doughnutWrap {
-    height: 290px;
-    padding: 1rem 0 0;
-}
-
 .trendWrap {
     height: 290px;
     padding-top: 1rem;
+}
+
+.chartSummary {
+    margin-top: 0.35rem;
+    color: var(--di-muted);
+    font-size: 0.75rem;
 }
 
 .quotaHeader p {
@@ -351,7 +281,8 @@
     font-size: 0.66rem;
 }
 
-.bulkControls input {
+.bulkControls input,
+.bulkControls select {
     min-height: 40px;
 }
 
@@ -364,7 +295,6 @@
 }
 
 .classPrompt,
-.emptyChart,
 .loadingState {
     display: flex;
     align-items: center;
@@ -392,18 +322,6 @@
 .classPrompt p {
     margin-top: 0.35rem;
     font-size: 0.78rem;
-}
-
-.emptyChart {
-    height: 100%;
-    flex-direction: column;
-    gap: 0.5rem;
-    font-size: 0.78rem;
-}
-
-.emptyChart i {
-    color: #b3c3dc;
-    font-size: 1.8rem;
 }
 
 .loadingState {
@@ -587,10 +505,6 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .metrics {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
     .chartRow {
         grid-template-columns: 1fr;
     }
@@ -608,8 +522,7 @@
         align-self: flex-start;
     }
 
-    .filters,
-    .metrics {
+    .filters {
         grid-template-columns: 1fr;
     }
 
@@ -636,7 +549,6 @@
         width: 100%;
     }
 
-    .doughnutWrap,
     .trendWrap {
         height: 260px;
     }

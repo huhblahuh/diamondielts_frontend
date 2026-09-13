@@ -77,7 +77,7 @@
     flex: 0 0 36px;
     border-radius: 10px;
     object-fit: cover;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
 }
 
 .brandText {
@@ -107,7 +107,7 @@
     border: none;
     font-size: 1.5rem;
     cursor: pointer;
-    color: rgba(255,255,255,0.5);
+    color: rgba(255, 255, 255, 0.5);
 }
 
 /* ── Nav Links ───────────────────────────────────────────────────────────── */
@@ -145,27 +145,56 @@
 }
 
 .activeLink {
-    background: var(--di-blue, #005BFF) !important;
+    background: rgba(59, 130, 246, 0.22) !important;
+    border-left: 3px solid #60A5FA;
     color: #FFFFFF !important;
     font-weight: 700;
-    box-shadow: 0 4px 16px rgba(0, 91, 255, 0.4);
+    box-shadow: none;
 }
 
 /* Sparkle star decorations on sidebar (pure CSS) */
-.navStar1, .navStar2, .navStar3 {
+.navStar1,
+.navStar2,
+.navStar3 {
     position: absolute;
     color: rgba(247, 183, 49, 0.4);
     font-size: 0.6rem;
     pointer-events: none;
     animation: twinkle 3s ease-in-out infinite;
 }
-.navStar1 { top: 30%; right: 12px; animation-delay: 0s; }
-.navStar2 { top: 60%; right: 16px; animation-delay: 1s; font-size: 0.5rem; }
-.navStar3 { top: 80%; right: 10px; animation-delay: 2s; font-size: 0.45rem; }
+
+.navStar1 {
+    top: 30%;
+    right: 12px;
+    animation-delay: 0s;
+}
+
+.navStar2 {
+    top: 60%;
+    right: 16px;
+    animation-delay: 1s;
+    font-size: 0.5rem;
+}
+
+.navStar3 {
+    top: 80%;
+    right: 10px;
+    animation-delay: 2s;
+    font-size: 0.45rem;
+}
 
 @keyframes twinkle {
-    0%, 100% { opacity: 0.4; transform: scale(1); }
-    50% { opacity: 1; transform: scale(1.3); }
+
+    0%,
+    100% {
+        opacity: 0.4;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 1;
+        transform: scale(1.3);
+    }
 }
 
 /* ── User Section ────────────────────────────────────────────────────────── */
@@ -190,7 +219,7 @@
     font-weight: 700;
     color: white;
     flex-shrink: 0;
-    border: 2px solid rgba(255,255,255,0.2);
+    border: 2px solid rgba(255, 255, 255, 0.2);
     cursor: pointer;
     transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
@@ -227,16 +256,16 @@
 }
 
 .userSection small {
-    color: rgba(255,255,255,0.45);
+    color: rgba(255, 255, 255, 0.45);
     text-transform: uppercase;
     font-size: 0.6rem;
     letter-spacing: 0.5px;
 }
 
 .btnLogout {
-    background: rgba(255,255,255,0.08);
+    background: rgba(255, 255, 255, 0.08);
     border: none;
-    color: rgba(255,255,255,0.5);
+    color: rgba(255, 255, 255, 0.5);
     font-size: 1rem;
     cursor: pointer;
     padding: 0.4rem 0.5rem;
@@ -250,6 +279,38 @@
     background: rgba(255, 107, 107, 0.15);
 }
 
+.sidebarLogout {
+    padding: 0.85rem 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.btnLogoutFull {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.55rem;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0.65rem 0.85rem;
+    border-radius: 10px;
+    transition: all 0.2s ease;
+}
+
+.btnLogoutFull:hover {
+    color: #ff6b6b;
+    background: rgba(255, 107, 107, 0.15);
+    border-color: rgba(255, 107, 107, 0.3);
+}
+
+.btnLogoutFull i {
+    font-size: 1rem;
+}
+
 /* ── Main Content ────────────────────────────────────────────────────────── */
 .mainContent {
     flex: 1;
@@ -257,6 +318,8 @@
     flex-direction: column;
     overflow: hidden;
     background: var(--di-bg);
+    position: relative;
+    z-index: 2;
 }
 
 .topHeader {
@@ -367,13 +430,54 @@
     background: #f9fbff;
 }
 
+.quotaPeriods {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.75rem;
+    margin-top: 0.9rem;
+}
+
+.quotaPeriodCard {
+    min-width: 0;
+    padding: 0.85rem;
+    border: 1px solid var(--di-border);
+    border-radius: 12px;
+    background: #fff;
+}
+
+.quotaPeriodCard .quotaItemTop {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.quotaPeriodCard .quotaItemTop>span {
+    overflow-wrap: anywhere;
+}
+
+.quotaPeriodToggle {
+    display: none;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    margin-top: 0.75rem;
+    padding: 0.7rem;
+    border: 1px solid var(--di-border);
+    border-radius: 11px;
+    color: var(--di-blue);
+    background: #fff;
+    font-weight: 700;
+    cursor: pointer;
+}
+
 .speakingQuotaStats {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 0.65rem;
 }
 
-.speakingQuotaStats > div {
+.speakingQuotaStats>div {
     padding: 0.85rem 0.6rem;
     border-radius: 12px;
     text-align: center;
@@ -393,7 +497,7 @@
     font-size: 1.35rem;
 }
 
-.speakingQuotaStats > div:last-child strong {
+.speakingQuotaStats>div:last-child strong {
     color: var(--di-blue);
 }
 
@@ -421,7 +525,7 @@
     gap: 1rem;
 }
 
-.quotaItemTop > div {
+.quotaItemTop>div {
     display: flex;
     flex-direction: column;
 }
@@ -442,7 +546,7 @@
     margin-top: 0.2rem;
 }
 
-.quotaItemTop > span {
+.quotaItemTop>span {
     color: var(--di-blue);
     font-size: 0.82rem;
     font-weight: 800;
@@ -522,7 +626,8 @@
         display: block;
     }
 
-    .hamburger, .mobileCloseBtn {
+    .hamburger,
+    .mobileCloseBtn {
         display: flex;
         align-items: center;
         justify-content: center;
@@ -530,5 +635,240 @@
 
     .pageBody {
         padding: 1rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .quotaPeriods {
+        grid-template-columns: 1fr;
+    }
+
+    .quotaPeriodSecondary {
+        display: none;
+    }
+
+    .quotaPeriodsExpanded .quotaPeriodSecondary {
+        display: block;
+    }
+
+    .quotaPeriodToggle {
+        display: flex;
+    }
+
+    .topHeader {
+        display: none !important;
+    }
+
+    .pageBody {
+        /* extra space so content isn't hidden behind bottom nav */
+        padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px)) !important;
+    }
+
+    .pageBody.studentPageBody {
+        padding: 0 0 calc(76px + env(safe-area-inset-bottom, 0px)) !important;
+    }
+}
+
+/* ── Mobile Bottom Navigation Bar ──────────────────────────────────────── */
+.mobileBottomNav {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .mobileBottomNav {
+        display: flex;
+        align-items: center;
+        position: fixed;
+        bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+        left: 50%;
+        transform: translateX(-50%);
+        width: calc(100% - 32px);
+        max-width: 480px;
+        height: 62px;
+        background: rgba(6, 27, 94, 0.92);
+        backdrop-filter: blur(20px) saturate(180%);
+        -webkit-backdrop-filter: blur(20px) saturate(180%);
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.10);
+        box-shadow:
+            0 8px 32px rgba(6, 27, 94, 0.45),
+            0 2px 8px rgba(0, 0, 0, 0.18),
+            inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        z-index: 300;
+        padding: 0 6px;
+        gap: 0;
+    }
+
+    /* Sliding pill indicator */
+    .mobileNavPill {
+        position: absolute;
+        top: 6px;
+        bottom: 6px;
+        left: 6px;
+        /* width = (total width - 12px padding) / tab count */
+        width: calc((100% - 12px) / var(--tab-count));
+        border-radius: 999px;
+        background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+        transform: translateX(calc(var(--tab-index) * 100%));
+        transition:
+            transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
+            width 0.2s ease;
+        box-shadow: 0 2px 12px rgba(99, 102, 241, 0.5);
+        pointer-events: none;
+        will-change: transform;
+    }
+
+    /* Each nav item */
+    .mobileNavItem {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 3px;
+        padding: 6px 2px;
+        border-radius: 999px;
+        text-decoration: none;
+        color: rgba(255, 255, 255, 0.5);
+        transition: color 0.2s ease;
+        position: relative;
+        z-index: 1;
+        -webkit-tap-highlight-color: transparent;
+        user-select: none;
+    }
+
+    .mobileNavItem:active {
+        transform: scale(0.93);
+        transition: transform 0.1s ease, color 0.2s ease;
+    }
+
+    .mobileNavItemActive {
+        color: #ffffff;
+    }
+
+    .mobileNavIcon {
+        font-size: 1.15rem;
+        line-height: 1;
+        transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .mobileNavItemActive .mobileNavIcon {
+        transform: translateY(-1px) scale(1.1);
+    }
+
+    .mobileNavLabel {
+        font-size: 0.6rem;
+        font-weight: 600;
+        letter-spacing: 0.01em;
+        line-height: 1;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+        transition: opacity 0.2s ease;
+        opacity: 0.85;
+    }
+
+    .mobileNavItemActive .mobileNavLabel {
+        opacity: 1;
+        font-weight: 700;
+    }
+}
+
+/* ── Mobile Swipe-Back: Previous Page Underlay ────────────────────────────── */
+.prevPageLayer {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    display: none;
+    background: var(--di-bg, #f8fafc);
+    overflow: hidden;
+    pointer-events: none;
+}
+
+@media (max-width: 768px) {
+    .prevPageLayer {
+        display: block;
+    }
+}
+
+/* Shimmer skeleton shown behind the sliding current page */
+.prevPageSkeleton {
+    width: 100%;
+    height: 100%;
+    padding: 24px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+@keyframes shimmer {
+    0%   { background-position: -400px 0; }
+    100% { background-position: 400px 0; }
+}
+
+.skelBlock {
+    border-radius: 14px;
+    background: linear-gradient(
+        90deg,
+        rgba(226,232,240,0.6) 25%,
+        rgba(241,245,249,0.95) 50%,
+        rgba(226,232,240,0.6) 75%
+    );
+    background-size: 800px 100%;
+    animation: shimmer 1.5s ease-in-out infinite;
+}
+
+.skelTitle {
+    height: 28px;
+    width: 45%;
+    border-radius: 8px;
+    margin-bottom: 6px;
+}
+
+.skelCard {
+    height: 88px;
+    border-radius: 16px;
+}
+
+.skelCardShort {
+    width: 78%;
+}
+
+.skelCardSmall {
+    height: 56px;
+    border-radius: 12px;
+}
+
+.dimVeil {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.28);
+    pointer-events: none;
+    opacity: 0.55;
+    will-change: opacity;
+}
+
+/* ── Left-edge swipe handle (visible hint on mobile) ─────────────────────── */
+.edgeHandle {
+    display: none;
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 4px;
+    height: 56px;
+    border-radius: 0 4px 4px 0;
+    background: rgba(99, 102, 241, 0.35);
+    z-index: 200;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+@media (max-width: 768px) {
+    .edgeHandle {
+        display: block;
     }
 }

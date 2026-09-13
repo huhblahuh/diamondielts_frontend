@@ -1,20 +1,30 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useCallback, useState, useEffect, useRef } from 'react';
+import { useParams, useNavigate, useSearchParams, useLocation, useOutletContext } from 'react-router-dom';
 import axiosClient from '../../api/axiosClient';
 import styles from './SpeakingPractice.module.css';
 import Swal from 'sweetalert2';
 import AttemptDetailView from './AttemptDetailView';
 import { SpeakingAssessmentPipeline } from './speakingAssessmentPipeline';
+import { getSpeakingPrompt, normalizeSpeakingContent } from '../../utils/speakingContent';
 
 export default function SpeakingPractice({
     isAssignmentMode = false,
     assignmentId = null,
     assignmentItemId = null,
     assignment = null,
+    assignmentItemDetail = null,
+    initialSubmissionId = null,
     onBack = null
 }) {
     const { exerciseId: routeExerciseId } = useParams();
+    const [searchParams] = useSearchParams();
     const navigate = useNavigate();
+    const location = useLocation();
+    const outletContext = useOutletContext();
+    const registerBackHandler = outletContext?.registerBackHandler;
+
+    // Ưu tiên query param (khi render trong trang practice), fallback sang path param (route cũ)
+    const practiceExerciseId = searchParams.get('exerciseId') || routeExerciseId;
 
     const [currentItemId, setCurrentItemId] = useState(assignmentItemId || null);
 
@@ -25,7 +35,7 @@ export default function SpeakingPractice({
         }
     }, [assignmentItemId, isAssignmentMode]);
 
-    const activeId = isAssignmentMode ? currentItemId : routeExerciseId;
+    const activeId = isAssignmentMode ? currentItemId : practiceExerciseId;
 
     const [exercise, setExercise] = useState(null);
     const [history, setHistory] = useState([]);
@@ -35,6 +45,7 @@ export default function SpeakingPractice({
     const [results, setResults] = useState(null);
     const [submissionId, setSubmissionId] = useState(null);
     const [loadingHistory, setLoadingHistory] = useState(false);
+    const [isSubmissionQueueing, setIsSubmissionQueueing] = useState(false);
 
     // UI State for sidebars
     const [leftSidebarOpen, setLeftSidebarOpen] = useState(false);
@@ -47,6 +58,87 @@ export default function SpeakingPractice({
     const recordingStartedAtRef = useRef(null);
     const startInProgressRef = useRef(false);
     const stopInProgressRef = useRef(false);
+    const resultWasVisibleRef = useRef(false);
+    const resultMarkerWasActiveRef = useRef(false);
+
+    const resultMarkerActive = location.state?.speakingResultOpen === true;
+    const requestedSubmissionId = initialSubmissionId
+        || (resultMarkerActive ? location.state?.speakingSubmissionId : null);
+
+    // A result is a real screen from the user's perspective. Keep the URL the
+    // same, but push a history entry so browser Back and swipe Back can close it.
+    useEffect(() => {
+        const markerWasActive = resultMarkerWasActiveRef.current;
+        resultMarkerWasActiveRef.current = resultMarkerActive;
+
+        if (markerWasActive && !resultMarkerActive && results) {
+            setResults(null);
+            setSubmissionId(null);
+        }
+    }, [resultMarkerActive, results]);
+
+    useEffect(() => {
+        const resultIsVisible = Boolean(results);
+
+        if (resultIsVisible && !resultWasVisibleRef.current && !resultMarkerActive) {
+            navigate(`${location.pathname}${location.search}${location.hash}`, {
+                state: {
+                    ...(location.state || {}),
+                    speakingResultOpen: true,
+                    speakingSubmissionId: submissionId,
+                },
+            });
+        }
+
+        resultWasVisibleRef.current = resultIsVisible;
+    }, [location.hash, location.pathname, location.search, location.state, navigate, resultMarkerActive, results]);
+
+    const closeResultView = useCallback(() => {
+        if (resultMarkerActive && Number(window.history.state?.idx) > 0) {
+            navigate(-1);
+            return;
+        }
+
+        setResults(null);
+        setSubmissionId(null);
+        if (resultMarkerActive) {
+            const {
+                speakingResultOpen: _discardedMarker,
+                speakingSubmissionId: _discardedSubmission,
+                ...nextState
+            } = location.state || {};
+            navigate(`${location.pathname}${location.search}${location.hash}`, {
+                replace: true,
+                state: nextState,
+            });
+        }
+    }, [location.hash, location.pathname, location.search, location.state, navigate, resultMarkerActive]);
+
+    const handlePageBack = useCallback(() => {
+        if (rightSidebarOpen) {
+            setRightSidebarOpen(false);
+            return;
+        }
+        if (leftSidebarOpen) {
+            setLeftSidebarOpen(false);
+            return;
+        }
+        if (results) {
+            closeResultView();
+            return;
+        }
+        onBack?.();
+    }, [closeResultView, leftSidebarOpen, onBack, results, rightSidebarOpen]);
+
+    useEffect(() => {
+        if (!registerBackHandler) return undefined;
+
+        return registerBackHandler({
+            canHandleBack: () => Boolean(rightSidebarOpen || leftSidebarOpen || results || onBack),
+            canSwipeBack: () => !isRecording && status !== 'starting' && status !== 'processing',
+            handleBack: handlePageBack,
+        });
+    }, [handlePageBack, isRecording, leftSidebarOpen, onBack, registerBackHandler, results, rightSidebarOpen, status]);
 
     const detectPartNumber = (type, formattedContent) => {
         const typeLower = (type || '').toLowerCase();
@@ -71,7 +163,7 @@ export default function SpeakingPractice({
         return 1;
     };
 
-    const partNum = exercise ? detectPartNumber(exercise.type, exercise.formattedContent) : 1;
+    const partNum = exercise ? detectPartNumber(exercise.type, exercise.content) : 1;
 
     const getRecordingTimeLimit = (part) => {
         if (part === 2) return 150; // 2 minutes 30 seconds
@@ -106,25 +198,39 @@ export default function SpeakingPractice({
                     if (!currentItemId) return;
                     const activeSpeakingItem = assignment?.items?.find(it => it.itemId === parseInt(currentItemId));
                     if (activeSpeakingItem) {
-                        const typeUpper = (activeSpeakingItem.itemType || '').toUpperCase();
+                        let itemDetail = assignmentItemDetail;
+                        if (!itemDetail?.content && assignmentId) {
+                            itemDetail = await axiosClient.get(
+                                `/student/assignment/${assignmentId}/items/${currentItemId}`
+                            );
+                        }
+
+                        const itemData = { ...activeSpeakingItem, ...(itemDetail || {}) };
+                        const typeUpper = (itemData.itemType || '').toUpperCase();
                         setExercise({
-                            itemId: activeSpeakingItem.itemId,
-                            type: typeUpper === 'AI_SPEAKING' ? 'AI_SPEAKING' : 'SPEAKING',
-                            formattedContent: activeSpeakingItem.formattedContent,
-                            maxAttempts: activeSpeakingItem.maxAttempts,
+                            itemId: itemData.itemId,
+                            type: itemData.type || (typeUpper === 'AI_SPEAKING' ? 'AI_SPEAKING' : 'SPEAKING'),
+                            content: itemData.content,
+                            maxAttempts: itemData.maxAttempts,
                             topicName: assignment?.title,
                             topicId: null
                         });
                         loadHistory(activeSpeakingItem.itemId);
+                        if (requestedSubmissionId) {
+                            handleSelectHistory(requestedSubmissionId);
+                        }
                     }
                 } else {
-                    if (!routeExerciseId) return;
+                    if (!practiceExerciseId) return;
                     // 1. Tải chi tiết bài tập hiện tại
-                    const data = await axiosClient.get(`/student/exercise/${routeExerciseId}`);
+                    const data = await axiosClient.get(`/student/exercise/${practiceExerciseId}`);
                     setExercise(data);
 
                     // 2. Tải lịch sử nộp bài cho bài tập này (Cột trái)
-                    loadHistory(routeExerciseId);
+                    loadHistory(practiceExerciseId);
+                    if (requestedSubmissionId) {
+                        handleSelectHistory(requestedSubmissionId);
+                    }
                 }
             } catch (err) {
                 console.error(err);
@@ -132,15 +238,28 @@ export default function SpeakingPractice({
             }
         };
         loadData();
-    }, [routeExerciseId, currentItemId, isAssignmentMode, assignment]);
+    }, [practiceExerciseId, currentItemId, isAssignmentMode, assignmentId, assignment, assignmentItemDetail, requestedSubmissionId]);
 
     const loadHistory = async (targetId = null) => {
         const id = targetId || activeId;
         if (!id) return;
         try {
             setLoadingHistory(true);
-            const data = await axiosClient.get(`/student/PracticeSpeaking/history/${id}`);
-            setHistory(data || []);
+            if (isAssignmentMode) {
+                const currentAssignmentId = assignmentId || assignment?.assignmentId;
+                if (!currentAssignmentId) {
+                    setHistory([]);
+                    return;
+                }
+
+                const itemDetail = await axiosClient.get(
+                    `/student/assignment/${currentAssignmentId}/items/${id}`
+                );
+                setHistory(itemDetail?.history || []);
+            } else {
+                const data = await axiosClient.get(`/student/PracticeSpeaking/history/${id}`);
+                setHistory(data || []);
+            }
         } catch (err) {
             console.error(err);
         } finally {
@@ -172,7 +291,7 @@ export default function SpeakingPractice({
             try {
                 const checkUrl = isAssignmentMode
                     ? `/student/PracticeSpeaking/check-attempts/${currentItemId}`
-                    : `/student/PracticeSpeaking/check-exercise-attempts/${routeExerciseId}`;
+                    : `/student/PracticeSpeaking/check-exercise-attempts/${practiceExerciseId}`;
                 const checkData = await axiosClient.get(checkUrl);
                 if (checkData.isLimitReached) {
                     Swal.fire({
@@ -205,7 +324,7 @@ export default function SpeakingPractice({
 
             const pipeline = new SpeakingAssessmentPipeline({
                 credentials: tokenData,
-                question: getCleanTextQuestion(exercise?.formattedContent),
+                question: getSpeakingPrompt(exercise?.content),
                 partNumber: partNum
             });
             assessmentPipelineRef.current = pipeline;
@@ -242,6 +361,7 @@ export default function SpeakingPractice({
         const pipeline = assessmentPipelineRef.current;
 
         setStatus('processing');
+        setIsSubmissionQueueing(true);
         setIsRecording(false);
         if (timerRef.current) clearInterval(timerRef.current);
         timerRef.current = null;
@@ -261,6 +381,7 @@ export default function SpeakingPractice({
             // 1. Kiểm tra từ = 0 (lỗi mic)
             if (wordCount === 0) {
                 setStatus('idle');
+                setIsSubmissionQueueing(false);
 
                 Swal.fire({
                     icon: 'warning',
@@ -275,7 +396,7 @@ export default function SpeakingPractice({
                         navigator.mediaDevices.getUserMedia({ audio: true })
                             .then(stream => {
                                 stream.getTracks().forEach(track => track.stop());
-                                Swal.fire('Thành công', 'Micro đã sẵn sàng hoạt động! Hãy bắt đầu ghi âm lại nhé.', 'success');
+                                Swal.fire('Micro đã hoạt động', 'Bạn có thể bắt đầu ghi âm lại.', 'success');
                             })
                             .catch(err => {
                                 console.error(err);
@@ -290,6 +411,7 @@ export default function SpeakingPractice({
             const minWords = partNum === 2 ? 20 : 10;
             if (wordCount < minWords) {
                 setStatus('idle');
+                setIsSubmissionQueueing(false);
                 Swal.fire({
                     toast: true,
                     position: 'top-end',
@@ -324,6 +446,7 @@ export default function SpeakingPractice({
                 assessmentPipelineRef.current = null;
             }
             setStatus('idle');
+            setIsSubmissionQueueing(false);
             Swal.fire('Lỗi', 'Không thể xử lý bài nói. Vui lòng thử lại.', 'error');
         } finally {
             stopInProgressRef.current = false;
@@ -343,13 +466,13 @@ export default function SpeakingPractice({
             // Append các thông tin cơ bản
             if (isAssignmentMode) {
                 formData.append("AssignmentItemId", parseInt(currentItemId));
-                formData.append("type", exercise?.type || "");
             } else {
-                formData.append("exerciseId", parseInt(routeExerciseId));
-                formData.append("type", exercise?.type || "");
+                formData.append("exerciseId", parseInt(practiceExerciseId));
             }
-            formData.append("question", getCleanTextQuestion(exercise?.formattedContent));
-            formData.append("audioDurationSeconds", duration);
+            formData.append(
+                "audioDurationMilliseconds",
+                String(Math.round(duration * 1000)),
+            );
             formData.append("sonioxTranscript", sonioxTranscript);
             formData.append("sonioxTokensJson", JSON.stringify(sonioxTokens));
             formData.append("sonioxFinalized", "true");
@@ -364,25 +487,26 @@ export default function SpeakingPractice({
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
 
+            // Backend đã nhận và queue bài thành công: trả nút record về ngay,
+            // việc chấm điểm tiếp tục chạy nền qua pollResults.
+            setIsSubmissionQueueing(false);
+            setStatus('processing');
             setSubmissionId(resp.submissionId);
             pollResults(resp.submissionId);
-            loadHistory(isAssignmentMode ? currentItemId : routeExerciseId);
+            loadHistory(isAssignmentMode ? currentItemId : practiceExerciseId);
             return true;
         } catch (err) {
             console.error(err);
             if (err.code === 'OFF_TOPIC') {
-                const remainingText = err.remainingRetries > 0
-                    ? `Bạn còn ${err.remainingRetries} lần thử lại.`
-                    : 'Bạn đã dùng hết số lần thử lại.';
                 Swal.fire({
                     icon: 'warning',
-                    title: 'Bài nói đang bị lạc đề',
-                    text: `${err.reason || err.message} ${remainingText}`,
+                    title: 'Nội dung chưa phù hợp',
+                    text: err.message,
                     confirmButtonText: 'Nói lại'
                 });
             } else if (err.code === 'OFF_TOPIC_RETRY_LIMIT') {
                 Swal.fire(
-                    'Đã hết lượt thử lại',
+                    'Chưa thể gửi bài',
                     err.message,
                     'warning'
                 );
@@ -394,6 +518,7 @@ export default function SpeakingPractice({
                 );
             }
             setStatus('idle');
+            setIsSubmissionQueueing(false);
             return false;
         }
     };
@@ -412,10 +537,10 @@ export default function SpeakingPractice({
                 if (data.status === 'Completed') {
                     setResults(data.feedback);
                     setStatus('completed');
-                    loadHistory(isAssignmentMode ? currentItemId : routeExerciseId); // Cập nhật lại lịch sử khi đã chấm xong
+                    loadHistory(isAssignmentMode ? currentItemId : practiceExerciseId); // Cập nhật lại lịch sử khi đã chấm xong
                     return true;
                 } else if (data.status === 'Failed') {
-                    Swal.fire('Lỗi', 'AI không thể xử lý bài nói của bạn.', 'error');
+                    Swal.fire('Không thể xử lý', 'Bài nói chưa được xử lý. Vui lòng thử lại.', 'error');
                     setStatus('idle');
                     return true;
                 }
@@ -439,49 +564,6 @@ export default function SpeakingPractice({
         const mins = Math.floor(s / 60);
         const secs = s % 60;
         return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
-    };
-
-    // Hàm xử lý parse nội dung từ TipTap (JSON string) hoặc format đơn giản
-    const renderContent = (jsonStr) => {
-        if (!jsonStr) return "";
-        try {
-            const parsed = JSON.parse(jsonStr);
-            const content = parsed.passageHtml || parsed.htmlContent || parsed.textPrompt || parsed.prompt || parsed.question;
-            if (content) {
-                return content.replace(/\n/g, '<br />');
-            }
-            return jsonStr;
-        } catch (e) {
-            return jsonStr; // Không phải JSON thì cứ để nguyên (dữ liệu cũ)
-        }
-    };
-
-    // Bóc tách HTML thô để nộp câu hỏi sạch nhất lên AI
-    const stripHtml = (html) => {
-        if (!html) return "";
-        try {
-            const doc = new DOMParser().parseFromString(html, 'text/html');
-            return doc.body.textContent || "";
-        } catch (e) {
-            return html.replace(/<\/?[^>]+(>|$)/g, "").trim();
-        }
-    };
-
-    const getCleanTextQuestion = (jsonStr) => {
-        if (!jsonStr) return "";
-        try {
-            const parsed = JSON.parse(jsonStr);
-            if (parsed.textPrompt) {
-                return parsed.textPrompt.trim();
-            }
-            if (parsed.prompt) {
-                return parsed.prompt.trim();
-            }
-            const html = parsed.passageHtml || parsed.htmlContent || jsonStr;
-            return stripHtml(html).trim();
-        } catch (e) {
-            return stripHtml(jsonStr).trim();
-        }
     };
 
     const handleSelectHistory = async (subId) => {
@@ -513,6 +595,7 @@ export default function SpeakingPractice({
 
     const isOverdue = assignment?.dueDate ? new Date(assignment.dueDate) < new Date() : false;
     const isBlockedByDeadline = isAssignmentMode && isOverdue && !assignment?.allowLateSubmission;
+    const speakingContent = normalizeSpeakingContent(exercise.content);
 
     return (
         <div className={`${styles.studioContainer} ${results ? styles.resultsActive : ''}`}>
@@ -520,20 +603,33 @@ export default function SpeakingPractice({
             <aside className={`${styles.questionSidebar} ${leftSidebarOpen ? styles.isOpen : ''}`}>
                 <div className={styles.sidebarContent}>
                     <div className={styles.sidebarHeader}>
-                        <button
-                            type="button"
-                            onClick={isAssignmentMode ? onBack : () => navigate('/student/practice', { state: { selectedTopicId: exercise.topicId } })}
-                            className={styles.sidebarBackBtn}
-                        >
-                            <i className="bi bi-chevron-left"></i> {isAssignmentMode ? 'Quay lại danh sách' : 'Quay lại Kho Tự Do'}
-                        </button>
+                        <div className={styles.sidebarHeaderTop}>
+                            <button
+                                type="button"
+                                onClick={onBack ? onBack : () => navigate('/student/practice')}
+                                className={styles.sidebarBackBtn}
+                            >
+                                <i className="bi bi-chevron-left"></i> {isAssignmentMode ? 'Quay lại' : 'Kho Tự Do'}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setLeftSidebarOpen(false)}
+                                className={styles.sidebarCloseBtn}
+                                aria-label="Đóng lịch sử"
+                            >
+                                <i className="bi bi-x-lg"></i>
+                            </button>
+                        </div>
                         <h2 className={styles.sidebarTitle}>Lịch sử nộp bài</h2>
                         <p className={styles.sidebarSubtitle}>{isAssignmentMode ? assignment?.title : exercise.topicName}</p>
                     </div>
 
                     <div className={styles.historyList}>
                         {loadingHistory ? (
-                            <div className={styles.loadingHistory}>Đang tải...</div>
+                            <div className={styles.loadingHistory}>
+                                <div className="spinner-border spinner-border-sm text-primary" role="status"></div>
+                                <span>Đang tải lịch sử...</span>
+                            </div>
                         ) : history.length === 0 ? (
                             <div className={styles.emptyHistory}>
                                 <div className={styles.emptyHistoryIcon}>
@@ -579,23 +675,28 @@ export default function SpeakingPractice({
                     {results ? (
                         <AttemptDetailView
                             results={results}
-                            onBack={() => {
-                                setResults(null);
-                                setSubmissionId(null);
-                            }}
+                            onBack={closeResultView}
                         />
                     ) : (
                         /* BỘ KHUNG GHI ÂM CHÍNH */
                         <div className={styles.recordingCard}>
                             {/* Header */}
                             <div className={styles.cardHeader}>
-                                <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                                <div className={styles.cardHeaderLeft}>
                                     <div className={styles.partBadge}>
                                         Speaking Part <span className={styles.headerPartNum}>{partNum}</span>
                                     </div>
-                                    <div className={styles.attemptLimitBadge}>
-                                        <i className="bi bi-info-circle"></i> Lượt làm: <strong>{history.length}</strong>
-                                    </div>
+                                </div>
+                                <div className={styles.cardHeaderRight}>
+                                    <button
+                                        type="button"
+                                        className={styles.historyBtn}
+                                        onClick={() => setLeftSidebarOpen(prev => !prev)}
+                                        title="Xem danh sách bài đã nộp"
+                                    >
+                                        <i className="bi bi-clock-history"></i>
+                                        <span>Lịch sử ({history.length})</span>
+                                    </button>
                                 </div>
                             </div>
 
@@ -603,7 +704,17 @@ export default function SpeakingPractice({
                             <div className={styles.cardBody}>
                                 <div className={styles.questionCardWrapper}>
                                     <div className={styles.questionContentCard}>
-                                        <div dangerouslySetInnerHTML={{ __html: renderContent(exercise.formattedContent) }} />
+                                        <div className={styles.questionText}>{speakingContent.question}</div>
+                                        {speakingContent.suggestions.length > 0 && (
+                                            <>
+                                                <strong>You should say:</strong>
+                                                <ul>
+                                                    {speakingContent.suggestions.map((suggestion, index) => (
+                                                        <li key={`${suggestion}-${index}`}>{suggestion}</li>
+                                                    ))}
+                                                </ul>
+                                            </>
+                                        )}
                                     </div>
                                 </div>
 
@@ -618,7 +729,9 @@ export default function SpeakingPractice({
                                         {isRecording && (
                                             <div className={styles.timerContainer}>
                                                 <div className={styles.timerLabels}>
-                                                    <span>Thời gian ghi âm:</span>
+                                                    <span className={styles.timerStatusText}>
+                                                        <span className={styles.recordingDot}></span> Đang ghi âm:
+                                                    </span>
                                                     <span className={styles.timeRemaining}>{formatTime(timer)} / {formatTime(timeLimit)}</span>
                                                 </div>
                                                 <div className={styles.timerBarContainer}>
@@ -629,16 +742,30 @@ export default function SpeakingPractice({
 
                                         {/* Record Button Area */}
                                         <div className={styles.recordArea}>
-                                            <p className={styles.recordPrompt}>
-                                                {isRecording ? 'Đang ghi âm...' : status === 'starting' ? 'Đang chuẩn bị micro...' : status === 'processing' ? 'Đang chấm bài...' : 'Nhấn để bắt đầu ghi âm'}
+                                            <div className={styles.recordBtnWrapper}>
+                                                {isRecording && (
+                                                    <div className={styles.waveRipples}>
+                                                        <span className={styles.ripple1}></span>
+                                                        <span className={styles.ripple2}></span>
+                                                        <span className={styles.ripple3}></span>
+                                                    </div>
+                                                )}
+                                                <button
+                                                    className={`${styles.recordBtn} ${isRecording ? styles.isRecordingBtn : ''}`}
+                                                    onClick={isRecording ? stopRecording : startRecording}
+                                                    disabled={status === 'starting' || isSubmissionQueueing}
+                                                    title={isSubmissionQueueing ? 'Đang gửi bài lên hệ thống' : isRecording ? 'Dừng ghi âm & nộp bài' : 'Nhấn để bắt đầu nói'}
+                                                >
+                                                    {isSubmissionQueueing ? (
+                                                        <span className="spinner-border" role="status" aria-label="Đang nộp bài"></span>
+                                                    ) : (
+                                                        <i className={`bi ${isRecording ? 'bi-stop-fill' : 'bi-mic-fill'}`}></i>
+                                                    )}
+                                                </button>
+                                            </div>
+                                            <p className={`${styles.recordPrompt} ${isRecording ? styles.promptRecording : ''}`}>
+                                                {isRecording ? 'Đang ghi âm bài nói... Nhấn để hoàn thành' : status === 'starting' ? 'Đang chuẩn bị micro...' : isSubmissionQueueing ? 'Đang nộp bài...' : status === 'processing' ? 'Bài đã được gửi và đang được chấm điểm...' : 'Nhấn vào micro để bắt đầu làm bài'}
                                             </p>
-                                            <button
-                                                className={`${styles.recordBtn} ${isRecording ? styles.isRecordingBtn : ''}`}
-                                                onClick={isRecording ? stopRecording : startRecording}
-                                                disabled={status === 'starting' || status === 'processing'}
-                                            >
-                                                <i className={`bi ${isRecording ? 'bi-stop-fill' : 'bi-mic-fill'}`}></i>
-                                            </button>
                                         </div>
                                     </div>
                                 )}
@@ -648,10 +775,6 @@ export default function SpeakingPractice({
                 </div>
             </main>
 
-            {/* NÚT MỞ SIDEBAR TRÁI TRÊN MOBILE */}
-            <button className={styles.mobileMenuBtn} onClick={() => setLeftSidebarOpen(true)}>
-                <i className="bi bi-list"></i>
-            </button>
         </div>
     );
 }

@@ -1,43 +1,42 @@
 import React, { useState, useEffect } from 'react';
 import Swal from 'sweetalert2';
 import axiosClient from '../../../api/axiosClient';
+import assignmentService from '../../../api/services/assignment.service';
 import SpotTaskCreator from './SpotTaskCreator';
 import ExerciseSelector from './ExerciseSelector';
+import DeadlineReminderModal from './DeadlineReminderModal';
+import { normalizeSpeakingContent } from '../../../utils/speakingContent';
 
-const parseItemContent = (formattedContent) => {
-    if (!formattedContent) return {};
-    if (typeof formattedContent === 'object') return formattedContent;
-
-    try {
-        const parsed = JSON.parse(formattedContent);
-        return parsed && typeof parsed === 'object' ? parsed : { content: String(parsed || '') };
-    } catch {
-        return { content: formattedContent };
-    }
-};
+const parseItemContent = (content) => content && typeof content === 'object' ? content : {};
 
 const getItemPrompt = (content) => {
     const candidates = [
         content.description,
-        content.htmlContent,
-        content.passageHtml,
-        content.prompt,
         content.question,
-        content.textPrompt,
-        content.topic,
-        content.content,
         content.title
     ];
 
     return candidates.find(value => typeof value === 'string' && value.trim()) || '';
 };
 
-const escapeHtml = (value) => String(value)
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
+const toDateTimeLocalValue = (value) => {
+    if (!value) return '';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '';
+    const pad = (num) => String(num).padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+};
+
+const formatReminderTime = (value) => {
+    if (!value) return '';
+    return new Date(value).toLocaleString('vi-VN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+    });
+};
 
 export default function FolderConfigModal({ show, onClose, assignmentId, classId, oldExercises = [], onSaved, styles }) {
     const [folderTitle, setFolderTitle] = useState('');
@@ -45,6 +44,10 @@ export default function FolderConfigModal({ show, onClose, assignmentId, classId
     const [folderDescription, setFolderDescription] = useState('');
     const [folderAllowLate, setFolderAllowLate] = useState(false);
     const [folderIsPublished, setFolderIsPublished] = useState(false);
+    const [folderReminderAt, setFolderReminderAt] = useState('');
+    const [folderReminderProcessedAt, setFolderReminderProcessedAt] = useState('');
+    const [reminderDirty, setReminderDirty] = useState(false);
+    const [showReminderModal, setShowReminderModal] = useState(false);
     const [folderItems, setFolderItems] = useState([]);
     const [expandedItemId, setExpandedItemId] = useState(null);
 
@@ -73,6 +76,10 @@ export default function FolderConfigModal({ show, onClose, assignmentId, classId
                     setFolderDescription(assignData.description || '');
                     setFolderAllowLate(assignData.allowLateSubmission || false);
                     setFolderIsPublished(assignData.isPublished || false);
+                    setFolderReminderAt(toDateTimeLocalValue(assignData.reminderAt));
+                    setFolderReminderProcessedAt(assignData.reminderProcessedAt || '');
+                    setReminderDirty(false);
+                    setShowReminderModal(false);
 
                     if (assignData.dueDate) {
                         const date = new Date(assignData.dueDate);
@@ -104,29 +111,19 @@ export default function FolderConfigModal({ show, onClose, assignmentId, classId
                             label = ex
                                 ? `${prefix} [Ngân hàng] ${ex.type || 'Custom'} - ${ex.skillType}${attemptsSuffix}`
                                 : `[Bài tập cũ #${item.exerciseId}]${attemptsSuffix}`;
-                        } else if (item.itemType === 'AI_SPEAKING') {
-                            let parsed = {};
-                            try { parsed = JSON.parse(item.formattedContent || '{}'); } catch (e) { }
-                            label = `🗣️ [Tự do] ${parsed.part || 'Part 1'} - ${(parsed.prompt || '').substring(0, 30)}...${item.maxAttempts ? ` (Tối đa ${item.maxAttempts} lần)` : ''}`;
-                        } else if (item.itemType === 'AI_WRITING') {
-                            let parsed = {};
-                            try { parsed = JSON.parse(item.formattedContent || '{}'); } catch (e) { }
-                            label = `✍️ [Tự do] ${parsed.task || 'Task 1'} - ${(parsed.prompt || '').substring(0, 30)}...`;
-                        } else if (item.itemType === 'GENERAL') {
-                            let parsed = {};
-                            try { parsed = JSON.parse(item.formattedContent || '{}'); } catch (e) { }
-                            label = `📝 [Tự do] ${parsed.title || 'General'} - ${(parsed.prompt || '').substring(0, 30)}...`;
+                        } else if (item.itemType === 'AI_SPEAKING' || item.itemType === 'SPEAKING') {
+                            const parsed = normalizeSpeakingContent(item.content);
+                            label = `🗣️ [Tự do] ${item.type || 'Part 1'} - ${parsed.question.substring(0, 30)}...${item.maxAttempts ? ` (Tối đa ${item.maxAttempts} lần)` : ''}`;
                         } else if (item.itemType === 'fileSubmission') {
-                            let parsed = {};
-                            try { parsed = JSON.parse(item.formattedContent || '{}'); } catch (e) { }
-                            label = `📁 [Nộp File] ${(parsed.description || '').replace(/<[^>]*>/g, '').substring(0, 30)}... (${item.payloads?.length || 0} files)`;
+                            label = `📁 [Nộp File] ${(item.content?.description || '').substring(0, 30)}... (${item.payloads?.length || 0} files)`;
                         }
                         return {
                             id: Date.now() + Math.random(),
                             dbId: item.itemId,
                             exerciseId: item.exerciseId,
                             itemType: item.itemType,
-                            formattedContent: item.formattedContent,
+                            type: item.type || '',
+                            content: item.content || {},
                             maxAttempts: item.maxAttempts,
                             payloads: item.payloads || [],
                             _displayLabel: label
@@ -146,6 +143,10 @@ export default function FolderConfigModal({ show, onClose, assignmentId, classId
                 setFolderDescription('');
                 setFolderAllowLate(false);
                 setFolderIsPublished(false);
+                setFolderReminderAt('');
+                setFolderReminderProcessedAt('');
+                setReminderDirty(false);
+                setShowReminderModal(false);
                 setFolderItems([]);
                 setExpandedItemId(null);
 
@@ -191,7 +192,8 @@ export default function FolderConfigModal({ show, onClose, assignmentId, classId
                 id: Date.now() + Math.random() + newItemsList.length,
                 exerciseId: ex.exerciseId,
                 itemType: ex.skillType,
-                formattedContent: ex.formattedContent || "{}",
+                type: ex.type,
+                content: ex.content,
                 maxAttempts: isSpeaking ? maxAttempts : null,
                 _displayLabel: `${prefix} [Ngân hàng] ${ex.type || 'Custom'} - ${ex.skillType}${attemptsSuffix}`
             });
@@ -223,18 +225,26 @@ export default function FolderConfigModal({ show, onClose, assignmentId, classId
         setExpandedItemId(prev => prev === localId ? null : prev);
     };
 
+    const handleDeadlineReminder = () => {
+        if (!folderDueDate) {
+            Swal.fire('Chú ý', 'Vui lòng chọn hạn nộp bài trước.', 'warning');
+            return;
+        }
+        setShowReminderModal(true);
+    };
+
     const handleImportScript = async () => {
         const defaultSample = JSON.stringify([
             {
-                SkillType: 'SPEAKING',
                 Type: 'Part 1',
-                QuestionContent: 'Do you live in a house or an apartment?',
+                Question: 'Do you live in a house or an apartment?',
+                Suggestions: [],
                 MaxAttempts: 3
             },
             {
-                SkillType: 'SPEAKING',
                 Type: 'Part 2',
-                QuestionContent: 'Describe a place where you would like to live.',
+                Question: 'Describe a place where you would like to live.',
+                Suggestions: ['Where it is', 'What it looks like'],
                 MaxAttempts: 2
             }
         ], null, 2);
@@ -249,13 +259,13 @@ export default function FolderConfigModal({ show, onClose, assignmentId, classId
                             <i class="bi bi-magic"></i> Chèn JSON mẫu
                         </button>
                     </div>
-                    <textarea id="folder-script-input" rows="13" spellcheck="false" style="width:100%;box-sizing:border-box;font-family:Consolas,Monaco,'Courier New',monospace;font-size:.82rem;padding:.75rem;border-radius:8px;border:1px solid #cbd5e1;background:#0f172a;color:#38bdf8;outline:none;line-height:1.45" placeholder='[{ "SkillType": "SPEAKING", "Type": "Part 1", "QuestionContent": "...", "MaxAttempts": 3 }]'></textarea>
+                    <textarea id="folder-script-input" rows="13" spellcheck="false" style="width:100%;box-sizing:border-box;font-family:Consolas,Monaco,'Courier New',monospace;font-size:.82rem;padding:.75rem;border-radius:8px;border:1px solid #cbd5e1;background:#0f172a;color:#38bdf8;outline:none;line-height:1.45" placeholder='[{ "Type": "Part 2", "Question": "...", "Suggestions": ["..."], "MaxAttempts": 3 }]'></textarea>
                     <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:.75rem;margin-top:.75rem;font-size:.8rem;color:#475569">
                         <div style="font-weight:700;color:#1e293b;margin-bottom:.35rem"><i class="bi bi-info-circle-fill" style="color:#6366f1"></i> Cấu trúc hỗ trợ</div>
                         <ul style="margin:0;padding-left:1.2rem;display:grid;gap:.2rem">
-                            <li><strong>SkillType:</strong> SPEAKING</li>
                             <li><strong>Type:</strong> Part 1, Part 2 hoặc Part 3</li>
-                            <li><strong>QuestionContent:</strong> nội dung đề bài, không được trống</li>
+                            <li><strong>Question:</strong> nội dung đề bài, không được trống</li>
+                            <li><strong>Suggestions:</strong> mảng chuỗi dành cho Part 2</li>
                             <li><strong>MaxAttempts:</strong> số lượt nộp tối đa, mặc định là 3</li>
                         </ul>
                     </div>
@@ -310,23 +320,21 @@ export default function FolderConfigModal({ show, onClose, assignmentId, classId
                         return false;
                     }
 
-                    const skillType = String(item.SkillType ?? item.skillType ?? '').trim().toUpperCase();
                     const rawType = String(item.Type ?? item.type ?? '').trim();
-                    const questionContent = String(item.QuestionContent ?? item.questionContent ?? '').trim();
+                    const question = String(item.Question ?? item.question ?? '').trim();
+                    const suggestions = Array.isArray(item.Suggestions ?? item.suggestions)
+                        ? (item.Suggestions ?? item.suggestions).map(value => String(value).trim()).filter(Boolean)
+                        : [];
                     const normalizedPart = validParts.find(part => part.toLowerCase() === rawType.toLowerCase());
                     const rawMaxAttempts = item.MaxAttempts ?? item.maxAttempts ?? 3;
                     const maxAttempts = Number(rawMaxAttempts);
 
-                    if (skillType !== 'SPEAKING') {
-                        Swal.showValidationMessage(`Mục #${index + 1}: SkillType hiện chỉ hỗ trợ SPEAKING.`);
-                        return false;
-                    }
                     if (!normalizedPart) {
                         Swal.showValidationMessage(`Mục #${index + 1}: Type phải là Part 1, Part 2 hoặc Part 3.`);
                         return false;
                     }
-                    if (!questionContent) {
-                        Swal.showValidationMessage(`Mục #${index + 1}: QuestionContent không được để trống.`);
+                    if (!question) {
+                        Swal.showValidationMessage(`Mục #${index + 1}: Question không được để trống.`);
                         return false;
                     }
                     if (!Number.isInteger(maxAttempts) || maxAttempts < 1) {
@@ -338,13 +346,11 @@ export default function FolderConfigModal({ show, onClose, assignmentId, classId
                         id: Date.now() + Math.random() + index,
                         exerciseId: null,
                         itemType: 'SPEAKING',
-                        formattedContent: JSON.stringify({
-                            part: normalizedPart,
-                            prompt: `<p>${escapeHtml(questionContent)}</p>`
-                        }),
+                        type: normalizedPart,
+                        content: { question, suggestions: normalizedPart === 'Part 2' ? suggestions : [] },
                         maxAttempts,
                         payloads: [],
-                        _displayLabel: `[Speaking] ${normalizedPart} - ${questionContent.substring(0, 30)}${questionContent.length > 30 ? '...' : ''} (Tối đa ${maxAttempts} lần)`
+                        _displayLabel: `[Speaking] ${normalizedPart} - ${question.substring(0, 30)}${question.length > 30 ? '...' : ''} (Tối đa ${maxAttempts} lần)`
                     });
                 }
 
@@ -410,6 +416,19 @@ export default function FolderConfigModal({ show, onClose, assignmentId, classId
             return;
         }
 
+        if (!folderAllowLate && folderReminderAt && !folderReminderProcessedAt) {
+            const reminderDate = new Date(folderReminderAt);
+            const dueDate = new Date(folderDueDate);
+            if (reminderDate >= dueDate) {
+                Swal.fire('Chú ý', 'Thời điểm nhắc deadline phải trước hạn nộp bài.', 'warning');
+                return;
+            }
+            if (reminderDirty && reminderDate <= new Date()) {
+                Swal.fire('Chú ý', 'Thời điểm nhắc deadline phải ở trong tương lai.', 'warning');
+                return;
+            }
+        }
+
         if (itemsToSave.length === 0) {
             const confirmEmpty = await Swal.fire({
                 title: 'Thư mục chưa có bài tập',
@@ -429,7 +448,8 @@ export default function FolderConfigModal({ show, onClose, assignmentId, classId
         const formattedItems = itemsToSave.map(it => ({
             exerciseId: it.exerciseId || null,
             itemType: it.itemType,
-            formattedContent: it.formattedContent || "{}",
+            type: it.type || '',
+            content: it.content || {},
             maxAttempts: (it.maxAttempts !== undefined && it.maxAttempts !== null) ? it.maxAttempts : null,
             payloads: it.payloads || []
         }));
@@ -445,20 +465,55 @@ export default function FolderConfigModal({ show, onClose, assignmentId, classId
 
         try {
             setLoading(true);
+            let savedAssignmentId = assignmentId;
             if (assignmentId) {
                 await axiosClient.put(`/teacher/assignment/${assignmentId}`, payload);
-                Swal.fire({
-                    icon: 'success',
-                    title: shouldPublish ? 'Đã xuất bản & lưu thay đổi!' : 'Đã chuyển thành bản nháp & lưu thay đổi!',
-                    timer: 1800,
-                    showConfirmButton: false
-                });
             } else {
                 payload.classId = classId;
-                await axiosClient.post('/teacher/assignment', payload);
+                const createResult = await axiosClient.post('/teacher/assignment', payload);
+                savedAssignmentId = createResult?.assignmentId ?? createResult?.AssignmentId;
+            }
+
+            let reminderError = null;
+            const shouldCancelReminder = Boolean(
+                assignmentId
+                && reminderDirty
+                && !folderReminderProcessedAt
+                && (!folderReminderAt || folderAllowLate)
+            );
+            const shouldSetReminder = Boolean(
+                savedAssignmentId
+                && !folderAllowLate
+                && folderReminderAt
+                && (reminderDirty || !assignmentId)
+            );
+
+            if (shouldCancelReminder || shouldSetReminder) {
+                try {
+                    await assignmentService.setDeadlineReminder(
+                        savedAssignmentId,
+                        shouldSetReminder
+                            ? new Date(folderReminderAt).toISOString()
+                            : null
+                    );
+                } catch (error) {
+                    reminderError = error;
+                    console.error('Error saving deadline reminder:', error);
+                }
+            }
+
+            if (reminderError) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Đã lưu assignment',
+                    text: reminderError.message || 'Không thể cập nhật lịch nhắc deadline. Vui lòng mở lại assignment và thử lại.'
+                });
+            } else {
                 Swal.fire({
                     icon: 'success',
-                    title: shouldPublish ? 'Đã xuất bản thư mục deadline mới!' : 'Đã lưu bản nháp thành công!',
+                    title: assignmentId
+                        ? (shouldPublish ? 'Đã xuất bản & lưu thay đổi!' : 'Đã chuyển thành bản nháp & lưu thay đổi!')
+                        : (shouldPublish ? 'Đã xuất bản thư mục deadline mới!' : 'Đã lưu bản nháp thành công!'),
                     timer: 1800,
                     showConfirmButton: false
                 });
@@ -559,17 +614,46 @@ export default function FolderConfigModal({ show, onClose, assignmentId, classId
                             />
                         </div>
 
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <input
-                                id="allow-late-checkbox"
-                                type="checkbox"
-                                style={{ width: '16px', height: '16px', cursor: 'pointer' }}
-                                checked={folderAllowLate}
-                                onChange={e => setFolderAllowLate(e.target.checked)}
-                            />
-                            <label htmlFor="allow-late-checkbox" style={{ fontSize: '0.85rem', color: '#475569', fontWeight: 600, cursor: 'pointer', userSelect: 'none' }}>
-                                Cho phép học sinh nộp muộn (Late Submission)
-                            </label>
+                        <div className={styles.deadlineReminderRow}>
+                            <div className={styles.allowLateOption}>
+                                <input
+                                    id="allow-late-checkbox"
+                                    type="checkbox"
+                                    checked={folderAllowLate}
+                                    onChange={e => {
+                                        const checked = e.target.checked;
+                                        setFolderAllowLate(checked);
+                                        if (checked && folderReminderAt && !folderReminderProcessedAt) {
+                                            setReminderDirty(true);
+                                        }
+                                    }}
+                                />
+                                <label htmlFor="allow-late-checkbox">
+                                    Cho phép học sinh nộp muộn (Late Submission)
+                                </label>
+                            </div>
+
+                            {!folderAllowLate && (
+                                <div className={styles.reminderControl}>
+                                    <button
+                                        type="button"
+                                        className={styles.btnDeadlineReminder}
+                                        onClick={handleDeadlineReminder}
+                                    >
+                                        <i className="bi bi-bell-fill"></i>
+                                        {folderReminderProcessedAt
+                                            ? 'Nhắc deadline lần nữa'
+                                            : (folderReminderAt ? 'Đổi lịch nhắc' : 'Nhắc deadline')}
+                                    </button>
+                                    {folderReminderAt && (
+                                        <span className={styles.reminderStatus}>
+                                            {folderReminderProcessedAt ? 'Đã nhắc' : 'Sẽ nhắc'} lúc {formatReminderTime(
+                                                folderReminderProcessedAt || folderReminderAt
+                                            )}
+                                        </span>
+                                    )}
+                                </div>
+                            )}
                         </div>
 
                         <div className={styles.folderTasksSection}>
@@ -617,11 +701,11 @@ export default function FolderConfigModal({ show, onClose, assignmentId, classId
                                 ) : (
                                     folderItems.map((it, itemIndex) => {
                                         const type = (it.itemType || '').toUpperCase();
-                                        const parsedContent = parseItemContent(it.formattedContent);
+                                        const parsedContent = parseItemContent(it.content);
                                         const prompt = getItemPrompt(parsedContent);
                                         const isExpanded = expandedItemId === it.id;
                                         const sourceLabel = it.exerciseId ? `Ngân hàng · #${it.exerciseId}` : 'Tạo trong thư mục';
-                                        const partOrTask = parsedContent.part || parsedContent.task;
+                                        const partOrTask = it.type;
                                         const attachments = it.payloads || [];
                                         let badgeClass = styles.badgeGeneral;
                                         let badgeLabel = 'General';
@@ -629,15 +713,6 @@ export default function FolderConfigModal({ show, onClose, assignmentId, classId
                                         if (type === 'AI_SPEAKING' || type === 'SPEAKING') {
                                             badgeClass = styles.badgeSpeaking;
                                             badgeLabel = 'Speaking';
-                                        } else if (type === 'AI_WRITING' || type === 'WRITING') {
-                                            badgeClass = styles.badgeWriting;
-                                            badgeLabel = 'Writing';
-                                        } else if (type === 'READING') {
-                                            badgeClass = styles.badgeReading;
-                                            badgeLabel = 'Reading';
-                                        } else if (type === 'LISTENING') {
-                                            badgeClass = styles.badgeListening;
-                                            badgeLabel = 'Listening';
                                         } else if (type === 'FILESUBMISSION' || type === 'FILE_SUBMISSION') {
                                             badgeClass = styles.badgeFile;
                                             badgeLabel = 'Nộp File';
@@ -699,10 +774,7 @@ export default function FolderConfigModal({ show, onClose, assignmentId, classId
 
                                                         <div className={styles.folderTaskPromptLabel}>Nội dung / Yêu cầu</div>
                                                         {prompt ? (
-                                                            <div
-                                                                className={styles.folderTaskPrompt}
-                                                                dangerouslySetInnerHTML={{ __html: prompt }}
-                                                            />
+                                                            <div className={styles.folderTaskPrompt} style={{ whiteSpace: 'pre-wrap' }}>{prompt}</div>
                                                         ) : (
                                                             <div className={styles.folderTaskEmptyDetail}>Không có nội dung chi tiết.</div>
                                                         )}
@@ -802,6 +874,27 @@ export default function FolderConfigModal({ show, onClose, assignmentId, classId
                         )}
                     </div>
                 )}
+
+                <DeadlineReminderModal
+                    show={showReminderModal}
+                    dueDate={folderDueDate}
+                    currentReminderAt={folderReminderAt}
+                    processedAt={folderReminderProcessedAt}
+                    styles={styles}
+                    onClose={() => setShowReminderModal(false)}
+                    onApply={(reminderAt) => {
+                        setFolderReminderAt(toDateTimeLocalValue(reminderAt));
+                        setFolderReminderProcessedAt('');
+                        setReminderDirty(true);
+                        setShowReminderModal(false);
+                    }}
+                    onCancelSchedule={() => {
+                        setFolderReminderAt('');
+                        setFolderReminderProcessedAt('');
+                        setReminderDirty(true);
+                        setShowReminderModal(false);
+                    }}
+                />
             </div>
         </div>
     );

@@ -66,3 +66,63 @@
 .pageInfo strong {
     color: #1e293b;
 }
+
+@media (max-width: 768px) {
+    .floatingOnMobile {
+        gap: 0.25rem;
+        width: max-content;
+        max-width: calc(100vw - 2rem);
+        padding: 0.45rem 0.55rem;
+        flex-wrap: nowrap;
+        border: 1px solid rgba(255, 255, 255, 0.7);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.9);
+        box-shadow: 0 12px 32px rgba(6, 27, 94, 0.18);
+        backdrop-filter: blur(18px) saturate(150%);
+        -webkit-backdrop-filter: blur(18px) saturate(150%);
+    }
+
+    .floatingOnMobile .pageBtn {
+        min-width: 32px;
+        height: 32px;
+        padding: 0 0.35rem;
+        border-color: transparent;
+        border-radius: 50%;
+        background: transparent;
+        color: #526485;
+        font-size: 0.8rem;
+    }
+
+    .floatingOnMobile .previousPageBtn,
+    .floatingOnMobile .nextPageBtn {
+        color: #0b63ed;
+        background: #edf4ff;
+        font-size: 1rem;
+    }
+
+    .floatingOnMobile .pageBtn.active {
+        border-color: transparent;
+        color: #fff;
+        background: linear-gradient(135deg, #2563eb, #56a7fa);
+        box-shadow: 0 5px 12px rgba(37, 99, 235, 0.3);
+    }
+
+    .floatingOnMobile .edgePageBtn,
+    .floatingOnMobile .overflowPageBtn,
+    .floatingOnMobile .ellipsis {
+        display: none;
+    }
+
+    .floatingOnMobile .pageInfo {
+        margin-left: 0.25rem;
+        padding: 0.35rem 0.55rem;
+        border-radius: 999px;
+        color: #71809d;
+        background: #f3f7fc;
+        font-size: 0.68rem;
+    }
+
+    .floatingOnMobile .pageInfo strong {
+        color: #17335f;
+    }
+}

@@ -8,7 +8,14 @@ import styles from './Pagination.module.css';
  * @param {function} onPageChange - Callback when a page is selected
  * @param {number} [maxVisible=5] - Max number of page buttons shown
  */
-export default function Pagination({ currentPage, totalPages, onPageChange, maxVisible = 5 }) {
+export default function Pagination({
+    currentPage,
+    totalPages,
+    onPageChange,
+    maxVisible = 5,
+    floatingOnMobile = false,
+    onInteraction
+}) {
 
     const getPageNumbers = () => {
         const pages = [];
@@ -29,9 +36,15 @@ export default function Pagination({ currentPage, totalPages, onPageChange, maxV
     const pageNumbers = getPageNumbers();
 
     return (
-        <div className={styles.pagination}>
+        <div
+            className={`${styles.pagination} ${floatingOnMobile ? styles.floatingOnMobile : ''}`}
+            onPointerDown={onInteraction}
+            onPointerMove={onInteraction}
+            onClickCapture={onInteraction}
+            onFocusCapture={onInteraction}
+        >
             <button
-                className={styles.pageBtn}
+                className={`${styles.pageBtn} ${styles.edgePageBtn}`}
                 onClick={() => onPageChange(1)}
                 disabled={currentPage === 1}
                 title="Trang đầu"
@@ -39,7 +52,7 @@ export default function Pagination({ currentPage, totalPages, onPageChange, maxV
                 «
             </button>
             <button
-                className={styles.pageBtn}
+                className={`${styles.pageBtn} ${styles.previousPageBtn}`}
                 onClick={() => onPageChange(currentPage - 1)}
                 disabled={currentPage === 1}
                 title="Trang trước"
@@ -49,7 +62,7 @@ export default function Pagination({ currentPage, totalPages, onPageChange, maxV
 
             {pageNumbers[0] > 1 && (
                 <>
-                    <button className={styles.pageBtn} onClick={() => onPageChange(1)}>1</button>
+                    <button className={`${styles.pageBtn} ${styles.overflowPageBtn}`} onClick={() => onPageChange(1)}>1</button>
                     {pageNumbers[0] > 2 && <span className={styles.ellipsis}>…</span>}
                 </>
             )}
@@ -69,14 +82,14 @@ export default function Pagination({ currentPage, totalPages, onPageChange, maxV
                     {pageNumbers[pageNumbers.length - 1] < totalPages - 1 && (
                         <span className={styles.ellipsis}>…</span>
                     )}
-                    <button className={styles.pageBtn} onClick={() => onPageChange(totalPages)}>
+                    <button className={`${styles.pageBtn} ${styles.overflowPageBtn}`} onClick={() => onPageChange(totalPages)}>
                         {totalPages}
                     </button>
                 </>
             )}
 
             <button
-                className={styles.pageBtn}
+                className={`${styles.pageBtn} ${styles.nextPageBtn}`}
                 onClick={() => onPageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
                 title="Trang sau"
@@ -84,7 +97,7 @@ export default function Pagination({ currentPage, totalPages, onPageChange, maxV
                 ›
             </button>
             <button
-                className={styles.pageBtn}
+                className={`${styles.pageBtn} ${styles.edgePageBtn}`}
                 onClick={() => onPageChange(totalPages)}
                 disabled={currentPage === totalPages}
                 title="Trang cuối"

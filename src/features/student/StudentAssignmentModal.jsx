@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axiosClient from '../../api/axiosClient';
+import assignmentService from '../../api/services/assignment.service';
 import styles from './StudentAssignmentModal.module.css';
 import Skeleton from '../../components/common/Skeleton';
 import CommonAttachmentUploader from '../../components/CommonAttachmentUploader';
@@ -7,6 +8,8 @@ import Swal from 'sweetalert2';
 import { showToastError } from '../../utils/toast';
 import AttemptDetailView from './AttemptDetailView';
 import { SpeakingAssessmentPipeline } from './speakingAssessmentPipeline';
+import SpeakingQuestionCard from '../../components/SpeakingQuestionCard';
+import { getSpeakingPrompt, normalizeSpeakingContent } from '../../utils/speakingContent';
 
 // Soniox credentials are issued by the backend for each recording session.
 
@@ -15,8 +18,12 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
     const [loading, setLoading] = useState(true);
     const [submittingItemId, setSubmittingItemId] = useState(null);
 
-    // Lưu lịch sử bài nộp của học sinh theo từng ItemId
+    // Lịch sử chỉ được populate sau khi item detail được mở.
     const [histories, setHistories] = useState({});
+    const [itemDetails, setItemDetails] = useState({});
+    const [expandedItemId, setExpandedItemId] = useState(null);
+    const [itemDetailLoadingId, setItemDetailLoadingId] = useState(null);
+    const [itemDetailErrors, setItemDetailErrors] = useState({});
 
     // Lưu file đang chuẩn bị nộp theo từng ItemId
     const [pendingFiles, setPendingFiles] = useState({});
@@ -54,28 +61,12 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
     const fetchAssignmentDetails = async () => {
         try {
             setLoading(true);
-            const data = await axiosClient.get(`/student/assignment/${assignmentId}`);
+            const data = await assignmentService.getStudentAssignmentSummary(assignmentId);
             setAssignment(data);
-
-            // Sau khi lấy được chi tiết assignment, fetch lịch sử nộp bài của từng hạng mục
-            if (data?.items) {
-                const historyPromises = data.items.map(async (item) => {
-                    try {
-                        const historyData = await axiosClient.get(`/student/assignment/items/${item.itemId}/submissions`);
-                        return { itemId: item.itemId, history: historyData || [] };
-                    } catch (e) {
-                        console.error(`Failed to fetch history for item ${item.itemId}:`, e);
-                        return { itemId: item.itemId, history: [] };
-                    }
-                });
-
-                const results = await Promise.all(historyPromises);
-                const historiesMap = {};
-                results.forEach(res => {
-                    historiesMap[res.itemId] = res.history;
-                });
-                setHistories(historiesMap);
-            }
+            setHistories({});
+            setItemDetails({});
+            setItemDetailErrors({});
+            setExpandedItemId(null);
         } catch (err) {
             console.error("Failed to fetch assignment detail:", err);
             showToastError('Không thể tải chi tiết bài tập. Vui lòng kiểm tra lại kết nối.');
@@ -85,31 +76,21 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
         }
     };
 
-    const detectPartNumber = (type, formattedContent) => {
+    const detectPartNumber = (type) => {
         const typeLower = (type || '').toLowerCase();
         if (typeLower.includes('part 2') || typeLower.includes('part2') || typeLower.includes('speaking2')) return 2;
         if (typeLower.includes('part 3') || typeLower.includes('part3') || typeLower.includes('speaking3')) return 3;
         if (typeLower.includes('part 1') || typeLower.includes('part1') || typeLower.includes('speaking1')) return 1;
 
-        if (formattedContent) {
-            try {
-                const parsed = typeof formattedContent === 'string' ? JSON.parse(formattedContent) : formattedContent;
-                const pType = (parsed.type || parsed.part || '').toString().toLowerCase();
-                if (pType.includes('part 2') || pType.includes('part2') || pType.includes('2')) return 2;
-                if (pType.includes('part 3') || pType.includes('part3') || pType.includes('3')) return 3;
-                if (pType.includes('part 1') || pType.includes('part1') || pType.includes('1')) return 1;
-
-                const pContent = (parsed.passageHtml || parsed.htmlContent || parsed.textPrompt || parsed.prompt || '').toLowerCase();
-                if (pContent.includes('part 2') || pContent.includes('part2')) return 2;
-                if (pContent.includes('part 3') || pContent.includes('part3')) return 3;
-                if (pContent.includes('part 1') || pContent.includes('part1')) return 1;
-            } catch (e) { }
-        }
         return 1;
     };
 
     const activeSpeakingItemForLimit = assignment?.items?.find(it => it.itemId === activeSpeakingItemId);
-    const partNum = activeSpeakingItemForLimit ? detectPartNumber(activeSpeakingItemForLimit.itemType, activeSpeakingItemForLimit.formattedContent) : 1;
+    const activeSpeakingItemDetail = activeSpeakingItemId ? itemDetails[activeSpeakingItemId] : null;
+    const activeSpeakingItemData = activeSpeakingItemForLimit
+        ? { ...activeSpeakingItemForLimit, ...activeSpeakingItemDetail }
+        : null;
+    const partNum = activeSpeakingItemData ? detectPartNumber(activeSpeakingItemData.type) : 1;
     const getRecordingTimeLimit = (part) => {
         if (part === 2) return 150; // 2 minutes 30 seconds
         if (part === 3) return 60;  // 1 minute
@@ -120,7 +101,7 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
     // Tự động dừng ghi âm khi hết thời gian
     useEffect(() => {
         if (isRecording && speakingTimer >= timeLimit && activeSpeakingItemId) {
-            stopSpeakingRecording(activeSpeakingItemId, activeSpeakingItemForLimit?.itemType, activeSpeakingItemForLimit?.formattedContent);
+            stopSpeakingRecording(activeSpeakingItemId, activeSpeakingItemData?.type, activeSpeakingItemData?.content);
             Swal.fire({
                 icon: 'info',
                 title: 'Hết thời gian ghi âm',
@@ -131,17 +112,36 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
         }
     }, [speakingTimer, isRecording, timeLimit, partNum, activeSpeakingItemId]);
 
-    const fetchItemHistory = async (itemId) => {
+    const fetchItemDetail = async (itemId, force = false) => {
+        if (!force && itemDetails[itemId]) {
+            setExpandedItemId(itemId);
+            return itemDetails[itemId];
+        }
+
+        setExpandedItemId(itemId);
+        setItemDetailLoadingId(itemId);
+        setItemDetailErrors(prev => ({ ...prev, [itemId]: null }));
         try {
-            const historyData = await axiosClient.get(`/student/assignment/items/${itemId}/submissions`);
+            const detail = await assignmentService.getStudentAssignmentItemDetail(assignmentId, itemId);
+            setItemDetails(prev => ({ ...prev, [itemId]: detail }));
             setHistories(prev => ({
                 ...prev,
-                [itemId]: historyData || []
+                [itemId]: detail?.history || []
             }));
+            return detail;
         } catch (e) {
-            console.error(`Failed to refresh history for item ${itemId}:`, e);
+            console.error(`Failed to load item detail ${itemId}:`, e);
+            setItemDetailErrors(prev => ({
+                ...prev,
+                [itemId]: 'Không thể tải chi tiết hạng mục. Vui lòng thử lại.'
+            }));
+            return null;
+        } finally {
+            setItemDetailLoadingId(null);
         }
     };
+
+    const fetchItemHistory = async (itemId) => fetchItemDetail(itemId, true);
 
     const handleFileChange = (itemId, files) => {
         setPendingFiles(prev => ({
@@ -294,7 +294,6 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
             const formData = new FormData();
             formData.append('AssignmentItemId', itemId);
             formData.append('AudioBlobUrl', filePayload.dataValue);
-            formData.append('AudioDurationSeconds', 0); // File tự luận không có duration
 
             await axiosClient.post('/student/submissions/file', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
@@ -342,41 +341,7 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
         return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
     };
 
-    const renderContent = (jsonStr) => {
-        if (!jsonStr) return "";
-        try {
-            const parsed = JSON.parse(jsonStr);
-            return parsed.passageHtml || parsed.htmlContent || parsed.textPrompt || parsed.question || jsonStr;
-        } catch (e) {
-            return jsonStr;
-        }
-    };
-
-    const stripHtml = (html) => {
-        if (!html) return "";
-        try {
-            const doc = new DOMParser().parseFromString(html, 'text/html');
-            return doc.body.textContent || "";
-        } catch (e) {
-            return html.replace(/<\/?[^>]+(>|$)/g, "").trim();
-        }
-    };
-
-    const getCleanTextQuestion = (jsonStr) => {
-        if (!jsonStr) return "";
-        try {
-            const parsed = JSON.parse(jsonStr);
-            if (parsed.textPrompt) {
-                return parsed.textPrompt.trim();
-            }
-            const html = parsed.passageHtml || parsed.htmlContent || jsonStr;
-            return stripHtml(html).trim();
-        } catch (e) {
-            return stripHtml(jsonStr).trim();
-        }
-    };
-
-    const startSpeakingRecording = async (itemId, itemType, formattedContent) => {
+    const startSpeakingRecording = async (itemId, itemType, content) => {
         try {
             // Kiểm tra giới hạn số lần nộp bài trước khi bắt đầu ghi âm
             try {
@@ -410,8 +375,8 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
 
             const pipeline = new SpeakingAssessmentPipeline({
                 credentials: tokenData,
-                question: getCleanTextQuestion(formattedContent),
-                partNumber: detectPartNumber(itemType, formattedContent)
+                question: getSpeakingPrompt(content),
+                partNumber: detectPartNumber(itemType)
             });
             assessmentPipelineRef.current = pipeline;
             await pipeline.start();
@@ -428,7 +393,7 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
         }
     };
 
-    const stopSpeakingRecording = async (itemId, itemType, formattedContent) => {
+    const stopSpeakingRecording = async (itemId, itemType, content) => {
         if (!assessmentPipelineRef.current) return;
 
         setSpeakingStatus(prev => ({ ...prev, [itemId]: 'processing' }));
@@ -461,7 +426,7 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
                         navigator.mediaDevices.getUserMedia({ audio: true })
                             .then(stream => {
                                 stream.getTracks().forEach(track => track.stop());
-                                Swal.fire('Thành công', 'Micro đã sẵn sàng hoạt động! Hãy bắt đầu ghi âm lại nhé.', 'success');
+                                Swal.fire('Micro đã hoạt động', 'Bạn có thể bắt đầu ghi âm lại.', 'success');
                             })
                             .catch(err => {
                                 console.error(err);
@@ -473,7 +438,7 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
             }
 
             // 2. Kiểm tra độ dài bài nói dựa trên Part
-            const partNum = detectPartNumber(itemType, formattedContent);
+            const partNum = detectPartNumber(itemType);
             const minWords = partNum === 2 ? 20 : 10;
             if (wordCount < minWords) {
                 setSpeakingStatus(prev => ({ ...prev, [itemId]: 'idle' }));
@@ -500,8 +465,6 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
 
             await submitSpeakingToBackend(
                 itemId,
-                itemType,
-                formattedContent,
                 duration,
                 outcome.audioBlob,
                 outcome.transcript,
@@ -518,8 +481,6 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
 
     const submitSpeakingToBackend = async (
         itemId,
-        itemType,
-        formattedContent,
         duration,
         audioBlob = null,
         sonioxTranscript = '',
@@ -530,9 +491,10 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
             const formData = new FormData();
 
             formData.append("AssignmentItemId", itemId);
-            formData.append("type", (itemType || '').toUpperCase() === 'AI_SPEAKING' ? 'AI_SPEAKING' : 'SPEAKING');
-            formData.append("question", getCleanTextQuestion(formattedContent));
-            formData.append("audioDurationSeconds", duration);
+            formData.append(
+                "audioDurationMilliseconds",
+                String(Math.round(duration * 1000)),
+            );
             formData.append("sonioxTranscript", sonioxTranscript);
             formData.append("sonioxTokensJson", JSON.stringify(sonioxTokens));
             formData.append("sonioxFinalized", "true");
@@ -552,9 +514,7 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
         } catch (err) {
             console.error(err);
             if (err.code === 'OFF_TOPIC') {
-                showToastError(
-                    `${err.reason || err.message} Còn ${err.remainingRetries || 0} lần thử lại.`
-                );
+                showToastError(err.message);
             } else {
                 showToastError(
                     err.message || 'Không thể nộp bài. Vui lòng thử lại.'
@@ -575,7 +535,7 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
                     await fetchItemHistory(itemId);
                     return true;
                 } else if (data.status === 'Failed') {
-                    showToastError('AI không thể xử lý bài nói của bạn.');
+                    showToastError('Bài nói chưa được xử lý. Vui lòng thử lại.');
                     setSpeakingStatus(prev => ({ ...prev, [itemId]: 'idle' }));
                     return true;
                 }
@@ -625,7 +585,10 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
     // --- SPEAKING STUDIO VIEW MODE ---
     if (activeSpeakingItemId) {
         const activeSpeakingItem = assignment.items?.find(it => it.itemId === activeSpeakingItemId);
-        const activeItemParsed = activeSpeakingItem?.formattedContent ? JSON.parse(activeSpeakingItem.formattedContent) : {};
+        const activeSpeakingItemData = activeSpeakingItem
+            ? { ...activeSpeakingItem, ...itemDetails[activeSpeakingItemId] }
+            : null;
+        const activeItemParsed = normalizeSpeakingContent(activeSpeakingItemData?.content);
         const activeItemHistory = histories[activeSpeakingItemId] || [];
         const speakingItems = assignment.items?.filter(it => {
             const typeUpper = (it.itemType || '').toUpperCase();
@@ -639,7 +602,7 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
             return 'Part 1';
         };
 
-        const activePart = getPartFromType(activeSpeakingItem?.itemType);
+        const activePart = getPartFromType(activeSpeakingItemData?.type);
 
         return (
             <div className={styles.modalOverlay} onClick={onClose}>
@@ -659,7 +622,7 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
                                 <i className="bi bi-arrow-left"></i> Quay lại danh sách
                             </button>
                             <span className={styles.studioHeaderTitle}>
-                                <strong>Phòng thu âm AI:</strong> {assignment.title}
+                                <strong>Phòng thu âm:</strong> {assignment.title}
                             </span>
                         </div>
                         <button className={styles.btnClose} onClick={onClose}>&times;</button>
@@ -690,22 +653,26 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
 
                                 <div className={styles.questionPickerList}>
                                     {speakingItems
-                                        .filter(ex => selectedPartFilter === 'All' || getPartFromType(ex.itemType) === selectedPartFilter)
+                                        .filter(ex => selectedPartFilter === 'All' || getPartFromType(ex.type) === selectedPartFilter)
                                         .map((ex, idx) => {
-                                            const itemParsed = ex.formattedContent ? JSON.parse(ex.formattedContent) : {};
+                                             const itemData = { ...ex, ...itemDetails[ex.itemId] };
+                                             const itemParsed = normalizeSpeakingContent(itemData.content);
                                             return (
                                                 <button
                                                     key={ex.itemId}
-                                                    onClick={() => {
-                                                        setActiveSpeakingItemId(ex.itemId);
-                                                        setLeftSidebarOpen(false);
-                                                    }}
+                                                     onClick={async () => {
+                                                         const detail = await fetchItemDetail(ex.itemId);
+                                                         if (detail) {
+                                                             setActiveSpeakingItemId(ex.itemId);
+                                                             setLeftSidebarOpen(false);
+                                                         }
+                                                     }}
                                                     className={`${styles.questionPickerItem} ${ex.itemId === activeSpeakingItemId ? styles.activeQuestion : ''}`}
                                                 >
                                                     <div className={styles.qCircle}>Q{idx + 1}</div>
                                                     <div className={styles.qInfo}>
-                                                        <div className={styles.qTitleText}>{itemParsed.title || `Speaking Part`}</div>
-                                                        <div className={styles.qPartText}>Part {ex.itemType?.includes('2') ? 2 : ex.itemType?.includes('3') ? 3 : 1}</div>
+                                                        <div className={styles.qTitleText}>{itemParsed.question || 'Speaking'}</div>
+                                                        <div className={styles.qPartText}>{ex.type || 'Part 1'}</div>
                                                     </div>
                                                 </button>
                                             );
@@ -746,7 +713,7 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
                                         <div className={styles.cardBody}>
                                             <div className={styles.questionCardWrapper}>
                                                 <div className={styles.questionContentCard}>
-                                                    <div dangerouslySetInnerHTML={{ __html: renderContent(activeSpeakingItem?.formattedContent) }} />
+                                                     <SpeakingQuestionCard content={activeSpeakingItemData?.content} type={activeSpeakingItemData?.type} />
                                                 </div>
                                             </div>
 
@@ -780,8 +747,8 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
                                                         <button
                                                             className={`${styles.recordBtn} ${speakingStatus[activeSpeakingItemId] === 'recording' ? styles.isRecordingBtn : ''}`}
                                                             onClick={speakingStatus[activeSpeakingItemId] === 'recording'
-                                                                ? () => stopSpeakingRecording(activeSpeakingItemId, activeSpeakingItem?.itemType, activeSpeakingItem?.formattedContent)
-                                                                : () => startSpeakingRecording(activeSpeakingItemId, activeSpeakingItem?.itemType, activeSpeakingItem?.formattedContent)}
+                                                                 ? () => stopSpeakingRecording(activeSpeakingItemId, activeSpeakingItemData?.type, activeSpeakingItemData?.content)
+                                                                 : () => startSpeakingRecording(activeSpeakingItemId, activeSpeakingItemData?.type, activeSpeakingItemData?.content)}
                                                             disabled={speakingStatus[activeSpeakingItemId] === 'processing'}
                                                         >
                                                             <i className={`bi ${speakingStatus[activeSpeakingItemId] === 'recording' ? 'bi-stop-fill' : 'bi-mic-fill'}`}></i>
@@ -894,20 +861,70 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
                             <i className="bi bi-list-check text-success"></i> Hạng mục cần thực hiện ({assignment.items?.length || 0})
                         </h4>
 
-                        {assignment.items?.map((item, index) => {
-                            const itemHistory = histories[item.itemId] || [];
-                            const parsedContent = item.formattedContent ? JSON.parse(item.formattedContent) : {};
-                            const files = pendingFiles[item.itemId] || [];
-                            const isSpeaking = (item.itemType || '').toUpperCase() === 'AI_SPEAKING' || (item.itemType || '').toUpperCase() === 'SPEAKING';
+                                        {assignment.items?.map((summaryItem, index) => {
+                                            const itemDetail = itemDetails[summaryItem.itemId];
+                                            const isSpeaking = (summaryItem.itemType || '').toUpperCase() === 'AI_SPEAKING' || (summaryItem.itemType || '').toUpperCase() === 'SPEAKING';
+                                            const itemTitle = summaryItem.title || (isSpeaking ? 'Bài tập Speaking' : 'Nộp tài liệu tự luận');
+                                            const itemDescription = summaryItem.description || (isSpeaking
+                                                ? 'Nhấn nút bên dưới để vào phòng thu âm và làm bài nói.'
+                                                : 'Vui lòng làm bài và tải lên file bài làm theo đúng yêu cầu bên dưới.');
 
-                            return (
-                                <div key={item.itemId} className={styles.itemCard}>
+                                            if (!itemDetail || itemDetailLoadingId === summaryItem.itemId || itemDetailErrors[summaryItem.itemId]) {
+                                                return (
+                                                    <div key={summaryItem.itemId} className={styles.itemCard}>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => itemDetailErrors[summaryItem.itemId]
+                                                                ? fetchItemDetail(summaryItem.itemId, true)
+                                                                : fetchItemDetail(summaryItem.itemId)}
+                                                            className={styles.itemSummaryButton}
+                                                            style={{ width: '100%', border: 0, background: 'transparent', padding: 0, textAlign: 'left', cursor: 'pointer' }}
+                                                        >
+                                                            <div className={styles.itemHeader}>
+                                                                <div className={styles.itemInfo}>
+                                                                    <h4>Hạng mục {index + 1}: {itemTitle}</h4>
+                                                                    <p className={styles.itemDesc}>{itemDescription}</p>
+                                                                    {summaryItem.hasSubmission && (
+                                                                        <span className={styles.statusCellSubmitted}>
+                                                                            <i className="bi bi-check-circle-fill"></i> Đã nộp bài
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                                <i className={`bi bi-chevron-down ${styles.itemSummaryChevron}`} aria-hidden="true"></i>
+                                                            </div>
+                                                        </button>
+                                                        {itemDetailLoadingId === summaryItem.itemId && (
+                                                            <div className="d-flex align-items-center gap-2 text-muted p-3">
+                                                                <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                                                Đang tải chi tiết hạng mục...
+                                                            </div>
+                                                        )}
+                                                        {itemDetailErrors[summaryItem.itemId] && (
+                                                            <div className="alert alert-danger m-3 mb-0">
+                                                                {itemDetailErrors[summaryItem.itemId]} Vui lòng bấm vào item để thử lại.
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                );
+                                            }
 
-                                    {/* Tiêu đề & Loại bài tập */}
+                                            const item = { ...summaryItem, ...itemDetail };
+                                            const itemHistory = histories[item.itemId] || itemDetail.history || [];
+                                            const parsedContent = item.content && typeof item.content === 'object' ? item.content : {};
+                                            const files = pendingFiles[item.itemId] || [];
+
+                                            return (
+                                                <div key={item.itemId} className={`${styles.itemCard} ${styles.itemDetailPanel}`}>
+
+                                                    <button type="button" className={`${styles.collapseItemButton} mb-2`} onClick={() => setExpandedItemId(null)}>
+                                                        <i className="bi bi-chevron-up"></i> Thu gọn hạng mục
+                                                    </button>
+
+                                                    {/* Tiêu đề & Loại bài tập */}
                                     <div className={styles.itemHeader}>
                                         <div className={styles.itemInfo}>
-                                            <h4>Hạng mục {index + 1}: {parsedContent.title || (isSpeaking ? 'Bài tập Speaking AI' : 'Nộp tài liệu tự luận')}</h4>
-                                            <p className={styles.itemDesc}>{parsedContent.description || (isSpeaking ? 'Nhấn nút bên dưới để vào phòng thu âm và làm câu hỏi phát âm AI.' : 'Vui lòng làm bài và tải lên file bài làm theo đúng yêu cầu bên dưới.')}</p>
+                                            <h4>Hạng mục {index + 1}: {parsedContent.title || (isSpeaking ? 'Bài tập Speaking' : 'Nộp tài liệu tự luận')}</h4>
+                                            <p className={styles.itemDesc}>{parsedContent.description || (isSpeaking ? 'Nhấn nút bên dưới để vào phòng thu âm và làm bài nói.' : 'Vui lòng làm bài và tải lên file bài làm theo đúng yêu cầu bên dưới.')}</p>
 
                                             {isSpeaking && (
                                                 <div className={item.maxAttempts && itemHistory.length >= item.maxAttempts ? styles.attemptLimitBadgeError : styles.attemptLimitBadge}>
@@ -927,7 +944,7 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
                                         )}
                                         {isSpeaking && (
                                             <span className={styles.speakingBadge}>
-                                                <i className="bi bi-mic-fill"></i> AI Speaking
+                                                <i className="bi bi-mic-fill"></i> Bài nói
                                             </span>
                                         )}
                                     </div>

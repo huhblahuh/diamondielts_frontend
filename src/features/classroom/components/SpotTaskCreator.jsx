@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import Swal from 'sweetalert2';
-import TiptapEditor from '../../../components/TiptapEditor';
 import CommonAttachmentUploader from '../../../components/CommonAttachmentUploader';
+import { makeSpeakingContent } from '../../../utils/speakingContent';
 
 const SpotTaskCreator = React.forwardRef(({ show, onClose, onAddTask, onDirtyChange, styles }, ref) => {
     const [inlineSkillType, setInlineSkillType] = useState('SPEAKING');
     const [inlinePart, setInlinePart] = useState('Part 1');
-    const [inlineWritingTask, setInlineWritingTask] = useState('Task 1');
     const [inlinePrompt, setInlinePrompt] = useState('');
+    const [inlineSuggestions, setInlineSuggestions] = useState([]);
     const [inlineUploadPayloads, setInlineUploadPayloads] = useState([]);
     const [inlineMaxAttempts, setInlineMaxAttempts] = useState(3);
 
@@ -26,10 +26,8 @@ const SpotTaskCreator = React.forwardRef(({ show, onClose, onAddTask, onDirtyCha
                     id: localId,
                     exerciseId: null,
                     itemType: 'SPEAKING',
-                    formattedContent: JSON.stringify({
-                        part: inlinePart,
-                        prompt: inlinePrompt
-                    }),
+                    type: inlinePart,
+                    content: makeSpeakingContent(inlinePrompt, inlineSuggestions, inlinePart),
                     maxAttempts: inlineMaxAttempts,
                     _displayLabel: `[Speaking] ${inlinePart} - ${inlinePrompt.substring(0, 30)}...${inlineMaxAttempts ? ` (Tối đa ${inlineMaxAttempts} lần)` : ''}`
                 };
@@ -38,9 +36,8 @@ const SpotTaskCreator = React.forwardRef(({ show, onClose, onAddTask, onDirtyCha
                     id: localId,
                     exerciseId: null,
                     itemType: 'fileSubmission',
-                    formattedContent: JSON.stringify({
-                        description: inlinePrompt
-                    }),
+                    type: '',
+                    content: { description: inlinePrompt },
                     payloads: inlineUploadPayloads,
                     _displayLabel: `[Nộp File] ${inlinePrompt.substring(0, 30)}... (${inlineUploadPayloads.length} files)`
                 };
@@ -49,8 +46,8 @@ const SpotTaskCreator = React.forwardRef(({ show, onClose, onAddTask, onDirtyCha
         },
         reset: () => {
             setInlinePrompt('');
+            setInlineSuggestions([]);
             setInlinePart('Part 1');
-            setInlineWritingTask('Task 1');
             setInlineUploadPayloads([]);
             setInlineMaxAttempts(3);
         }
@@ -86,10 +83,8 @@ const SpotTaskCreator = React.forwardRef(({ show, onClose, onAddTask, onDirtyCha
                 id: localId,
                 exerciseId: null,
                 itemType: 'SPEAKING',
-                formattedContent: JSON.stringify({
-                    part: inlinePart,
-                    prompt: inlinePrompt
-                }),
+                type: inlinePart,
+                content: makeSpeakingContent(inlinePrompt, inlineSuggestions, inlinePart),
                 maxAttempts: inlineMaxAttempts,
                 _displayLabel: `[Speaking] ${inlinePart} - ${inlinePrompt.substring(0, 30)}...${inlineMaxAttempts ? ` (Tối đa ${inlineMaxAttempts} lần)` : ''}`
             };
@@ -98,9 +93,8 @@ const SpotTaskCreator = React.forwardRef(({ show, onClose, onAddTask, onDirtyCha
                 id: localId,
                 exerciseId: null,
                 itemType: 'fileSubmission',
-                formattedContent: JSON.stringify({
-                    description: inlinePrompt
-                }),
+                type: '',
+                content: { description: inlinePrompt },
                 payloads: inlineUploadPayloads,
                 _displayLabel: `[Nộp File] ${inlinePrompt.substring(0, 30)}... (${inlineUploadPayloads.length} files)`
             };
@@ -110,8 +104,8 @@ const SpotTaskCreator = React.forwardRef(({ show, onClose, onAddTask, onDirtyCha
 
         // Reset state
         setInlinePrompt('');
+        setInlineSuggestions([]);
         setInlinePart('Part 1');
-        setInlineWritingTask('Task 1');
         setInlineUploadPayloads([]);
         setInlineMaxAttempts(3);
         onClose();
@@ -136,7 +130,7 @@ const SpotTaskCreator = React.forwardRef(({ show, onClose, onAddTask, onDirtyCha
                             setInlineUploadPayloads([]);
                         }}
                     >
-                        <option value="SPEAKING">Speaking AI</option>
+                        <option value="SPEAKING">Speaking</option>
                         <option value="fileSubmission">Nộp file kèm theo</option>
                     </select>
                 </div>
@@ -149,7 +143,7 @@ const SpotTaskCreator = React.forwardRef(({ show, onClose, onAddTask, onDirtyCha
                             <select 
                                 className={styles.folderInput} 
                                 value={inlinePart} 
-                                onChange={e => setInlinePart(e.target.value)}
+                                onChange={e => { setInlinePart(e.target.value); if (e.target.value !== 'Part 2') setInlineSuggestions([]); }}
                             >
                                 <option value="Part 1">Part 1 - Interview</option>
                                 <option value="Part 2">Part 2 - Cue Card</option>
@@ -173,19 +167,6 @@ const SpotTaskCreator = React.forwardRef(({ show, onClose, onAddTask, onDirtyCha
                     </>
                 )}
 
-                {inlineSkillType === 'AI_WRITING' && (
-                    <div className={styles.folderGroup}>
-                        <label className={styles.folderLabel}>Phần Viết / Task</label>
-                        <select 
-                            className={styles.folderInput} 
-                            value={inlineWritingTask} 
-                            onChange={e => setInlineWritingTask(e.target.value)}
-                        >
-                            <option value="Task 1">Task 1 - Report / Description</option>
-                            <option value="Task 2">Task 2 - Essay Writing</option>
-                        </select>
-                    </div>
-                )}
             </div>
 
             {inlineSkillType === 'fileSubmission' ? (
@@ -215,13 +196,37 @@ const SpotTaskCreator = React.forwardRef(({ show, onClose, onAddTask, onDirtyCha
             ) : (
                 <div className={styles.folderGroup}>
                     <label className={styles.folderLabel}>Nội dung đề bài / Yêu cầu chi tiết <span style={{color:'#ef4444'}}>*</span></label>
-                    <div style={{ border: '1px solid #cbd5e1', borderRadius: '8px', minHeight: '160px', background: '#ffffff', overflow: 'hidden' }}>
-                        <TiptapEditor 
-                            value={inlinePrompt} 
-                            onChange={setInlinePrompt} 
-                            placeholder="VD: Speak about a historical building in your town..." 
-                        />
-                    </div>
+                    <textarea className={styles.folderTextarea} value={inlinePrompt} onChange={e => setInlinePrompt(e.target.value)} placeholder="VD: Speak about a historical building in your town..." style={{ minHeight: '140px' }} />
+                    {inlinePart === 'Part 2' && (
+                        <div style={{ display: 'grid', gap: '0.5rem', marginTop: '0.75rem' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span className={styles.folderLabel}>Các ý gợi ý</span>
+                                <button type="button" className={styles.btnActionOutline} onClick={() => setInlineSuggestions(items => [...items, ''])}>
+                                    + Thêm gợi ý
+                                </button>
+                            </div>
+                            {inlineSuggestions.map((value, index) => (
+                                <div key={index} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                                    <input
+                                        className={styles.folderInput}
+                                        style={{ flex: 1 }}
+                                        value={value}
+                                        onChange={e => setInlineSuggestions(items => items.map((item, i) => i === index ? e.target.value : item))}
+                                        placeholder={`Gợi ý ${index + 1}`}
+                                    />
+                                    <button
+                                        type="button"
+                                        className={styles.btnRemoveSuggestion}
+                                        onClick={() => setInlineSuggestions(items => items.filter((_, i) => i !== index))}
+                                        title="Xóa gợi ý"
+                                        aria-label={`Xóa gợi ý ${index + 1}`}
+                                    >
+                                        <i className="bi bi-x-lg"></i>
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
             )}
 

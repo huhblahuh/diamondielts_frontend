@@ -407,9 +407,6 @@
 }
 
 .badgeSPEAKING { background: #fdf2f8; color: #ec4899; border: 1px solid #fbcfe8; }
-.badgeREADING { background: #eff6ff; color: #3b82f6; border: 1px solid #bfdbfe; }
-.badgeLISTENING { background: #ecfdf5; color: #10b981; border: 1px solid #a7f3d0; }
-.badgeWRITING { background: #fffbeb; color: #d97706; border: 1px solid #fef3c7; }
 
 .miniActionBtn {
     background: #f1f5f9;
@@ -690,5 +687,793 @@
     display: inline-block;
     user-select: none;
     cursor: default;
+}
+
+/* --- ADMIN EXERCISE SHELL --- */
+.headingIcon {
+    margin-right: 0.65rem;
+    color: #4f46e5;
+}
+
+.deleteTopicBtn {
+    position: absolute;
+    z-index: 5;
+    top: 0.75rem;
+    right: 0.75rem;
+    display: grid;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    place-items: center;
+    border: 1px solid #fee2e2;
+    border-radius: 0.55rem;
+    background: #fff7f7;
+    color: #ef4444;
+    cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s, transform 0.2s;
+}
+
+.deleteTopicBtn:hover {
+    border-color: #fecaca;
+    background: #fee2e2;
+    transform: translateY(-1px);
+}
+
+.deleteTopicBtn:focus-visible,
+.backBtn:focus-visible,
+.toolbarBtn:focus-visible,
+.filterBtn:focus-visible,
+.rowActionBtn:focus-visible,
+.closeBtn:focus-visible {
+    outline: 3px solid rgba(99, 102, 241, 0.25);
+    outline-offset: 2px;
+}
+
+.cardArrow {
+    color: #94a3b8;
+    font-size: 1.4rem;
+    transition: color 0.2s, transform 0.2s;
+}
+
+.card:hover .cardArrow {
+    color: #4f46e5;
+    transform: translateX(3px);
+}
+
+.designerToolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.25rem;
+}
+
+.backBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.55rem 0.75rem;
+    border: 0;
+    border-radius: 0.6rem;
+    background: transparent;
+    color: #64748b;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.backBtn i {
+    font-size: 1.2rem;
+}
+
+.backBtn:hover {
+    background: #eef2ff;
+    color: #4f46e5;
+}
+
+.topicHero {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    margin-bottom: 1.5rem;
+    padding: 1.75rem 2rem;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 1rem;
+    background:
+        radial-gradient(circle at 92% 15%, rgba(255, 255, 255, 0.18), transparent 25%),
+        linear-gradient(135deg, #6366f1 0%, #4338ca 100%);
+    box-shadow: 0 14px 28px -14px rgba(67, 56, 202, 0.55);
+    color: #fff;
+}
+
+.topicHeroIcon {
+    display: grid;
+    flex: 0 0 auto;
+    width: 3.5rem;
+    height: 3.5rem;
+    place-items: center;
+    border: 1px solid rgba(255, 255, 255, 0.24);
+    border-radius: 1rem;
+    background: rgba(255, 255, 255, 0.14);
+    font-size: 1.55rem;
+}
+
+.topicHeroEyebrow {
+    display: block;
+    margin-bottom: 0.25rem;
+    color: #c7d2fe;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+}
+
+.topicHero h3 {
+    margin: 0;
+    font-size: clamp(1.35rem, 2vw, 1.65rem);
+    font-weight: 800;
+}
+
+.topicHero p {
+    max-width: 780px;
+    margin: 0.45rem 0 0;
+    color: #e0e7ff;
+    font-size: 0.92rem;
+    line-height: 1.55;
+}
+
+/* --- EXERCISE BANK --- */
+.listPanel {
+    margin-top: 0;
+    padding: 1.25rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.9rem;
+    background: #fff;
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
+}
+
+.listHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.listTitle {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    margin: 0;
+    color: #0f172a;
+    font-size: 1.2rem;
+    font-weight: 800;
+}
+
+.listTitle i {
+    color: #6366f1;
+}
+
+.listSubtitle {
+    margin: 0.25rem 0 0;
+    color: #64748b;
+    font-size: 0.84rem;
+}
+
+.listActions,
+.filterBar,
+.rowActions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.listActions {
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+
+.toolbarBtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    min-height: 2.25rem;
+    padding: 0.5rem 0.85rem;
+    border: 1px solid transparent;
+    border-radius: 0.55rem;
+    color: #fff;
+    font-size: 0.8rem;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+    transition: box-shadow 0.2s, filter 0.2s, transform 0.2s;
+}
+
+.toolbarBtn:hover {
+    filter: brightness(1.05);
+    transform: translateY(-1px);
+}
+
+.primaryToolbarBtn {
+    background: linear-gradient(135deg, #4f46e5, #6366f1);
+    box-shadow: 0 5px 12px -5px rgba(79, 70, 229, 0.7);
+}
+
+.scriptToolbarBtn {
+    background: linear-gradient(135deg, #7c3aed, #8b5cf6);
+    box-shadow: 0 5px 12px -5px rgba(124, 58, 237, 0.7);
+}
+
+.excelToolbarBtn {
+    background: linear-gradient(135deg, #10b981, #059669);
+    box-shadow: 0 5px 12px -5px rgba(5, 150, 105, 0.7);
+}
+
+.secondaryToolbarBtn {
+    border-color: #e2e8f0;
+    background: #f8fafc;
+    box-shadow: none;
+    color: #475569;
+}
+
+.secondaryToolbarBtn:hover {
+    border-color: #cbd5e1;
+    background: #f1f5f9;
+}
+
+.filterBar {
+    gap: 0.4rem;
+    margin-bottom: 1rem;
+}
+
+.filterBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.4rem 0.75rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 999px;
+    background: #f8fafc;
+    color: #475569;
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.filterBtn:hover,
+.filterBtnActive {
+    border-color: #a5b4fc;
+    background: #eef2ff;
+    color: #4338ca;
+}
+
+.tableWrapper {
+    margin-bottom: 1rem;
+    border-radius: 0.7rem;
+}
+
+.styledTable {
+    min-width: 720px;
+    font-size: 0.85rem;
+}
+
+.styledTable thead th {
+    padding: 0.8rem;
+    font-weight: 700;
+    text-transform: none;
+    letter-spacing: normal;
+}
+
+.styledTable tbody td {
+    padding: 0.75rem 0.8rem;
+}
+
+.idColumn { width: 70px; }
+.skillColumn { width: 110px; }
+.typeColumn { width: 120px; }
+.actionColumn { width: 150px; text-align: center !important; }
+
+.exerciseId {
+    color: #64748b;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.skillBadge {
+    border: 1px solid #e2e8f0;
+    border-radius: 0.45rem;
+    background: #f1f5f9;
+    color: #475569;
+    font-size: 0.7rem;
+}
+
+.exerciseType {
+    color: #334155;
+    font-size: 0.82rem;
+}
+
+.exerciseSnippet {
+    max-width: 350px;
+    overflow: hidden;
+    color: #475569;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.actionCell {
+    text-align: center;
+}
+
+.rowActions {
+    justify-content: center;
+    gap: 0.4rem;
+}
+
+.rowActionBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.4rem 0.65rem;
+    border-radius: 0.45rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s, transform 0.2s;
+}
+
+.rowActionBtn:hover {
+    transform: translateY(-1px);
+}
+
+.editBtn {
+    border: 1px solid #bfdbfe;
+    background: #eff6ff;
+    color: #2563eb;
+}
+
+.editBtn:hover {
+    border-color: #93c5fd;
+    background: #dbeafe;
+}
+
+.deleteBtn {
+    border: 1px solid #fecaca;
+    background: #fff7f7;
+    color: #dc2626;
+}
+
+.deleteBtn:hover {
+    background: #fee2e2;
+}
+
+.tableState {
+    padding: 3rem !important;
+    color: #64748b;
+    text-align: center;
+}
+
+.emptyTableState {
+    color: #94a3b8;
+}
+
+.emptyTableState i {
+    margin-right: 0.4rem;
+    font-size: 1.1rem;
+}
+
+.stateSpinner {
+    display: inline-block;
+    width: 0.9rem;
+    height: 0.9rem;
+    margin-right: 0.35rem;
+    vertical-align: -0.1rem;
+    border: 2px solid #c7d2fe;
+    border-top-color: #4f46e5;
+    border-radius: 50%;
+    animation: exerciseSpin 0.75s linear infinite;
+}
+
+@keyframes exerciseSpin {
+    to { transform: rotate(360deg); }
+}
+
+/* --- SPEAKING EDITOR MODAL --- */
+.modalOverlay {
+    position: fixed;
+    z-index: 1100;
+    inset: 0;
+    display: grid;
+    padding: 1.25rem;
+    place-items: center;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(4px);
+    animation: modalFade 0.2s ease-out;
+}
+
+.modalContent {
+    width: min(720px, 95vw);
+    max-height: min(88vh, 820px);
+    overflow: auto;
+    border: 1px solid #e2e8f0;
+    border-radius: 1rem;
+    background: #fff;
+    box-shadow: 0 28px 70px -20px rgba(15, 23, 42, 0.55);
+    animation: modalRise 0.25s ease-out;
+}
+
+@keyframes modalFade { from { opacity: 0; } }
+@keyframes modalRise { from { opacity: 0; transform: translateY(12px) scale(0.98); } }
+
+.modalHeader,
+.modalFooter {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.25rem 1.5rem;
+}
+
+.modalHeader {
+    border-bottom: 1px solid #e2e8f0;
+    background: linear-gradient(180deg, #fff, #fafafa);
+}
+
+.modalHeader h3 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 1.25rem;
+}
+
+.modalHeader p {
+    margin: 0.25rem 0 0;
+    color: #64748b;
+    font-size: 0.84rem;
+}
+
+.closeBtn {
+    display: grid;
+    flex: 0 0 auto;
+    width: 2.25rem;
+    height: 2.25rem;
+    padding: 0;
+    place-items: center;
+    border: 0;
+    border-radius: 50%;
+    background: #f1f5f9;
+    color: #64748b;
+    font-size: 1.55rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.closeBtn:hover {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.modalBody {
+    display: grid;
+    gap: 1.25rem;
+    padding: 1.5rem;
+}
+
+.questionTextarea {
+    min-height: 130px;
+    resize: vertical;
+}
+
+.suggestionHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.suggestionList {
+    display: grid;
+    gap: 0.65rem;
+    margin-top: 0.65rem;
+}
+
+.suggestionRow {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.suggestionRow .removeBtn {
+    display: grid;
+    flex: 0 0 2.6rem;
+    place-items: center;
+    border: 1px solid #fecaca;
+    border-radius: 0.6rem;
+    background: #fff7f7;
+    color: #ef4444;
+}
+
+.formHint {
+    color: #64748b;
+}
+
+.modalFooter {
+    justify-content: flex-end;
+    border-top: 1px solid #e2e8f0;
+    background: #f8fafc;
+}
+
+.btnSecondary,
+.btnSubmit {
+    min-width: 90px;
+    padding: 0.65rem 1rem;
+    border-radius: 0.6rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.btnSecondary {
+    border: 1px solid #cbd5e1;
+    background: #fff;
+    color: #475569;
+}
+
+.btnSubmit {
+    border: 1px solid #4f46e5;
+    background: linear-gradient(135deg, #4f46e5, #6366f1);
+    color: #fff;
+    box-shadow: 0 6px 14px -7px rgba(79, 70, 229, 0.8);
+}
+
+.btnSubmit:disabled {
+    border-color: #94a3b8;
+    background: #94a3b8;
+    box-shadow: none;
+    cursor: wait;
+}
+
+/* SweetAlert content rendered outside the React tree. */
+.topicDialog :global(.exercise-topic-form),
+.importDialog :global(.exercise-import-content),
+.scriptDialog :global(.exercise-script-content) {
+    color: #334155;
+    text-align: left;
+}
+
+.topicDialog :global(.exercise-topic-form label) {
+    display: block;
+    margin-bottom: 0.4rem;
+    color: #334155;
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+.topicDialog :global(.exercise-topic-form label:not(:first-child)) {
+    margin-top: 1rem;
+}
+
+.topicDialog :global(.exercise-topic-form label span) {
+    color: #ef4444;
+}
+
+.topicDialog :global(.swal2-input),
+.topicDialog :global(.swal2-textarea) {
+    width: 100%;
+    margin: 0;
+    box-sizing: border-box;
+    border: 1px solid #cbd5e1;
+    border-radius: 0.6rem;
+    box-shadow: none;
+    font-size: 0.9rem;
+}
+
+.topicDialog :global(.swal2-textarea) {
+    height: 90px;
+    resize: vertical;
+}
+
+.importDialog :global(.exercise-dialog-title),
+.scriptDialog :global(.exercise-dialog-title) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.55rem;
+    color: #0f172a;
+    font-size: 1.2rem;
+    font-weight: 800;
+}
+
+.importDialog :global(.exercise-dialog-title--excel i) { color: #10b981; }
+.scriptDialog :global(.exercise-dialog-title--script i) { color: #6366f1; }
+
+.importDialog :global(.exercise-import-content) {
+    margin-top: 0.75rem;
+    font-size: 0.85rem;
+}
+
+.importDialog :global(.exercise-template-card) {
+    margin-bottom: 1.1rem;
+    padding: 1rem;
+    border: 1px solid #bae6fd;
+    border-radius: 0.75rem;
+    background: linear-gradient(135deg, #f0fdf4, #e0f2fe);
+}
+
+.importDialog :global(.exercise-template-row) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.importDialog :global(.exercise-template-title) {
+    margin-bottom: 0.2rem;
+    color: #0f172a;
+    font-size: 0.9rem;
+    font-weight: 800;
+}
+
+.importDialog :global(.exercise-template-title i) {
+    margin-right: 0.4rem;
+    color: #0284c7;
+}
+
+.importDialog :global(.exercise-template-copy) {
+    color: #475569;
+    font-size: 0.8rem;
+}
+
+.importDialog :global(.exercise-template-button) {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.55rem 0.9rem;
+    border: 0;
+    border-radius: 0.55rem;
+    background: linear-gradient(135deg, #0284c7, #2563eb);
+    box-shadow: 0 5px 12px -5px rgba(37, 99, 235, 0.75);
+    color: #fff;
+    font-size: 0.8rem;
+    font-weight: 700;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.importDialog :global(.exercise-rules-card),
+.scriptDialog :global(.exercise-script-rules) {
+    padding: 0.9rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.65rem;
+    background: #f8fafc;
+}
+
+.importDialog :global(.exercise-rules-title),
+.scriptDialog :global(.exercise-script-rules > div) {
+    margin-bottom: 0.6rem;
+    color: #1e293b;
+    font-weight: 800;
+}
+
+.importDialog :global(.exercise-rules-title i),
+.scriptDialog :global(.exercise-script-rules i) {
+    color: #6366f1;
+}
+
+.importDialog :global(.exercise-rules-list) {
+    display: grid;
+    gap: 0.5rem;
+}
+
+.importDialog :global(.exercise-rule-row) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.55rem 0.75rem;
+    border: 1px solid #f1f5f9;
+    border-radius: 0.5rem;
+    background: #fff;
+}
+
+.importDialog :global(.exercise-rule-row > span) { font-weight: 700; }
+.importDialog :global(.exercise-rule-row code) {
+    padding: 0.15rem 0.45rem;
+    border-radius: 0.35rem;
+    background: #e0e7ff;
+    color: #3730a3;
+    font-weight: 700;
+}
+.importDialog :global(.exercise-rule-row em) { color: #64748b; }
+
+.scriptDialog :global(.exercise-script-content) { margin-top: 0.5rem; }
+.scriptDialog :global(.exercise-script-toolbar) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+    color: #475569;
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+.scriptDialog :global(.exercise-script-toolbar button) {
+    padding: 0.4rem 0.7rem;
+    border: 0;
+    border-radius: 0.45rem;
+    background: #e0e7ff;
+    color: #4338ca;
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.scriptDialog :global(#swal-script-input) {
+    width: 100%;
+    padding: 0.8rem;
+    box-sizing: border-box;
+    border: 1px solid #334155;
+    border-radius: 0.6rem;
+    outline: none;
+    background: #0f172a;
+    color: #7dd3fc;
+    font-family: Consolas, Monaco, "Courier New", monospace;
+    font-size: 0.82rem;
+    line-height: 1.5;
+    resize: vertical;
+}
+
+.scriptDialog :global(#swal-script-input:focus) {
+    border-color: #818cf8;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+}
+
+.scriptDialog :global(.exercise-script-rules) {
+    margin-top: 0.75rem;
+    color: #475569;
+    font-size: 0.8rem;
+}
+
+.scriptDialog :global(.exercise-script-rules ul) {
+    display: grid;
+    gap: 0.25rem;
+    margin: 0;
+    padding-left: 1.2rem;
+}
+
+@media (max-width: 900px) {
+    .container { padding: 0.75rem; }
+    .grid { grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
+    .listHeader { align-items: flex-start; flex-direction: column; }
+    .listActions { justify-content: flex-start; }
+}
+
+@media (max-width: 600px) {
+    .container { padding: 0.25rem; }
+    .header { margin-bottom: 1.25rem; }
+    .header h2 { font-size: 1.35rem; }
+    .grid { grid-template-columns: 1fr; gap: 1rem; }
+    .card { padding: 1.35rem; }
+    .topicHero { align-items: flex-start; padding: 1.25rem; }
+    .topicHeroIcon { display: none; }
+    .listPanel { padding: 1rem; }
+    .listActions { display: grid; width: 100%; grid-template-columns: 1fr 1fr; }
+    .toolbarBtn { width: 100%; }
+    .modalOverlay { padding: 0.65rem; }
+    .modalContent { width: 100%; max-height: 94vh; }
+    .modalHeader, .modalBody, .modalFooter { padding: 1rem; }
+    .suggestionHeader { align-items: flex-start; flex-direction: column; }
+    .importDialog :global(.exercise-template-row),
+    .importDialog :global(.exercise-rule-row),
+    .scriptDialog :global(.exercise-script-toolbar) { align-items: flex-start; flex-direction: column; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .container,
+    .listPanel,
+    .modalOverlay,
+    .modalContent,
+    .stateSpinner { animation: none; }
 }
 

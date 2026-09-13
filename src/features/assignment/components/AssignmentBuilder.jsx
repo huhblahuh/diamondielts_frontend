@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import Swal from 'sweetalert2';
-import TiptapEditor from '../../../components/TiptapEditor';
 import styles from '../CreateAssignment.module.css';
 import assignmentService from '../../../api/services/assignment.service';
+import { makeSpeakingContent } from '../../../utils/speakingContent';
 
 export default function AssignmentBuilder({ items, setItems, onOpenBank }) {
     const [showSpeakingBuilder, setShowSpeakingBuilder] = useState(false);
     const [speakingPart, setSpeakingPart] = useState('Part 1');
     const [speakingPrompt, setSpeakingPrompt] = useState('');
+    const [speakingSuggestions, setSpeakingSuggestions] = useState([]);
 
     // State cho File Submission Builder (Trường hợp A)
     const [showFileSubmissionBuilder, setShowFileSubmissionBuilder] = useState(false);
@@ -28,15 +29,14 @@ export default function AssignmentBuilder({ items, setItems, onOpenBank }) {
         const newItem = {
             id: Date.now(),
             itemType: 'SPEAKING',
-            formattedContent: JSON.stringify({
-                part: speakingPart,
-                prompt: speakingPrompt 
-            }),
-            _displayLabel: `🗣️ [Tự do] ${speakingPart} - ${speakingPrompt.replace(/<[^>]*>/g, '').substring(0, 40)}...`
+            type: speakingPart,
+            content: makeSpeakingContent(speakingPrompt, speakingSuggestions, speakingPart),
+            _displayLabel: `🗣️ [Tự do] ${speakingPart} - ${speakingPrompt.substring(0, 40)}...`
         };
         setItems([...items, newItem]);
         setShowSpeakingBuilder(false);
         setSpeakingPrompt('');
+        setSpeakingSuggestions([]);
         setSpeakingPart('Part 1');
         Swal.fire({ icon: 'success', title: 'Đã tạo task Ghi âm', timer: 1000, showConfirmButton: false });
     };
@@ -44,8 +44,9 @@ export default function AssignmentBuilder({ items, setItems, onOpenBank }) {
     const handleAddFileUpload = () => {
         const newItem = {
             id: Date.now(),
-            itemType: 'FILE_UPLOAD',
-            formattedContent: JSON.stringify({ allowedExtensions: ['pdf', 'docx', 'zip'] }),
+            itemType: 'fileSubmission',
+            type: '',
+            content: { description: '', allowedExtensions: ['pdf', 'docx', 'zip'] },
             _displayLabel: `📁 Yêu cầu Nộp File (PDF/Docx)`
         };
         setItems([...items, newItem]);
@@ -104,9 +105,8 @@ export default function AssignmentBuilder({ items, setItems, onOpenBank }) {
         const newItem = {
             id: Date.now(),
             itemType: 'fileSubmission',
-            formattedContent: JSON.stringify({
-                description: fileSubmissionDescription 
-            }),
+            type: '',
+            content: { description: fileSubmissionDescription },
             payloads: fileSubmissionPayloads,
             _displayLabel: `📁 [Nộp File] ${fileSubmissionDescription.replace(/<[^>]*>/g, '').substring(0, 40)}... (${fileSubmissionPayloads.length} files)`
         };
@@ -174,7 +174,7 @@ export default function AssignmentBuilder({ items, setItems, onOpenBank }) {
                         <div style={{padding:'1.5rem', display:'flex', flexDirection:'column', gap:'1.25rem'}}>
                             <div>
                                 <label className={styles.label}>Dạng Đề / Phần thi</label>
-                                <select className={styles.select} value={speakingPart} onChange={(e) => setSpeakingPart(e.target.value)}>
+                                <select className={styles.select} value={speakingPart} onChange={(e) => { setSpeakingPart(e.target.value); if (e.target.value !== 'Part 2') setSpeakingSuggestions([]); }}>
                                     <option value="Part 1">Part 1 - Giới thiệu & Phỏng vấn</option>
                                     <option value="Part 2">Part 2 - Thẻ gợi ý (Cue Card)</option>
                                     <option value="Part 3">Part 3 - Thảo luận Mở rộng</option>
@@ -183,9 +183,15 @@ export default function AssignmentBuilder({ items, setItems, onOpenBank }) {
                             <div>
                                 <label className={styles.label}>Nội dung đề bài / Yêu cầu nói</label>
                                 <div style={{border:'1px solid #cbd5e1', borderRadius:'8px', minHeight:'220px'}}>
-                                    <TiptapEditor value={speakingPrompt} onChange={setSpeakingPrompt} placeholder="Nhập nội dung đề bài nói..." />
+                                    <textarea className={styles.input} value={speakingPrompt} onChange={event => setSpeakingPrompt(event.target.value)} placeholder="Nhập câu hỏi Speaking..." style={{ minHeight: '180px', resize: 'vertical' }} />
                                 </div>
                             </div>
+                            {speakingPart === 'Part 2' && (
+                                <div>
+                                    <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}><label className={styles.label}>Các ý gợi ý</label><button type="button" className={styles.btnSecondary} onClick={() => setSpeakingSuggestions(items => [...items, ''])}>+ Thêm gợi ý</button></div>
+                                    <div style={{display:'grid', gap:'0.5rem'}}>{speakingSuggestions.map((value, index) => <div key={index} style={{display:'flex', gap:'0.5rem'}}><input className={styles.input} value={value} onChange={event => setSpeakingSuggestions(items => items.map((item, i) => i === index ? event.target.value : item))} placeholder={`Gợi ý ${index + 1}`} /><button type="button" className={styles.miniDanger} onClick={() => setSpeakingSuggestions(items => items.filter((_, i) => i !== index))} title="Xóa gợi ý" aria-label={`Xóa gợi ý ${index + 1}`}><i className="bi bi-x-lg"></i></button></div>)}</div>
+                                </div>
+                            )}
                         </div>
                         <div className={styles.modalFooter}>
                             <button type="button" onClick={() => setShowSpeakingBuilder(false)} className={styles.btnSecondary}>Hủy bỏ</button>

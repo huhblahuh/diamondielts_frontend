@@ -1,34 +1,17 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import styles from './StudentDashboard.module.css';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 import dashboardService from '../../api/services/dashboard.service';
-import axiosClient from '../../api/axiosClient';
+import HeroArtwork from '../../components/common/HeroArtwork';
+import styles from './StudentDashboard.module.css';
 
-function getStatusLabel(status) {
-    if (status === 'Completed') return 'Đã chấm';
-    if (status === 'Grading') return 'Đang chấm';
-    return 'Chờ chấm';
-}
-function getStatusBadgeClass(status) {
-    if (status === 'Completed') return styles.statusCompleted;
-    if (status === 'Grading') return styles.statusGrading;
-    return styles.statusPending;
-}
-function getScoreBadgeClass(score) {
-    if (score >= 7.0) return styles.scoreGreen;
-    if (score >= 5.0) return styles.scoreYellow;
-    return styles.scoreRed;
-}
-function formatDate(dateStr) {
-    if (!dateStr) return '';
-    const d = new Date(dateStr);
-    return d.toLocaleDateString('vi-VN', {
-        day: '2-digit', month: '2-digit', year: 'numeric',
-        hour: '2-digit', minute: '2-digit'
-    });
-}
+const EMPTY_ACTIVITY = { fromDate: '', toDate: '', monthCount: 2, currentStreak: 0, longestStreak: 0, totalActiveDays: 0, totalSubmissions: 0, days: [] };
+const QUICK_PARTS = [
+    { part: 'Part 1', subtitle: 'Câu hỏi cá nhân', icon: 'bi-chat-dots-fill', tone: 'blue' },
+    { part: 'Part 2', subtitle: 'Nói theo chủ đề', icon: 'bi-file-earmark-text-fill', tone: 'purple' },
+    { part: 'Part 3', subtitle: 'Thảo luận nâng cao', icon: 'bi-people-fill', tone: 'orange' },
+];
 
-// ─── Helper: Lời chào theo giờ ──────────────────────────────────────────────
 function getGreeting() {
     const hour = new Date().getHours();
     if (hour < 12) return '🌤️ Chào buổi sáng';
@@ -36,494 +19,207 @@ function getGreeting() {
     return '🌙 Chào buổi tối';
 }
 
-// ─── Helper: Avatar ký tự đầu tên ────────────────────────────────────────────
-function getInitials(name = '') {
-    return name.trim().split(' ').slice(-1)[0]?.charAt(0).toUpperCase() || '?';
+function dateKey(value) {
+    const date = value instanceof Date ? value : new Date(`${String(value || '').slice(0, 10)}T00:00:00`);
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
 
-// ─── Helper: Tạo lưới đóng góp dạng động theo số lượng tuần ──────────────────
-function buildHeatmapGrid(numWeeks = 12) {
+function getRecentDays(count = 7) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-
-    // Tìm ngày Thứ 2 của tuần hiện tại
-    const dayOfWeek = today.getDay(); // 0=Sun, 1=Mon, ...
-    const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-    const thisMonday = new Date(today);
-    thisMonday.setDate(today.getDate() - daysToMonday);
-
-    // Đi ngược (numWeeks - 1) tuần nữa
-    const startDay = new Date(thisMonday);
-    startDay.setDate(thisMonday.getDate() - (numWeeks - 1) * 7);
-
-    const days = [];
-    for (let i = 0; i < numWeeks * 7; i++) {
-        const d = new Date(startDay);
-        d.setDate(startDay.getDate() + i);
-        const yyyy = d.getFullYear();
-        const mm = String(d.getMonth() + 1).padStart(2, '0');
-        const dd = String(d.getDate()).padStart(2, '0');
-        days.push({ dateStr: `${yyyy}-${mm}-${dd}`, dateObj: d });
-    }
-    return days;
-}
-
-// ─── Helper: Map heatmap data → lookup {date: count} ─────────────────────────
-function buildHeatmapMap(activityHeatmap = []) {
-    const map = {};
-    activityHeatmap.forEach(({ date, count }) => { map[date] = count; });
-    return map;
-}
-
-// ─── Helper: Màu ô heatmap ───────────────────────────────────────────────────
-function getHeatColor(count) {
-    if (!count || count === 0) return styles.heat0;
-    if (count === 1) return styles.heat1;
-    if (count <= 3) return styles.heat2;
-    return styles.heat3;
-}
-
-// ─── Helper: Label tháng trên heatmap ────────────────────────────────────────
-// Trả về [{colIndex, label}] — label chỉ xuất hiện khi bắt đầu tháng mới
-function buildMonthLabels(gridDays) {
-    const labels = [];
-    let lastMonth = -1;
-    gridDays.forEach(({ dateObj }, i) => {
-        const col = Math.floor(i / 7); // mỗi cột = 1 tuần
-        const month = dateObj.getMonth();
-        if (month !== lastMonth) {
-            const monthNames = ['Th1','Th2','Th3','Th4','Th5','Th6','Th7','Th8','Th9','Th10','Th11','Th12'];
-            labels.push({ col, label: monthNames[month] });
-            lastMonth = month;
-        }
+    return Array.from({ length: count }, (_, index) => {
+        const date = new Date(today);
+        date.setDate(today.getDate() - (count - index - 1));
+        return date;
     });
-    return labels;
 }
 
-// ─── Helper: Tính chuỗi ngày học liên tiếp ───────────────────────────────────
-// Đếm ngược từ hôm nay. Nếu hôm nay chưa có activity, bắt đầu từ hôm qua.
-function calcStreak(activityHeatmap = []) {
-    if (!activityHeatmap || activityHeatmap.length === 0) return 0;
-
-    const map = buildHeatmapMap(activityHeatmap);
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const fmt = (d) => {
-        const yyyy = d.getFullYear();
-        const mm = String(d.getMonth() + 1).padStart(2, '0');
-        const dd = String(d.getDate()).padStart(2, '0');
-        return `${yyyy}-${mm}-${dd}`;
-    };
-
-    // Nếu hôm nay chưa học, bắt đầu check từ hôm qua
-    let cursor = new Date(today);
-    if (!map[fmt(cursor)]) {
-        cursor.setDate(cursor.getDate() - 1);
-    }
-
-    let streak = 0;
-    while (map[fmt(cursor)] > 0) {
-        streak++;
-        cursor.setDate(cursor.getDate() - 1);
-        // Giới hạn tối đa 365 ngày để tránh vòng lặp vô hạn
-        if (streak > 365) break;
-    }
-    return streak;
+function formatReset(resetDate) {
+    if (!resetDate) return 'Không tự động đặt lại';
+    const diff = new Date(resetDate).getTime() - Date.now();
+    if (diff <= 0) return 'Sắp được đặt lại';
+    const hours = Math.ceil(diff / 3600000);
+    return hours < 24 ? `Đặt lại sau ${hours} giờ` : `Đặt lại sau ${Math.ceil(hours / 24)} ngày`;
 }
 
-// ─── Sub-component: Streak Badge ─────────────────────────────────────────────
-function StreakBadge({ streak }) {
-    if (streak === 0) return null;
+function deadlineLabel(daysLeft) {
+    if (daysLeft <= 0) return 'Hết hạn hôm nay';
+    if (daysLeft === 1) return 'Còn 1 ngày';
+    return `Còn ${daysLeft} ngày`;
+}
+
+function DeadlineRow({ deadline, onOpen }) {
     return (
-        <div className={styles.streakBadge}>
-            <span className={styles.streakFlame}>🔥</span>
-            <span className={styles.streakCount}>{streak}</span>
-            <span className={styles.streakText}>ngày</span>
-        </div>
+        <button type="button" className={styles.deadlineRow} onClick={() => onOpen(deadline)}>
+            <span className={`${styles.deadlineDate} ${deadline.daysLeft <= 1 ? styles.deadlineUrgent : ''}`}><i className="bi bi-calendar2-check" /></span>
+            <span className={styles.deadlineCopy}>
+                <strong>{deadline.title}</strong>
+                <small>{deadline.className || 'Bài tập được giao'} · {deadlineLabel(deadline.daysLeft)}</small>
+            </span>
+            <i className="bi bi-chevron-right" />
+        </button>
     );
 }
 
-
-function StatCard({ icon, value, label, colorClass }) {
-    return (
-        <div className={styles.statCard}>
-            <div className={`${styles.statIcon} ${colorClass}`}>
-                <i className={`bi ${icon}`}></i>
-            </div>
-            <div>
-                <span className={styles.statVal}>{value}</span>
-                <p className={styles.statLabel}>{label}</p>
-            </div>
-        </div>
-    );
-}
-
-// ─── Sub-component: Deadline Card ────────────────────────────────────────────
-function DeadlineCard({ deadline, onClick }) {
-    const { title, className, daysLeft } = deadline;
-
-    let urgencyClass = styles.urgencyGreen;
-    let urgencyText = `Còn ${daysLeft} ngày`;
-    if (daysLeft <= 0) {
-        urgencyClass = styles.urgencyRed;
-        urgencyText = 'Hết hạn hôm nay';
-    } else if (daysLeft === 1) {
-        urgencyClass = styles.urgencyRed;
-        urgencyText = 'Còn 1 ngày';
-    } else if (daysLeft <= 3) {
-        urgencyClass = styles.urgencyYellow;
-        urgencyText = `Còn ${daysLeft} ngày`;
-    }
-
-    return (
-        <div className={styles.deadlineCard} onClick={onClick}>
-            <div className={styles.deadlineInfo}>
-                <span className={`${styles.urgencyBadge} ${urgencyClass}`}>{urgencyText}</span>
-                <h4 className={styles.deadlineTitle}>{title}</h4>
-                <p className={styles.deadlineClass}>
-                    <i className="bi bi-mortarboard"></i> {className}
-                </p>
-            </div>
-            <i className="bi bi-chevron-right"></i>
-        </div>
-    );
-}
-
-// ─── Sub-component: Activity Heatmap ─────────────────────────────────────────
-// CELL_SIZE + GAP = 16px mỗi cột (khớp với CSS .heatCell + gap weeksRow)
-const CELL = 13; // px
-const GAP  = 3;  // px
-const COL_W = CELL + GAP; // = 16
-
-function ActivityHeatmap({ activityHeatmap }) {
-    const wrapperRef = useRef(null); // đo trên inner wrapper (đã trừ padding card)
-    const [weeksCount, setWeeksCount] = useState(24);
-
-    useEffect(() => {
-        const el = wrapperRef.current;
-        if (!el) return;
-
-        const observer = new ResizeObserver(([entry]) => {
-            // contentBoxSize cho kích thước nội dung, không bao gồm padding
-            const fullWidth = entry.contentRect.width;
-            // Trừ dayLabels column (≈28px) + 1 khoảng gap
-            const available = fullWidth - 28 - GAP;
-            const count = Math.max(4, Math.floor(available / COL_W));
-            setWeeksCount(count);
-        });
-
-        observer.observe(el);
-        return () => observer.disconnect();
-    }, []);
-
-    const gridDays = useMemo(() => buildHeatmapGrid(weeksCount), [weeksCount]);
-    const heatMap = useMemo(() => buildHeatmapMap(activityHeatmap), [activityHeatmap]);
-    const monthLabels = useMemo(() => buildMonthLabels(gridDays), [gridDays]);
-
-    const DAY_LABELS = ['T2', '', 'T4', '', 'T6', '', 'CN'];
-
-    // Nhóm theo cột (tuần)
-    const weeks = [];
-    for (let col = 0; col < weeksCount; col++) {
-        weeks.push(gridDays.slice(col * 7, col * 7 + 7));
-    }
-
-    return (
-        <div className={styles.heatmapCard}>
-            <h3 className={styles.sectionTitle}>
-                <i className="bi bi-activity"></i> Hoạt động luyện tập
-            </h3>
-
-            <div className={styles.heatmapWrapper} ref={wrapperRef}>
-                {/* Label ngày trong tuần (cột trái) */}
-                <div className={styles.dayLabels}>
-                    {DAY_LABELS.map((label, i) => (
-                        <span key={i} className={styles.dayLabel}>{label}</span>
-                    ))}
-                </div>
-
-                {/* Grid chính */}
-                <div className={styles.heatmapGrid}>
-                    {/* Label tháng */}
-                    <div className={styles.monthLabels} style={{ gridTemplateColumns: `repeat(${weeksCount}, ${COL_W}px)` }}>
-                        {monthLabels.map(({ col, label }) => (
-                            <span
-                                key={col}
-                                className={styles.monthLabel}
-                                style={{ gridColumn: col + 1 }}
-                            >
-                                {label}
-                            </span>
-                        ))}
-                    </div>
-
-                    {/* Các cột tuần */}
-                    <div className={styles.weeksRow}>
-                        {weeks.map((week, weekIdx) => (
-                            <div key={weekIdx} className={styles.weekCol}>
-                                {week.map(({ dateStr, dateObj }) => {
-                                    const count = heatMap[dateStr] || 0;
-                                    const formatted = dateObj.toLocaleDateString('vi-VN', {
-                                        day: '2-digit', month: '2-digit', year: 'numeric'
-                                    });
-                                    const tooltip = count > 0
-                                        ? `${count} lần luyện tập — ${formatted}`
-                                        : `Không có hoạt động — ${formatted}`;
-                                    return (
-                                        <div
-                                            key={dateStr}
-                                            className={`${styles.heatCell} ${getHeatColor(count)}`}
-                                            title={tooltip}
-                                        />
-                                    );
-                                })}
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </div>
-
-            {/* Chú thích */}
-            <div className={styles.heatmapLegend}>
-                <span className={styles.legendLabel}>Ít hơn</span>
-                <div className={`${styles.legendCell} ${styles.heat0}`} />
-                <div className={`${styles.legendCell} ${styles.heat1}`} />
-                <div className={`${styles.legendCell} ${styles.heat2}`} />
-                <div className={`${styles.legendCell} ${styles.heat3}`} />
-                <span className={styles.legendLabel}>Nhiều hơn</span>
-            </div>
-        </div>
-    );
-}
-
-// ─── MAIN COMPONENT ──────────────────────────────────────────────────────────
 export default function StudentDashboard() {
     const navigate = useNavigate();
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
-
+    const { openSidebar, mySpeakingQuota, isQuotaLoading, openMyQuota } = useOutletContext() || {};
+    const [user, setUser] = useState(() => JSON.parse(localStorage.getItem('user') || '{}'));
+    const [activity, setActivity] = useState(EMPTY_ACTIVITY);
     const [summary, setSummary] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [recentSubmissions, setRecentSubmissions] = useState([]);
-    const [loadingSubmissions, setLoadingSubmissions] = useState(true);
-
-    // Tính streak 1 lần, cache lại theo summary
-    const streak = useMemo(() =>
-        summary ? calcStreak(summary.activityHeatmap) : 0,
-    [summary]);
+    const [activityLoading, setActivityLoading] = useState(true);
+    const [summaryLoading, setSummaryLoading] = useState(true);
+    const [activityError, setActivityError] = useState('');
+    const [summaryError, setSummaryError] = useState('');
+    const [requestVersion, setRequestVersion] = useState(0);
+    const [deadlineSheetOpen, setDeadlineSheetOpen] = useState(false);
+    const closeRef = useRef(null);
 
     useEffect(() => {
-        const fetchSummary = async () => {
-            try {
-                setLoading(true);
-                const data = await dashboardService.getSummary();
-                setSummary(data);
-            } catch (err) {
-                console.error('Dashboard load error:', err);
-                setError('Không thể tải dữ liệu dashboard.');
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        const fetchSubmissions = async () => {
-            try {
-                setLoadingSubmissions(true);
-                const res = await axiosClient.get('/student/dashboard/submissions?page=1&pageSize=5');
-                if (res) {
-                    setRecentSubmissions(res.data || []);
-                }
-            } catch (err) {
-                console.error('Failed to fetch recent submissions:', err);
-            } finally {
-                setLoadingSubmissions(false);
-            }
-        };
-
-        fetchSummary();
-        fetchSubmissions();
+        const syncUser = (event) => setUser(event.detail || JSON.parse(localStorage.getItem('user') || '{}'));
+        window.addEventListener('diamond:user-updated', syncUser);
+        return () => window.removeEventListener('diamond:user-updated', syncUser);
     }, []);
+
+    useEffect(() => {
+        let active = true;
+        setActivityLoading(true);
+        setActivityError('');
+        dashboardService.getActivity({ months: 2 })
+            .then((data) => { if (active) setActivity(data || EMPTY_ACTIVITY); })
+            .catch((error) => {
+                if (active) {
+                    setActivity(EMPTY_ACTIVITY);
+                    setActivityError(error?.message || 'Không thể tải nhịp luyện tập.');
+                }
+            })
+            .finally(() => { if (active) setActivityLoading(false); });
+        return () => { active = false; };
+    }, [requestVersion]);
+
+    useEffect(() => {
+        let active = true;
+        setSummaryLoading(true);
+        setSummaryError('');
+        dashboardService.getSummary({ includeProgress: false })
+            .then((data) => { if (active) setSummary(data); })
+            .catch((error) => {
+                if (active) {
+                    setSummary(null);
+                    setSummaryError(error?.message || 'Không thể tải deadline.');
+                }
+            })
+            .finally(() => { if (active) setSummaryLoading(false); });
+        return () => { active = false; };
+    }, [requestVersion]);
+
+    useEffect(() => {
+        if (!deadlineSheetOpen) return undefined;
+        const previousOverflow = document.body.style.overflow;
+        const handleKeyDown = (event) => { if (event.key === 'Escape') setDeadlineSheetOpen(false); };
+        document.body.style.overflow = 'hidden';
+        document.addEventListener('keydown', handleKeyDown);
+        window.requestAnimationFrame(() => closeRef.current?.focus());
+        return () => {
+            document.body.style.overflow = previousOverflow;
+            document.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [deadlineSheetOpen]);
+
+    const activityByDate = useMemo(() => new Map((activity.days || []).map((day) => [dateKey(day.date), day.completedAttempts || 0])), [activity.days]);
+    const recentDays = useMemo(() => getRecentDays(), []);
+    const currentMonth = dateKey(new Date()).slice(0, 7);
+    const monthlySubmissions = (activity.days || []).filter((day) => dateKey(day.date).startsWith(currentMonth)).reduce((total, day) => total + (day.completedAttempts || 0), 0);
+    const deadlines = summary?.upcomingDeadlines || [];
+    const nearestDeadline = deadlines[0];
+    const quotaPercent = Math.min(100, Math.max(0, Number(mySpeakingQuota?.usagePercentage || 0)));
+
+    const openAssignment = (deadline) => {
+        setDeadlineSheetOpen(false);
+        navigate(`/student/assignment/${deadline.assignmentId}`, { state: { classId: deadline.classId } });
+    };
 
     return (
         <div className={styles.container}>
-
-            {/* ── Welcome Banner ── */}
-            <div className={styles.welcomeBanner}>
-                <div className={styles.welcomeLeft}>
-                    <div className={styles.avatar}>
-                        {!loading && summary && streak > 0 ? streak : 0}
-                        {!loading && summary && streak > 0 && (
-                            <span className={styles.avatarFlame}>🔥</span>
-                        )}
-                    </div>
-                    <div>
-                        <p className={styles.greeting}>{getGreeting()},</p>
-                        <h1 className={styles.welcomeName}>{user.fullName || 'Học viên'}!</h1>
-                        <p className={styles.welcomeSub}>Hôm nay bạn đã sẵn sàng luyện tập chưa?</p>
-                    </div>
+            <section className={styles.heroSection}>
+                <div className={styles.mobileActions}>
+                    <button type="button" onClick={openSidebar} aria-label="Mở menu"><i className="bi bi-grid" /></button>
+                    <button type="button" onClick={() => navigate('/student/settings/notification')} aria-label="Cài đặt thông báo"><i className="bi bi-bell" /></button>
                 </div>
+                <div className={styles.heroCopy}>
+                    <p>{getGreeting()},</p>
+                    <h1>{user.fullName || 'Học viên'}!</h1>
+                    <span>Theo dõi tiến độ và tiếp tục luyện tập.</span>
+                </div>
+                <HeroArtwork variant="home" className={styles.heroArtwork} />
+            </section>
+
+            {(activityError || summaryError) && (
+                <div className={styles.errorBanner} role="alert">
+                    <i className="bi bi-exclamation-circle" />
+                    <span>{[activityError, summaryError].filter(Boolean).join(' ')}</span>
+                    <button type="button" onClick={() => setRequestVersion((version) => version + 1)}>Thử lại</button>
+                </div>
+            )}
+
+            <section className={styles.statsGrid} aria-label="Thống kê luyện tập">
+                <article className={`${styles.statCard} ${styles.fireCard}`}><span className={styles.statIcon}><i className="bi bi-fire" /></span><div><strong>{activityLoading ? '—' : activity.currentStreak} <small>ngày</small></strong><p>Chuỗi hiện tại</p></div></article>
+                <article className={`${styles.statCard} ${styles.crownCard}`}><span className={styles.statIcon}><i className="bi bi-award-fill" /></span><div><strong>{activityLoading ? '—' : activity.longestStreak} <small>ngày</small></strong><p>Chuỗi dài nhất</p></div></article>
+                <article className={`${styles.statCard} ${styles.submitCard}`}><span className={styles.statIcon}><i className="bi bi-file-earmark-check-fill" /></span><div><strong>{activityLoading ? '—' : monthlySubmissions}</strong><p>Lượt nộp trong tháng</p></div></article>
+            </section>
+
+            <button type="button" className={styles.quotaStrip} onClick={openMyQuota} disabled={isQuotaLoading}>
+                <span className={styles.quotaIcon}><i className="bi bi-mic-fill" /></span>
+                <span className={styles.quotaMain}>
+                    <span className={styles.quotaTitle}><strong>Quota Speaking</strong><b>{isQuotaLoading ? 'Đang tải…' : mySpeakingQuota ? `Còn ${Number(mySpeakingQuota.remaining).toLocaleString('vi-VN')}/${Number(mySpeakingQuota.limit).toLocaleString('vi-VN')} điểm` : 'Chưa thiết lập'}</b></span>
+                    <span className={styles.quotaTrack}><i style={{ width: `${quotaPercent}%` }} /></span>
+                    <small>{mySpeakingQuota ? formatReset(mySpeakingQuota.resetDate) : 'Chạm để xem chi tiết hạn mức'}</small>
+                </span>
+                <i className="bi bi-chevron-right" />
+            </button>
+
+            <div className={styles.primaryGrid}>
+                <section className={styles.practiceCard}>
+                    <div className={styles.practiceContent}>
+                        <span className={styles.eyebrow}>IELTS Speaking</span><h2>Luyện tập</h2>
+                        <p>Chọn chủ đề phù hợp và luyện nói theo tốc độ của bạn.</p>
+                        <button type="button" onClick={() => navigate('/student/practice')}>Bắt đầu luyện tập <i className="bi bi-arrow-right" /></button>
+                    </div>
+                    <div className={styles.practiceVisual} aria-hidden="true"><i className="bi bi-chat-quote-fill" /><span><i className="bi bi-mic-fill" /></span></div>
+                </section>
+
+                <section className={styles.deadlineCard} aria-busy={summaryLoading}>
+                    <header><div><span className={styles.eyebrow}>{summaryLoading ? 'Đang tải deadline' : `${deadlines.length} bài cần hoàn thành`}</span><h2>Deadline sắp tới</h2></div>{deadlines.length > 1 && <button type="button" onClick={() => setDeadlineSheetOpen(true)}>Xem tất cả</button>}</header>
+                    {summaryLoading ? <div className={styles.cardSkeleton} role="status">Đang tải deadline…</div> : nearestDeadline ? <DeadlineRow deadline={nearestDeadline} onOpen={openAssignment} /> : <div className={styles.emptyDeadline}><i className="bi bi-check2-circle" /><span><strong>Bạn đã hoàn thành!</strong><small>Hiện không có deadline sắp tới.</small></span></div>}
+                </section>
             </div>
 
-            {/* ── Stats Row ── */}
-            <div className={styles.statsGrid}>
-                <StatCard
-                    icon="bi-mortarboard-fill"
-                    value={loading ? '—' : (summary?.totalClasses ?? 0)}
-                    label="Lớp đang học"
-                    colorClass={styles.purple}
-                />
-                <StatCard
-                    icon="bi-calendar-event-fill"
-                    value={loading ? '—' : (summary?.upcomingDeadlines?.length ?? 0)}
-                    label="Deadline sắp tới"
-                    colorClass={styles.orange}
-                />
-                <StatCard
-                    icon="bi-mic-fill"
-                    value={loading ? '—' : (summary?.totalSubmissions ?? 0)}
-                    label="Lần luyện speaking"
-                    colorClass={styles.blue}
-                />
-                {!loading && summary && streak > 0 && (
-                    <StatCard
-                        icon="bi-fire"
-                        value={`${streak}🔥`}
-                        label="Ngày học liên tiếp"
-                        colorClass={styles.gold}
-                    />
-                )}
-            </div>
-
-            {/* ── Main 2-column layout ── */}
-            <div className={styles.mainGrid}>
-
-                {/* Cột trái: Heatmap */}
-                <div className={styles.leftCol}>
-                    {!loading && summary && (
-                        <ActivityHeatmap activityHeatmap={summary.activityHeatmap} />
-                    )}
-                    {loading && <div className={styles.skeletonCard} />}
+            <section className={styles.rhythmCard} aria-busy={activityLoading}>
+                <header><h2>Nhịp luyện tập</h2><button type="button" onClick={() => navigate('/student/dashboard/progress')}>Xem tất cả <i className="bi bi-chevron-right" /></button></header>
+                <div className={styles.weekGrid}>
+                    {recentDays.map((date) => {
+                        const count = activityByDate.get(dateKey(date)) || 0;
+                        const isToday = dateKey(date) === dateKey(new Date());
+                        return <div key={dateKey(date)} className={`${styles.dayCard} ${isToday ? styles.today : ''}`}><span>{new Intl.DateTimeFormat('vi-VN', { weekday: 'short' }).format(date).replace('Th ', 'T')}</span><strong>{date.getDate()}</strong><i className={count > 0 ? 'bi bi-check-circle-fill' : 'bi bi-circle'} aria-label={count > 0 ? `${count} lượt hoàn thành` : 'Chưa luyện tập'} /></div>;
+                    })}
                 </div>
+            </section>
 
-                {/* Cột phải: Deadlines */}
-                <div className={styles.rightCol}>
-                    <div className={styles.deadlineCard_wrapper}>
-                        <h3 className={styles.sectionTitle}>
-                            <i className="bi bi-clock-history"></i> Deadline sắp tới
-                        </h3>
+            <section className={styles.quickCard}>
+                <header><h2>Luyện tập nhanh</h2><button type="button" onClick={() => navigate('/student/practice')}>Xem tất cả <i className="bi bi-chevron-right" /></button></header>
+                <div className={styles.quickGrid}>{QUICK_PARTS.map((item) => <button type="button" key={item.part} className={`${styles.quickItem} ${styles[item.tone]}`} onClick={() => navigate(`/student/practice?part=${encodeURIComponent(item.part)}`)}><span><i className={`bi ${item.icon}`} /></span><strong>{item.part}</strong><small>{item.subtitle}</small></button>)}</div>
+            </section>
 
-                        {loading && (
-                            <>
-                                <div className={styles.skeletonItem} />
-                                <div className={styles.skeletonItem} />
-                                <div className={styles.skeletonItem} />
-                            </>
-                        )}
-
-                        {error && (
-                            <div className={styles.errorMsg}>
-                                <i className="bi bi-exclamation-triangle"></i> {error}
-                            </div>
-                        )}
-
-                        {!loading && !error && summary?.upcomingDeadlines?.length === 0 && (
-                            <div className={styles.emptyState}>
-                                <i className="bi bi-check2-circle"></i>
-                                <p>Tuyệt! Không có deadline nào sắp tới.</p>
-                            </div>
-                        )}
-
-                        {!loading && !error && summary?.upcomingDeadlines?.slice(0, 3).map(dl => (
-                            <DeadlineCard
-                                key={dl.assignmentId}
-                                deadline={dl}
-                                onClick={() => navigate(`/student/assignment/${dl.assignmentId}`)}
-                            />
-                        ))}
-                    </div>
-                </div>
-            </div>
-
-            {/* ── Lịch sử làm bài gần đây ── */}
-            <div className={styles.historyCard}>
-                <div className={styles.historyHeader}>
-                    <h3 className={styles.sectionTitle} style={{ margin: 0 }}>
-                        <i className="bi bi-clock-history"></i> Lịch sử làm bài gần đây
-                    </h3>
-                    <button className={styles.viewAllBtn} onClick={() => navigate('/student/history')}>
-                        Xem tất cả <i className="bi bi-arrow-right"></i>
-                    </button>
-                </div>
-
-                {loadingSubmissions ? (
-                    <div style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>
-                        Đang đồng bộ lịch sử bài làm...
-                    </div>
-                ) : recentSubmissions.length === 0 ? (
-                    <div style={{ textAlign: 'center', padding: '2rem', color: '#64748b', fontStyle: 'italic' }}>
-                        Bạn chưa nộp bài tập nào. Hãy bắt đầu học nhé!
-                    </div>
-                ) : (
-                    <div className={styles.tableWrapper}>
-                        <table className={styles.table}>
-                            <thead>
-                                <tr>
-                                    <th>Mã</th>
-                                    <th>Ngày nộp</th>
-                                    <th>Tiêu đề / Đề bài</th>
-                                    <th>Kỹ năng</th>
-                                    <th>Lượt làm</th>
-                                    <th>Trạng thái</th>
-                                    <th>Điểm số</th>
-                                    <th style={{ textAlign: 'right' }}>Hành động</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {recentSubmissions.map((sub) => (
-                                    <tr key={sub.submissionId}>
-                                        <td style={{ fontWeight: 600, color: '#64748b' }}>#{sub.submissionId}</td>
-                                        <td>{formatDate(sub.createdAt)}</td>
-                                        <td style={{ fontWeight: 600, maxWidth: '250px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={sub.title}>
-                                            {sub.title}
-                                        </td>
-                                        <td>
-                                            <span className={`${styles.skillBadge} ${styles['badge' + sub.skillType?.toUpperCase()] || ''}`}>
-                                                {sub.skillType || 'SPEAKING'}
-                                            </span>
-                                        </td>
-                                        <td>Lần {sub.attemptNumber}</td>
-                                        <td>
-                                            <span className={`${styles.statusBadge} ${getStatusBadgeClass(sub.status)}`}>
-                                                {getStatusLabel(sub.status)}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            {sub.score !== null && sub.score !== undefined ? (
-                                                <span className={`${styles.scoreBadge} ${getScoreBadgeClass(sub.score)}`}>
-                                                    {sub.score.toFixed(1)} / 9.0
-                                                </span>
-                                            ) : (
-                                                <span style={{ color: '#94a3b8', fontStyle: 'italic' }}>Chờ chấm</span>
-                                            )}
-                                        </td>
-                                        <td style={{ textAlign: 'right' }}>
-                                            <button 
-                                                className={styles.viewAllBtn} 
-                                                style={{ padding: '4px 12px', fontSize: '0.78rem' }}
-                                                onClick={() => navigate('/student/history')}
-                                            >
-                                                Xem chi tiết
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
-            </div>
+            {deadlineSheetOpen && createPortal(
+                <div className={styles.sheetBackdrop} onMouseDown={(event) => { if (event.target === event.currentTarget) setDeadlineSheetOpen(false); }}>
+                    <section className={styles.deadlineSheet} role="dialog" aria-modal="true" aria-labelledby="deadline-sheet-title">
+                        <div className={styles.sheetHandle} />
+                        <header><div><span>{deadlines.length} bài tập</span><h2 id="deadline-sheet-title">Deadline sắp tới</h2></div><button ref={closeRef} type="button" onClick={() => setDeadlineSheetOpen(false)} aria-label="Đóng"><i className="bi bi-x-lg" /></button></header>
+                        <div className={styles.sheetList}>{deadlines.map((deadline) => <DeadlineRow key={deadline.assignmentId} deadline={deadline} onOpen={openAssignment} />)}</div>
+                    </section>
+                </div>,
+                document.body,
+            )}
         </div>
     );
 }

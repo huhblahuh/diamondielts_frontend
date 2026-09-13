@@ -62,24 +62,21 @@ export default function ExerciseDesigner({ topic, onBack, onRefreshTopics }) {
 
     return (
         <div className={styles.container}>
-            <div style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <button onClick={onBack} style={{ background: 'none', border: 'none', color: '#64748b', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <i className="bi bi-arrow-left-circle-fill" style={{ fontSize: '1.2rem' }}></i> Quay về Kho Chủ đề
+            <div className={styles.designerToolbar}>
+                <button onClick={onBack} className={styles.backBtn}>
+                    <i className="bi bi-arrow-left-circle-fill"></i> Quay về Kho Chủ đề
                 </button>
             </div>
 
-            <div style={{
-                background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
-                padding: '2rem',
-                borderRadius: '16px',
-                color: '#ffffff',
-                marginBottom: '2rem',
-                boxShadow: '0 10px 15px -3px rgba(99, 102, 241, 0.2)'
-            }}>
-                <h3 style={{ fontSize: '1.6rem', fontWeight: 800, margin: 0 }}>📚 Chủ đề: {topic.name}</h3>
-                <p style={{ margin: '0.5rem 0 0 0', opacity: 0.9, fontSize: '0.95rem' }}>
+            <div className={styles.topicHero}>
+                <div className={styles.topicHeroIcon}><i className="bi bi-journals"></i></div>
+                <div>
+                <span className={styles.topicHeroEyebrow}>Chủ đề đang quản lý</span>
+                <h3>{topic.name}</h3>
+                <p>
                     Quản lý ngân hàng câu hỏi, bài tập tự luyện và các đề thi Speaking/Reading/Listening/Writing cho học viên.
                 </p>
+                </div>
             </div>
 
             <ExerciseList 

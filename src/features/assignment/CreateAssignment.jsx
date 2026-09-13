@@ -9,6 +9,7 @@ import AssignmentBuilder from './components/AssignmentBuilder';
 import ExerciseBankModal from './components/ExerciseBankModal';
 import styles from './CreateAssignment.module.css';
 import Skeleton from '../../components/common/Skeleton';
+import { normalizeSpeakingContent } from '../../utils/speakingContent';
 
 export default function CreateAssignment() {
     const { assignmentId } = useParams();
@@ -57,20 +58,19 @@ export default function CreateAssignment() {
                         
                         const mappedItems = (assignData.items || []).map(item => {
                             let label = `Item #${item.itemId}`;
-                            let parsedSettings = {};
-                            try { parsedSettings = JSON.parse(item.formattedContent || '{}'); } catch(e){}
+                            const parsedSettings = item.content || {};
 
                             if (item.exerciseId) {
                                 const ex = (exData || []).find(e => e.exerciseId === item.exerciseId);
                                 label = ex ? `[Ngân hàng] ${ex.type} - ${ex.skillType}` : `[Bài tập cũ #${item.exerciseId}]`;
                             } else if (item.itemType === 'AI_SPEAKING' || item.itemType === 'SPEAKING') {
-                                const rawPart = parsedSettings.part || 'Speaking';
-                                const rawTxt = (parsedSettings.prompt || '').replace(/<[^>]*>/g, '').substring(0, 40);
+                                const rawPart = item.type || 'Speaking';
+                                const rawTxt = normalizeSpeakingContent(parsedSettings).question.substring(0, 40);
                                 label = `🗣️ [Tự do] ${rawPart} - ${rawTxt}...`;
                             } else if (item.itemType === 'FILE_UPLOAD') {
                                 label = '📁 Yêu cầu Nộp File bài làm';
                             } else if (item.itemType === 'fileSubmission') {
-                                const desc = (parsedSettings.description || '').replace(/<[^>]*>/g, '').substring(0, 40);
+                                const desc = (parsedSettings.description || '').substring(0, 40);
                                 label = `📁 [Nộp File] ${desc}... (${item.payloads?.length || 0} files)`;
                             }
                             
@@ -79,7 +79,8 @@ export default function CreateAssignment() {
                                 dbId: item.itemId,
                                 exerciseId: item.exerciseId,
                                 itemType: item.itemType,
-                                formattedContent: item.formattedContent,
+                                type: item.type || '',
+                                content: item.content || {},
                                 payloads: item.payloads || [],
                                 _displayLabel: label
                             };
@@ -109,7 +110,8 @@ export default function CreateAssignment() {
             const formattedItems = items.map(it => ({
                 exerciseId: it.exerciseId || null,
                 itemType: it.itemType,
-                formattedContent: it.formattedContent || "{}",
+                type: it.type || '',
+                content: it.content || {},
                 payloads: it.payloads || []
             }));
 
@@ -188,7 +190,8 @@ export default function CreateAssignment() {
                             id: Date.now() + index + Math.random(),
                             exerciseId: ex.exerciseId,
                             itemType: ex.skillType,
-                            formattedContent: "{}",
+                            type: ex.type,
+                            content: ex.content,
                             _displayLabel: `[Ngân hàng] ${ex.type} - ${ex.skillType}`
                         }));
                         setItems([...items, ...newItems]);

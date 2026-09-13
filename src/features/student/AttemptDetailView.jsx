@@ -23,6 +23,49 @@ const fmtTime = (sec) => {
     if (!sec || !isFinite(sec)) return '0:00';
     return `${Math.floor(sec / 60)}:${String(Math.floor(sec % 60)).padStart(2, '0')}`;
 };
+const getScoreGradient = (score) => {
+    const num = typeof score === 'number' ? score : parseFloat(score);
+    if (!Number.isFinite(num)) {
+        return 'linear-gradient(135deg, #64748b 0%, #475569 100%)';
+    }
+    const clamped = Math.max(3, Math.min(9, num));
+    const ratio = (clamped - 3) / 6; // 3.0 (3đ = đỏ) -> 9.0 (9đ = xanh lá)
+    // <= 3.0 = Đỏ (0deg), 6.0 = Vàng/Cam (~67.5deg), 9.0 = Xanh lá (135deg)
+    const hue = ratio * 135;
+    const h1 = Math.round(Math.max(0, hue - 12));
+    const h2 = Math.round(Math.min(145, hue + 12));
+    return `linear-gradient(135deg, hsl(${h1}, 84%, 44%) 0%, hsl(${h2}, 82%, 36%) 100%)`;
+};
+const getBandDescriptor = (score) => {
+    if (!Number.isFinite(score)) {
+        return {
+            label: 'Đang cập nhật',
+            note: 'Kết quả tổng quan sẽ xuất hiện khi các tiêu chí được chấm đầy đủ.'
+        };
+    }
+    if (score >= 8.5) {
+        return {
+            label: 'Expert User',
+            note: 'Sử dụng ngôn ngữ rất linh hoạt, chính xác và tự nhiên.'
+        };
+    }
+    if (score >= 7.5) {
+        return {
+            label: 'Very Good User',
+            note: 'Sử dụng ngôn ngữ linh hoạt, chính xác và tự nhiên trong hầu hết tình huống.'
+        };
+    }
+    if (score >= 6.5) {
+        return {
+            label: 'Good User',
+            note: 'Giao tiếp hiệu quả với khả năng kiểm soát ngôn ngữ tốt.'
+        };
+    }
+    return {
+        label: 'Competent User',
+        note: 'Đã truyền đạt được ý chính và còn nhiều cơ hội để cải thiện.'
+    };
+};
 // Parse tagged_fix string -> [{wrong, right, description}]
 function parseTaggedFix(taggedFix) {
     if (!taggedFix) return [];
@@ -88,7 +131,6 @@ const getPhonemeTone = (ph) => {
     const expected = ph?.phoneme || '';
     const spoken = ph?.spokenPhoneme || expected;
     const score = ph?.accuracyScore ?? ph?.spokenScore ?? 100;
-    // Ưu tiên điểm số: nếu >= 80 thì luôn xanh lá dù spokenPhoneme có khác expected
     if (score >= 80) return 'phonemeInlineGood';
     if (spoken !== expected || score < 50) return 'phonemeInlineBad';
     if (score <= 70) return 'phonemeInlineWarn';
@@ -167,7 +209,7 @@ function parseWordTimeRange(wordObj, issueObj) {
 // ══════════════════════════════════════════════
 //  COMPONENT
 // ══════════════════════════════════════════════
-export default function AttemptDetailView({ results, onBack }) {
+export default function AttemptDetailView({ results }) {
     const audioSource = results?.audioBlobUrl
         || results?.audioUrl
         || results?.audio_url
@@ -341,6 +383,18 @@ export default function AttemptDetailView({ results, onBack }) {
     const overall = Number.isFinite(results.overallScore)
         ? results.overallScore
         : computedOverall;
+    const bandDescriptor = getBandDescriptor(overall);
+    const overallProgress = Number.isFinite(overall)
+        ? `${Math.max(0, Math.min(100, Number(pct(overall))))}%`
+        : '0%';
+    const scoreMetrics = [
+        { key: 'fluency', cls: 'pillFluency', label: 'Fluency', val: fluScore, hasScore: true },
+        { key: 'lexical', cls: 'pillLexical', label: 'Lexical', val: lexicalScore, hasScore: true },
+        { key: 'grammar', cls: 'pillGrammar', label: 'Grammar', val: grammarScore, hasScore: true },
+        { key: 'pronun', cls: 'pillPronun', label: 'Pron', val: pronunciationScore, hasScore: true },
+        { key: 'suggest', cls: 'pillSuggest', label: 'Suggested', val: null, hasScore: false },
+    ];
+    const activeMetricIndex = Math.max(0, scoreMetrics.findIndex(metric => metric.key === activeTab));
     // ── audio handlers ──
     const togglePlay = () => {
         const a = audioRef.current;
@@ -638,62 +692,70 @@ export default function AttemptDetailView({ results, onBack }) {
     const progressPct = sliderMax > 0
         ? Math.min(100, Math.max(0, (sliderValue / sliderMax) * 100))
         : 0;
-    const selectedPronFixes = selectedIssue?.cat === 'pronun'
-        ? (selectedIssue.word?.phonemes || []).filter(ph => {
-            const score = ph.accuracyScore ?? ph.spokenScore ?? 100;
-            return score < 80;
-        })
-        : [];
     return (
         <div className={s.detailContainer}>
-            {/* ── HEADER WITH BACK BUTTON ── */}
-            {onBack && (
-                <div className={s.viewHeader}>
-                    <button className={s.backBtn} onClick={onBack} type="button">
-                        <i className="bi bi-arrow-left" /> Quay lại phòng thu
-                    </button>
-                    <span className={s.viewTitle}>Kết quả phân tích AI chi tiết</span>
-                </div>
-            )}
-            {/* ── MAIN WORKSPACE ── */}
-            <section className={s.bottomLayout}>
-                {/* Transcript Panel (Bên trái) */}
-                <div className={s.transcriptCard}>
-                    {/* Analytics Score Bar */}
-                    <div className={s.topSection}>
-                        <div className={s.overallPill}>
-                            <span className={s.overallLabel}>OVERALL</span>
-                            <span className={s.overallScore}>
-                                {Number.isFinite(overall) ? overall.toFixed(1) : '--'}
+            <section className={s.reportSurface}>
+                <div
+                    className={s.overallHero}
+                    style={{ background: getScoreGradient(overall) }}
+                >
+                    <div className={s.overallScoreBlock}>
+                        <span className={s.overallLabel}>OVERALL</span>
+                        <span className={s.overallScore}>
+                            {Number.isFinite(overall) ? overall.toFixed(1) : '--'}
+                        </span>
+                    </div>
+                    <div className={s.bandInsight}>
+                        <div className={s.bandInsightHead}>
+                            <span className={s.bandDescriptor}>{bandDescriptor.label}</span>
+                            <span className={s.bandValue}>
+                                {Number.isFinite(overall) ? `${overall.toFixed(1)} / 9.0` : '-- / 9.0'}
                             </span>
                         </div>
-                        <div className={s.subMetricPills}>
-                            {[
-                                { key: 'fluency', cls: 'pillFluency', label: 'Fluency', val: fluScore, hasScore: true },
-                                { key: 'lexical', cls: 'pillLexical', label: 'Lexical', val: lexicalScore, hasScore: true },
-                                { key: 'grammar', cls: 'pillGrammar', label: 'Grammar', val: grammarScore, hasScore: true },
-                                { key: 'pronun', cls: 'pillPronun', label: 'Pron', val: pronunciationScore, hasScore: true },
-                                { key: 'suggest', cls: 'pillSuggest', label: 'Suggested', val: null, hasScore: false },
-                            ].map(m => {
-                                const isActive = activeTab === m.key;
-                                return (
-                                    <button
-                                        key={m.key}
-                                        type="button"
-                                        className={`${s.metricPill} ${s[m.cls]} ${isActive ? s.active : ''}`}
-                                        onClick={() => setActiveTab(m.key)}
-                                    >
-                                        <span className={s.metricPillName}>{m.label}</span>
-                                        {m.hasScore && (
-                                            <span className={s.metricPillVal}>
-                                                {Number.isFinite(m.val) ? m.val.toFixed(1) : '--'}
-                                            </span>
-                                        )}
-                                    </button>
-                                );
-                            })}
+                        <div
+                            className={s.bandTrack}
+                            role="progressbar"
+                            aria-label="Điểm Overall"
+                            aria-valuemin={0}
+                            aria-valuemax={9}
+                            aria-valuenow={Number.isFinite(overall) ? overall : undefined}
+                        >
+                            <span className={s.bandFill} style={{ width: overallProgress }} />
                         </div>
+                        <div className={s.bandTicks} aria-hidden="true">
+                            <span>0</span><span>3</span><span>6</span><span>9</span>
+                        </div>
+                        <p className={s.bandNote}>{bandDescriptor.note}</p>
                     </div>
+                </div>
+
+                <div
+                    className={s.metricGrid}
+                    aria-label="Tiêu chí chấm điểm"
+                    style={{ '--active-metric-index': activeMetricIndex }}
+                >
+                    <span className={s.metricSlider} aria-hidden="true" />
+                    {scoreMetrics.map(m => {
+                        const isActive = activeTab === m.key;
+                        return (
+                            <button
+                                key={m.key}
+                                type="button"
+                                aria-pressed={isActive}
+                                className={`${s.metricCard} ${s[m.cls]} ${isActive ? s.active : ''}`}
+                                onClick={() => setActiveTab(m.key)}
+                            >
+                                <span className={s.metricScoreBadge}>
+                                    {m.hasScore && Number.isFinite(m.val) ? m.val.toFixed(1) : '--'}
+                                </span>
+                                <span className={s.metricLabel}>{m.label}</span>
+                            </button>
+                        );
+                    })}
+                </div>
+
+                <div className={s.bottomLayout}>
+                    <div className={s.transcriptCard}>
                     {results.processingWarning && (
                         <div className={s.processingWarning} role="status">
                             <i className="bi bi-exclamation-triangle" />
@@ -754,9 +816,9 @@ export default function AttemptDetailView({ results, onBack }) {
                             />
                         </div>
                     )}
-                </div>
-                {/* Cột phải chứa các card phân tích */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                    </div>
+                    {/* Cột phải chứa các card phân tích */}
+                    <div className={s.analysisColumn}>
                     <div
                         className={s.errorCardsCard}
                         style={{
@@ -778,10 +840,10 @@ export default function AttemptDetailView({ results, onBack }) {
                             <>
                                 <div className={s.errorCardsTitle} style={{ color: '#6d28d9' }}>
                                     <div className={s.statusDot} style={{ backgroundColor: '#6d28d9' }} />
-                                    GỢI Ý TỪ AI
+                                    GỢI Ý CẢI THIỆN
                                 </div>
                                 <div className={s.panelBody} style={{ color: 'var(--text-main)' }}>
-                                    Đây là bài nói mẫu đạt băng điểm <strong>IELTS Band 8.0+</strong> được AI biên soạn lại từ câu trả lời của bạn.
+                                    Đây là bài nói tham khảo được biên soạn lại từ câu trả lời của bạn.
                                     <br /><br />
                                     💡 <strong>Hướng dẫn:</strong> Nhấn vào các cụm từ màu tím được tô sáng trong transcript để xem dịch nghĩa tiếng Việt trực tiếp.
                                 </div>
@@ -854,7 +916,7 @@ export default function AttemptDetailView({ results, onBack }) {
                                     {selectedIssue.cat === 'lexical' ? 'TỪ VỰNG & TRÔI CHẢY' :
                                         selectedIssue.cat === 'grammar' ? 'CẤU TRÚC NGỮ PHÁP' :
                                             selectedIssue.cat === 'fluency' ? 'ĐỘ TRÔI CHẢY & MẠCH LẠC' :
-                                                selectedIssue.cat === 'pronun' ? 'PHÁT ÂM CHI TIẾT' : 'GỢI Ý TỪ AI'}
+                                                selectedIssue.cat === 'pronun' ? 'PHÁT ÂM CHI TIẾT' : 'GỢI Ý CẢI THIỆN'}
                                 </div>
                                 <div className={s.panelBody}>
                                     {selectedIssue.cat !== 'pronun' && (
@@ -885,16 +947,6 @@ export default function AttemptDetailView({ results, onBack }) {
                                             <div className={s.pronFocusMeta}>
                                                 <span>Điểm: <strong>{Math.round(selectedIssue.word.accuracyScore ?? 0)}</strong></span>
                                             </div>
-                                            {selectedPronFixes.length > 0 && (
-                                                <div className={s.pronFixList}>
-                                                    {selectedPronFixes.map((ph, idx) => (
-                                                        <span key={idx} className={s.pronFixPill}>
-                                                            <strong>{ph.phoneme}</strong>
-                                                            <span>{ph.spokenPhoneme && ph.spokenPhoneme !== ph.phoneme ? `Bạn nói ${ph.spokenPhoneme}` : `Điểm ${Math.round(ph.accuracyScore || 0)}`}</span>
-                                                        </span>
-                                                    ))}
-                                                </div>
-                                            )}
                                         </div>
                                     )}
                                 </div>
@@ -905,19 +957,23 @@ export default function AttemptDetailView({ results, onBack }) {
                                         <div className={s.pronCompareGrid}>
                                             <div className={s.pronCompareCard}>
                                                 <span>Từ đúng</span>
-                                                <strong>{selectedIssue.word.expectedIpa || '-'}</strong>
+                                                <div className={s.pronCompareExpectedPhonemes}>
+                                                    {selectedIssue.word.phonemes.map((ph, idx) => (
+                                                        <strong key={idx}>{ph.phoneme || '-'}</strong>
+                                                    ))}
+                                                </div>
                                             </div>
                                             <div className={s.pronCompareCard}>
                                                 <span>Bạn nói</span>
-                                                <strong>{selectedIssue.word.spokenIpa || '-'}</strong>
+                                                <div className={s.pronComparePhonemes}>
+                                                    {selectedIssue.word.phonemes.map((ph, idx) => (
+                                                        <span key={idx} className={`${s.pronComparePhoneme} ${s[getPhonemeTone(ph)]}`}>
+                                                            <small>{Math.round(ph.accuracyScore ?? ph.spokenScore ?? 0)}</small>
+                                                            <strong>{ph.spokenPhoneme || ph.phoneme || '-'}</strong>
+                                                        </span>
+                                                    ))}
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div className={s.phonemeWrap}>
-                                            {selectedIssue.word.phonemes.map((ph, idx) => (
-                                                <span key={idx} className={`${s.phonemeChip} ${(ph.accuracyScore || 0) < 80 ? s.phonemeBad : ''}`}>
-                                                    {ph.phoneme}
-                                                </span>
-                                            ))}
                                         </div>
                                         <div className={s.pronActions}>
                                             <button
@@ -986,6 +1042,7 @@ export default function AttemptDetailView({ results, onBack }) {
                             </div>
                         </div>
                     )}
+                    </div>
                 </div>
             </section>
             {popover && typeof document !== 'undefined' && createPortal(
@@ -1047,27 +1104,30 @@ export default function AttemptDetailView({ results, onBack }) {
                                 <div className={s.pronFocusMeta}>
                                     <span>Điểm: <strong>{Math.round(popover.issue.word.accuracyScore ?? 0)}</strong></span>
                                 </div>
-                                {(popover.issue.word.phonemes || []).filter(ph => (ph.accuracyScore ?? ph.spokenScore ?? 100) < 80).length > 0 && (
-                                    <div className={s.pronFixList}>
-                                        {(popover.issue.word.phonemes || [])
-                                            .filter(ph => (ph.accuracyScore ?? ph.spokenScore ?? 100) < 80)
-                                            .map((ph, idx) => (
-                                                <span key={idx} className={s.pronFixPill}>
-                                                    <strong>{ph.phoneme}</strong>
-                                                    <span>{ph.spokenPhoneme && ph.spokenPhoneme !== ph.phoneme ? `Bạn nói ${ph.spokenPhoneme}` : `Điểm ${Math.round(ph.accuracyScore || 0)}`}</span>
-                                                </span>
-                                            ))}
-                                    </div>
-                                )}
                             </div>
                             <div className={s.popPronCompare}>
                                 <div className={s.pronCompareCard}>
                                     <span>Từ đúng</span>
-                                    <strong>{popover.issue.word.expectedIpa || '-'}</strong>
+                                    {(popover.issue.word.phonemes || []).length > 0 ? (
+                                        <div className={s.pronCompareExpectedPhonemes}>
+                                            {popover.issue.word.phonemes.map((ph, idx) => (
+                                                <strong key={idx}>{ph.phoneme || '-'}</strong>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <strong>{popover.issue.word.expectedIpa || '-'}</strong>
+                                    )}
                                 </div>
                                 <div className={s.pronCompareCard}>
                                     <span>Bạn nói</span>
-                                    <strong>{popover.issue.word.spokenIpa || '-'}</strong>
+                                    <div className={s.pronComparePhonemes}>
+                                        {(popover.issue.word.phonemes || []).map((ph, idx) => (
+                                            <span key={idx} className={`${s.pronComparePhoneme} ${s[getPhonemeTone(ph)]}`}>
+                                                <small>{Math.round(ph.accuracyScore ?? ph.spokenScore ?? 0)}</small>
+                                                <strong>{ph.spokenPhoneme || ph.phoneme || '-'}</strong>
+                                            </span>
+                                        ))}
+                                    </div>
                                 </div>
                             </div>
                             <div className={s.pronActions}>

@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { normalizeSpeakingContent } from '../../../utils/speakingContent';
 
 // Helper functions defined statically outside the component
 const getPrefix = (skillType) => {
@@ -10,28 +11,7 @@ const getPrefix = (skillType) => {
     return '📝';
 };
 
-const getCleanText = (formattedContent) => {
-    if (!formattedContent) return 'Không có chi tiết';
-    try {
-        const parsed = typeof formattedContent === 'string' ? JSON.parse(formattedContent) : formattedContent;
-        if (!parsed) return 'Không có chi tiết';
-        const rawContent = parsed.htmlContent || parsed.passageHtml || parsed.prompt || parsed.question || parsed.textPrompt || parsed.topic || parsed.title || '';
-        let cleanText = '';
-        if (typeof window !== 'undefined' && window.DOMParser) {
-            try {
-                const doc = new DOMParser().parseFromString(rawContent, 'text/html');
-                cleanText = doc.body.textContent || rawContent;
-            } catch (err) {
-                cleanText = rawContent.replace(/<[^>]*>/g, '');
-            }
-        } else {
-            cleanText = rawContent.replace(/<[^>]*>/g, '');
-        }
-        return cleanText.trim() || 'Không có chi tiết';
-    } catch (e) {
-        return 'Không có chi tiết';
-    }
-};
+const getCleanText = (content) => normalizeSpeakingContent(content).question || 'Không có chi tiết';
 
 export default function ExerciseSelector({ show, onClose, oldExercises = [], onSelectTasks, styles }) {
     const [skillFilter, setSkillFilter] = useState('All');
@@ -65,7 +45,7 @@ export default function ExerciseSelector({ show, onClose, oldExercises = [], onS
                 const term = searchTerm.toLowerCase();
                 const typeStr = (ex.type || '').toLowerCase();
                 const skillStr = (ex.skillType || '').toLowerCase();
-                const detailsStr = getCleanText(ex.formattedContent).toLowerCase();
+                const detailsStr = getCleanText(ex.content).toLowerCase();
                 return typeStr.includes(term) || skillStr.includes(term) || detailsStr.includes(term);
             }
             return true;
@@ -190,7 +170,7 @@ export default function ExerciseSelector({ show, onClose, oldExercises = [], onS
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
                             {/* Skill Filter Pills */}
                             <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
-                                {['All', 'Speaking', 'Writing', 'Reading', 'Listening'].map(skill => (
+                                {['All', 'Speaking'].map(skill => (
                                     <button
                                         key={skill}
                                         type="button"
@@ -277,7 +257,7 @@ export default function ExerciseSelector({ show, onClose, oldExercises = [], onS
                                                         {getPrefix(ex.skillType)} {ex.type} - {ex.skillType}
                                                     </span>
                                                     <span style={{ fontSize: '0.78rem', color: '#64748b', maxBreakWords: '3' }}>
-                                                        {getCleanText(ex.formattedContent)}
+                                                        {getCleanText(ex.content)}
                                                     </span>
                                                 </div>
                                             </div>

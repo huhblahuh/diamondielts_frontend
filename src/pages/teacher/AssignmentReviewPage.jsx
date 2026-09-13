@@ -29,7 +29,7 @@ const STATUS_LABELS = {
 };
 
 // ─────────────────────────────────────────────
-//  Sub-Viewer: Speaking AI
+//  Sub-Viewer: Speaking
 // ─────────────────────────────────────────────
 function SpeakingSubmissionViewer({ attempt }) {
     const audioPayload = attempt.payloads?.find(p =>
@@ -61,7 +61,7 @@ function SpeakingSubmissionViewer({ attempt }) {
     return (
         <div className={s.speakingViewer}>
             <div className={s.noAiNote}>
-                <i className="bi bi-robot" /> Chưa có kết quả AI cho lần nộp này.
+                <i className="bi bi-clipboard-check" /> Chưa có kết quả chấm cho lần nộp này.
             </div>
         </div>
     );
@@ -513,7 +513,7 @@ export default function AssignmentReviewPage() {
 
     const getItemTypeLabel = (type) => {
         const t = (type || '').toUpperCase();
-        if (t === 'AI_SPEAKING' || t === 'SPEAKING') return 'Speaking AI';
+        if (t === 'AI_SPEAKING' || t === 'SPEAKING') return 'Speaking';
         if (t === 'FILESUBMISSION' || t === 'FILE_UPLOAD') return 'Nộp File';
         return type;
     };
@@ -524,10 +524,7 @@ export default function AssignmentReviewPage() {
         return s.badgeFile;
     };
 
-    const parseItemTitle = (formattedContent) => {
-        const parsed = tryParseJson(formattedContent);
-        return parsed.title || parsed.textPrompt?.slice(0, 40) || 'Không có tiêu đề';
-    };
+    const parseItemTitle = (item) => item.type || item.content?.question?.slice(0, 40) || item.content?.description?.slice(0, 40) || 'Không có tiêu đề';
 
     const countSubmitted = (item) => {
         // Count how many students in roster have submitted this specific item
@@ -557,7 +554,7 @@ export default function AssignmentReviewPage() {
                     <div className={s.headerBadge}>
                         <i className="bi bi-journal-check" />
                     </div>
-                    <div>
+                    <div className={s.headerCopy}>
                         <h2 className={s.headerTitle}>{data.title}</h2>
                         <p className={s.headerMeta}>
                             <i className="bi bi-calendar-event" />
@@ -600,7 +597,7 @@ export default function AssignmentReviewPage() {
                                         </span>
                                     </div>
                                     <div className={s.itemBtnTitle}>
-                                        #{idx + 1} {parseItemTitle(item.formattedContent)}
+                                        #{idx + 1} {parseItemTitle(item)}
                                     </div>
                                 </button>
                             );
