@@ -10,6 +10,7 @@ import ExerciseBankModal from './components/ExerciseBankModal';
 import styles from './CreateAssignment.module.css';
 import Skeleton from '../../components/common/Skeleton';
 import { normalizeSpeakingContent } from '../../utils/speakingContent';
+import { toAssignmentDateTimeLocal } from '../../utils/assignmentDate';
 
 export default function CreateAssignment() {
     const { assignmentId } = useParams();
@@ -27,13 +28,6 @@ export default function CreateAssignment() {
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [showBank, setShowBank] = useState(false);
-
-    const formatToDatetimeLocal = (isoString) => {
-        if (!isoString) return '';
-        const date = new Date(isoString);
-        const pad = (num) => String(num).padStart(2, '0');
-        return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
-    };
 
     useEffect(() => {
         const initData = async () => {
@@ -54,7 +48,7 @@ export default function CreateAssignment() {
                     if (assignData) {
                         setTitle(assignData.title || '');
                         setDescription(assignData.description || '');
-                        setDueDate(formatToDatetimeLocal(assignData.dueDate));
+                        setDueDate(toAssignmentDateTimeLocal(assignData.dueDate));
                         
                         const mappedItems = (assignData.items || []).map(item => {
                             let label = `Item #${item.itemId}`;

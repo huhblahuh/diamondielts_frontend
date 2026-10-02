@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Pagination from '../../../components/Pagination';
+import { parseAssignmentDueDate } from '../../../utils/assignmentDate';
 
 const PAGE_SIZE = 10;
 
@@ -15,8 +16,8 @@ export default function DeadlineListTab({ deadlines = [], onEditFolder, onDelete
             || deadline.title?.toLocaleLowerCase('vi').includes(normalizedSearch)
         ))
         .sort((first, second) => {
-            const firstDueTime = new Date(first.dueDate).getTime();
-            const secondDueTime = new Date(second.dueDate).getTime();
+            const firstDueTime = parseAssignmentDueDate(first.dueDate)?.getTime();
+            const secondDueTime = parseAssignmentDueDate(second.dueDate)?.getTime();
             const firstExpired = Number.isFinite(firstDueTime) && firstDueTime < now;
             const secondExpired = Number.isFinite(secondDueTime) && secondDueTime < now;
 
@@ -63,7 +64,7 @@ export default function DeadlineListTab({ deadlines = [], onEditFolder, onDelete
                     </thead>
                     <tbody>
                         {paged.map((dl) => {
-                            const dueTime = new Date(dl.dueDate).getTime();
+                            const dueTime = parseAssignmentDueDate(dl.dueDate)?.getTime();
                             const isPastDeadline = Number.isFinite(dueTime) && dueTime < now;
 
                             return (
@@ -79,7 +80,7 @@ export default function DeadlineListTab({ deadlines = [], onEditFolder, onDelete
                                         {dl.title}
                                     </span>
                                 </td>
-                                <td>{formatDate(dl.dueDate)}</td>
+                                <td>{formatDate(dl.dueDate, true)}</td>
                                 <td><strong>{dl.itemCount}</strong> bài</td>
                                 <td>
                                     {dl.isPublished ? (

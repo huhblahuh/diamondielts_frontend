@@ -5,6 +5,7 @@ import styles from './StudentClassroom.module.css';
 import Swal from 'sweetalert2';
 import Pagination from '../../components/Pagination';
 import HeroArtwork from '../../components/common/HeroArtwork';
+import { parseAssignmentDueDate } from '../../utils/assignmentDate';
 
 export default function StudentClassroom() {
     const navigate = useNavigate();
@@ -79,7 +80,7 @@ export default function StudentClassroom() {
 
     const formatDateTime = (isoStr) => {
         if (!isoStr) return "Không thời hạn";
-        const d = new Date(isoStr);
+        const d = parseAssignmentDueDate(isoStr);
         const time = d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false });
         const date = d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
         return `${time} · ${date}`;
@@ -88,7 +89,7 @@ export default function StudentClassroom() {
     const getStatusInfo = (dueDate) => {
         if (!dueDate) return { text: 'Không thời hạn', type: 'neutral' };
         const now = Date.now();
-        const diff = new Date(dueDate).getTime() - now;
+        const diff = parseAssignmentDueDate(dueDate).getTime() - now;
         if (diff <= 0) return { text: 'Đã quá hạn', type: 'overdue' };
         const days = Math.floor(diff / (1000 * 60 * 60 * 24));
         const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
@@ -99,14 +100,14 @@ export default function StudentClassroom() {
 
     // Filter counts
     const overdueCount = useMemo(() => {
-        return deadlines.filter(dl => dl.dueDate && new Date(dl.dueDate) < new Date()).length;
+        return deadlines.filter(dl => dl.dueDate && parseAssignmentDueDate(dl.dueDate) < new Date()).length;
     }, [deadlines]);
     const openCount = deadlines.length - overdueCount;
 
     // Filtered deadlines
     const filteredDeadlines = useMemo(() => {
         return deadlines.filter(dl => {
-            const isOverdue = dl.dueDate && new Date(dl.dueDate) < new Date();
+            const isOverdue = dl.dueDate && parseAssignmentDueDate(dl.dueDate) < new Date();
             if (statusFilter === 'open' && isOverdue) return false;
             if (statusFilter === 'overdue' && !isOverdue) return false;
             if (timeFilter !== 'all') {
@@ -114,7 +115,7 @@ export default function StudentClassroom() {
                 if (!dl.dueDate) return false;
 
                 const now = new Date();
-                const dueDate = new Date(dl.dueDate);
+                const dueDate = parseAssignmentDueDate(dl.dueDate);
                 const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
                 const endOfToday = new Date(startOfToday);
                 endOfToday.setDate(endOfToday.getDate() + 1);

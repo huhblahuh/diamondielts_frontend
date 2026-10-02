@@ -6,6 +6,7 @@ import Swal from 'sweetalert2';
 import AttemptDetailView from './AttemptDetailView';
 import { SpeakingAssessmentPipeline } from './speakingAssessmentPipeline';
 import { getSpeakingPrompt, normalizeSpeakingContent } from '../../utils/speakingContent';
+import { parseAssignmentDueDate } from '../../utils/assignmentDate';
 
 export default function SpeakingPractice({
     isAssignmentMode = false,
@@ -593,7 +594,7 @@ export default function SpeakingPractice({
 
     if (!exercise) return <div className={styles.loading}>Đang tải phòng thu...</div>;
 
-    const isOverdue = assignment?.dueDate ? new Date(assignment.dueDate) < new Date() : false;
+    const isOverdue = assignment?.dueDate ? parseAssignmentDueDate(assignment.dueDate) < new Date() : false;
     const isBlockedByDeadline = isAssignmentMode && isOverdue && !assignment?.allowLateSubmission;
     const speakingContent = normalizeSpeakingContent(exercise.content);
 

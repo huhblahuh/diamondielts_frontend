@@ -6,6 +6,7 @@ import SpotTaskCreator from './SpotTaskCreator';
 import ExerciseSelector from './ExerciseSelector';
 import DeadlineReminderModal from './DeadlineReminderModal';
 import { normalizeSpeakingContent } from '../../../utils/speakingContent';
+import { toAssignmentDateTimeLocal } from '../../../utils/assignmentDate';
 
 const parseItemContent = (content) => content && typeof content === 'object' ? content : {};
 
@@ -81,14 +82,7 @@ export default function FolderConfigModal({ show, onClose, assignmentId, classId
                     setReminderDirty(false);
                     setShowReminderModal(false);
 
-                    if (assignData.dueDate) {
-                        const date = new Date(assignData.dueDate);
-                        const pad = (num) => String(num).padStart(2, '0');
-                        const formatted = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
-                        setFolderDueDate(formatted);
-                    } else {
-                        setFolderDueDate('');
-                    }
+                    setFolderDueDate(toAssignmentDateTimeLocal(assignData.dueDate));
 
                     const mappedItems = (assignData.items || []).map(item => {
                         let label = `Item #${item.itemId}`;

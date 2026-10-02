@@ -9,6 +9,7 @@ import Skeleton from '../../components/common/Skeleton';
 import SpeakingPractice from '../../features/student/SpeakingPractice';
 import { normalizeSpeakingContent } from '../../utils/speakingContent';
 import CommonAttachmentUploader from '../../components/CommonAttachmentUploader';
+import { parseAssignmentDueDate } from '../../utils/assignmentDate';
 
 const detectPartNumber = (type) => {
     const typeLower = (type || '').toLowerCase();
@@ -20,7 +21,7 @@ const detectPartNumber = (type) => {
 
 const formatDueDate = (isoStr) => {
     if (!isoStr) return 'Không thời hạn';
-    const d = new Date(isoStr);
+    const d = parseAssignmentDueDate(isoStr);
     const time = d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false });
     const date = d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
     return `${time} · ${date}`;
@@ -28,7 +29,7 @@ const formatDueDate = (isoStr) => {
 
 const getRemainingDaysText = (isoStr) => {
     if (!isoStr) return 'Không thời hạn';
-    const diff = new Date(isoStr).getTime() - Date.now();
+    const diff = parseAssignmentDueDate(isoStr).getTime() - Date.now();
     if (diff <= 0) return 'Quá hạn nộp';
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
     const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
@@ -557,7 +558,7 @@ export default function AssignmentDetailPage() {
         );
     }
 
-    const isOverdue = assignment.dueDate && new Date(assignment.dueDate) < new Date();
+    const isOverdue = assignment.dueDate && parseAssignmentDueDate(assignment.dueDate) < new Date();
     const isBlockedByDeadline = isOverdue && !assignment.allowLateSubmission;
     const totalItems = assignment.items?.length || 0;
 

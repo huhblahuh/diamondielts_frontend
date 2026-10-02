@@ -5,6 +5,7 @@ import Swal from 'sweetalert2';
 import AttemptDetailView from '../../features/student/AttemptDetailView';
 import s from '../../features/classroom/components/SubmissionReviewModal.module.css';
 import Skeleton from '../../components/common/Skeleton';
+import { parseAssignmentDueDate } from '../../utils/assignmentDate';
 
 // ─────────────────────────────────────────────
 //  Helper: parse JSON safely
@@ -14,9 +15,9 @@ const tryParseJson = (str) => {
     try { return JSON.parse(str); } catch { return {}; }
 };
 
-const fmtDateTime = (iso) => {
+const fmtDateTime = (iso, isDueDate = false) => {
     if (!iso) return 'N/A';
-    return new Date(iso).toLocaleString('vi-VN', {
+    return (isDueDate ? parseAssignmentDueDate(iso) : new Date(iso)).toLocaleString('vi-VN', {
         day: '2-digit', month: '2-digit', year: 'numeric',
         hour: '2-digit', minute: '2-digit'
     });
@@ -558,7 +559,7 @@ export default function AssignmentReviewPage() {
                         <h2 className={s.headerTitle}>{data.title}</h2>
                         <p className={s.headerMeta}>
                             <i className="bi bi-calendar-event" />
-                            Hạn nộp: {fmtDateTime(data.dueDate)}
+                            Hạn nộp: {fmtDateTime(data.dueDate, true)}
                             <span className={s.metaSep}>·</span>
                             <i className="bi bi-list-check" />
                             {data.items?.length} hạng mục

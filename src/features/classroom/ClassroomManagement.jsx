@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import axiosClient from '../../api/axiosClient';
 import Swal from 'sweetalert2';
 import styles from './ClassroomManagement.module.css';
+import { parseAssignmentDueDate } from '../../utils/assignmentDate';
 
 // Import new modular sub-components
 import ClassroomGrid from './components/ClassroomGrid';
@@ -305,9 +306,9 @@ export default function ClassroomManagement() {
         }
     };
 
-    const formatDate = (dtStr) => {
+    const formatDate = (dtStr, isDueDate = false) => {
         if (!dtStr) return 'N/A';
-        return new Date(dtStr).toLocaleDateString('vi-VN');
+        return (isDueDate ? parseAssignmentDueDate(dtStr) : new Date(dtStr)).toLocaleDateString('vi-VN');
     };
 
     return (

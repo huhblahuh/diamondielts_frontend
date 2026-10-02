@@ -10,6 +10,7 @@ import AttemptDetailView from './AttemptDetailView';
 import { SpeakingAssessmentPipeline } from './speakingAssessmentPipeline';
 import SpeakingQuestionCard from '../../components/SpeakingQuestionCard';
 import { getSpeakingPrompt, normalizeSpeakingContent } from '../../utils/speakingContent';
+import { parseAssignmentDueDate } from '../../utils/assignmentDate';
 
 // Soniox credentials are issued by the backend for each recording session.
 
@@ -323,9 +324,9 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
         }
     };
 
-    const formatDateTime = (isoStr) => {
+    const formatDateTime = (isoStr, isDueDate = false) => {
         if (!isoStr) return "N/A";
-        const d = new Date(isoStr);
+        const d = isDueDate ? parseAssignmentDueDate(isoStr) : new Date(isoStr);
         return d.toLocaleString('vi-VN', {
             day: '2-digit',
             month: '2-digit',
@@ -579,7 +580,7 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
 
     if (!assignment) return null;
 
-    const isOverdue = new Date(assignment.dueDate) < new Date();
+    const isOverdue = parseAssignmentDueDate(assignment.dueDate) < new Date();
     const isBlockedByDeadline = isOverdue && !assignment.allowLateSubmission;
 
     // --- SPEAKING STUDIO VIEW MODE ---
@@ -831,7 +832,7 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
                         <h3>{assignment.title}</h3>
                         <div className={styles.modalMeta}>
                             <span className={isOverdue ? styles.dueDate : styles.dueDateOk}>
-                                <i className="bi bi-calendar-event"></i> Hạn nộp: {formatDateTime(assignment.dueDate)}
+                                <i className="bi bi-calendar-event"></i> Hạn nộp: {formatDateTime(assignment.dueDate, true)}
                             </span>
                             {isOverdue && (
                                 <span className="badge bg-danger rounded-pill">Quá hạn nộp</span>
