@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
     isPushSupported,
     subscribePush,
+    getPushFailureMessage,
     getPushStatus,
     isBannerDismissed,
     dismissBanner
@@ -51,7 +52,7 @@ export default function PushNotificationBanner({ pushStatus, onStatusChange }) {
                 setPermission('denied');
                 showToastError('Bạn đã từ chối cấp quyền thông báo.');
             } else {
-                showToastError('Không thể đăng ký thông báo. Vui lòng thử lại sau.');
+                showToastError(getPushFailureMessage(res));
             }
         } catch (err) {
             console.error('Subscription error:', err);

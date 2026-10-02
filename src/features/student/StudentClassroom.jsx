@@ -190,7 +190,7 @@ export default function StudentClassroom() {
 
     if (classes.length === 0) {
         return (
-            <div className={styles.container}>
+            <div className={`${styles.container} ${styles.emptyState}`}>
                 <div className={styles.emptyContainer}>
                     <div className={styles.emptyIcon}>
                         <i className="bi bi-mortarboard"></i>

@@ -3,7 +3,8 @@ import {
     isPushSupported,
     subscribePush,
     unsubscribePush,
-    getPushStatus
+    getPushStatus,
+    getPushFailureMessage
 } from '../../../utils/pushNotification';
 import { showToastSuccess, showToastError } from '../../../utils/toast';
 import styles from '../StudentProfile.module.css';
@@ -75,7 +76,7 @@ export default function NotificationSettingsCard({
                     setPermission('denied');
                     showToastError('Bạn đã chặn quyền thông báo trên trình duyệt.');
                 } else {
-                    showToastError('Không thể bật thông báo. Vui lòng thử lại.');
+                    showToastError(getPushFailureMessage(res));
                 }
             } else {
                 const ok = await unsubscribePush();
@@ -106,7 +107,7 @@ export default function NotificationSettingsCard({
                 setLocalStatus(updated);
                 if (onStatusChange) onStatusChange(updated);
             } else {
-                showToastError('Không thể gia hạn thông báo.');
+                showToastError(getPushFailureMessage(res));
             }
         } finally {
             setLoading(false);

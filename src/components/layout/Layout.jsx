@@ -8,10 +8,9 @@ import authService from '../../api/services/auth.service';
 import {
     getPushStatus,
     isPushSupported,
-    subscribePush,
+    syncExistingPushSubscription,
 } from '../../utils/pushNotification';
 
-const AUTO_PUSH_ATTEMPT_KEY = 'diamond_auto_push_attempted';
 const QUOTA_PERIODS = [
     { value: 'Daily', label: 'Theo ngày' },
     { value: 'Weekly', label: 'Theo tuần' },
@@ -50,7 +49,7 @@ export default function Layout() {
     const [quotaClock, setQuotaClock] = useState(Date.now());
     const [customHeader, setCustomHeader] = useState(null);
     const [pushStatus, setPushStatus] = useState(null);
-    const autoPushAttemptedRef = useRef(false);
+    const pushInitializedRef = useRef(false);
 
     useEffect(() => {
         setCustomHeader(null);
@@ -58,28 +57,17 @@ export default function Layout() {
 
     useEffect(() => {
         if (role !== 'Student' || !isPushSupported()) return undefined;
-        if (autoPushAttemptedRef.current) return undefined;
+        if (pushInitializedRef.current) return undefined;
 
-        autoPushAttemptedRef.current = true;
-
-        let alreadyAttempted = false;
-        try {
-            alreadyAttempted = sessionStorage.getItem(AUTO_PUSH_ATTEMPT_KEY) === '1';
-            if (!alreadyAttempted) {
-                sessionStorage.setItem(AUTO_PUSH_ATTEMPT_KEY, '1');
-            }
-        } catch {
-            // Some privacy modes disable sessionStorage. The in-memory guard
-            // still prevents duplicate requests during this Layout lifecycle.
-        }
+        pushInitializedRef.current = true;
 
         let isActive = true;
         const initializeStudentPush = async () => {
             try {
-                // When permission is already granted, this silently creates or
-                // refreshes the subscription. For a new user, ask once per tab.
-                if (Notification.permission === 'granted' || !alreadyAttempted) {
-                    await subscribePush();
+                // Reassociate an existing browser subscription with this user.
+                // Creating a new subscription requires an explicit user click.
+                if (Notification.permission === 'granted') {
+                    await syncExistingPushSubscription();
                 }
 
                 const status = await getPushStatus();

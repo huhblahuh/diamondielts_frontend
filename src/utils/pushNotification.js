@@ -148,14 +148,14 @@ export async function subscribePush() {
     }
 
     try {
-        const registration = await registerServiceWorker();
-        if (!registration) {
-            return { success: false, reason: 'registration_failed' };
-        }
-
         const permission = await Notification.requestPermission();
         if (permission !== 'granted') {
             return { success: false, permissionDenied: permission === 'denied' };
+        }
+
+        const registration = await registerServiceWorker();
+        if (!registration) {
+            return { success: false, reason: 'registration_failed' };
         }
 
         const publicKey = await getVapidPublicKey();
@@ -179,8 +179,25 @@ export async function subscribePush() {
         return { success: true };
     } catch (err) {
         console.error('Failed to subscribe to push notifications:', err);
-        return { success: false, error: err };
+        const reason = err?.name === 'AbortError' &&
+            err?.message?.includes('push service error')
+            ? 'push_service_error'
+            : 'subscription_failed';
+        return { success: false, reason, error: err };
     }
+}
+
+export function getPushFailureMessage(result) {
+    if (result?.reason === 'push_service_error') {
+        return 'Trình duyệt không đăng ký được với dịch vụ push. Hãy thử mạng hoặc trình duyệt khác.';
+    }
+    if (result?.reason === 'registration_failed') {
+        return 'Không thể khởi tạo thông báo trên trình duyệt. Hãy tải lại trang và thử lại.';
+    }
+    if (result?.reason === 'missing_key') {
+        return 'Máy chủ chưa cung cấp khóa để bật thông báo.';
+    }
+    return 'Không thể bật thông báo. Vui lòng thử lại.';
 }
 
 /**
