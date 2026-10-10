@@ -5,13 +5,18 @@ import styles from './SubmissionHistoryPage.module.css';
 import AttemptDetailView from '../../features/student/AttemptDetailView';
 import Pagination from '../../components/Pagination';
 import HeroArtwork from '../../components/common/HeroArtwork';
+import { useSearchParams } from 'react-router-dom';
 
 const PAGE_SIZE = 10;
 
 export default function SubmissionHistoryPage() {
+    const [searchParams, setSearchParams] = useSearchParams();
+    const detailId = searchParams.get('id');
+    const detailType = searchParams.get('type');
     const [submissions, setSubmissions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedSubmission, setSelectedSubmission] = useState(null);
+    const [loadedDetailId, setLoadedDetailId] = useState(null);
     const [loadingDetail, setLoadingDetail] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
@@ -107,18 +112,43 @@ export default function SubmissionHistoryPage() {
         }
     };
 
-    const handleViewDetail = async (submissionId) => {
-        setLoadingDetail(true);
-        try {
-            const detail = await axiosClient.get(`/student/submissions/${submissionId}`);
-            setSelectedSubmission(detail);
-        } catch (err) {
-            console.error('Fetch submission detail error:', err);
-            Swal.fire('Lỗi', 'Không thể tải chi tiết bài làm.', 'error');
-        } finally {
+    useEffect(() => {
+        if (!detailId || !detailType) {
+            setSelectedSubmission(null);
+            setLoadedDetailId(null);
             setLoadingDetail(false);
+            return undefined;
         }
+
+        let active = true;
+        setSelectedSubmission(null);
+        setLoadedDetailId(null);
+        setLoadingDetail(true);
+        axiosClient.get(`/student/submissions/${encodeURIComponent(detailId)}`)
+            .then(detail => {
+                if (active) {
+                    setSelectedSubmission(detail);
+                    setLoadedDetailId(detailId);
+                }
+            })
+            .catch(err => {
+                if (!active) return;
+                console.error('Fetch submission detail error:', err);
+                Swal.fire('Lỗi', 'Không thể tải chi tiết bài làm.', 'error');
+                setSearchParams({}, { replace: true });
+            })
+            .finally(() => {
+                if (active) setLoadingDetail(false);
+            });
+        return () => { active = false; };
+    }, [detailId, detailType]);
+
+    const handleViewDetail = (submission) => {
+        const type = (submission.skillType || 'SPEAKING').toLowerCase();
+        setSearchParams({ type, id: String(submission.submissionId) });
     };
+
+    const closeDetail = () => setSearchParams({}, { replace: true });
 
     const formatDate = (dateStr) => {
         if (!dateStr) return 'N/A';
@@ -237,7 +267,11 @@ export default function SubmissionHistoryPage() {
     }, [submissions, searchTerm, dateFilter, sortField, sortOrder]);
 
     // Detail view if opened
-    if (selectedSubmission) {
+    if (detailId && detailType && (loadingDetail || loadedDetailId !== detailId)) {
+        return <div className={styles.container}><div className={styles.loadingState}><div className={styles.loadingSpinner}></div><p>Đang tải chi tiết bài làm...</p></div></div>;
+    }
+
+    if (detailId && detailType && selectedSubmission) {
         const audioPayload = selectedSubmission.payloads?.find(
             p => p.dataType === 'AUDIO_URL' || p.dataType === 'FILE_URL'
         );
@@ -254,7 +288,7 @@ export default function SubmissionHistoryPage() {
                     <div className={styles.detailWrapper}>
                         <AttemptDetailView
                             results={enrichedFeedback}
-                            onBack={() => setSelectedSubmission(null)}
+                            onBack={closeDetail}
                         />
                     </div>
                 </div>
@@ -268,7 +302,7 @@ export default function SubmissionHistoryPage() {
                         <h3 className={styles.detailTitle}>Chi Tiết Bài Nộp</h3>
                         <p className={styles.detailSubtitle}>Thông tin chi tiết về lượt làm bài của bạn</p>
                     </div>
-                    <button className={styles.btnBack} onClick={() => setSelectedSubmission(null)}>
+                    <button className={styles.btnBack} onClick={closeDetail}>
                         <i className="bi bi-arrow-left"></i> Quay lại lịch sử
                     </button>
                 </div>
@@ -542,7 +576,7 @@ export default function SubmissionHistoryPage() {
                                                 <td className={styles.colAction}>
                                                     <button
                                                         className={styles.btnView}
-                                                        onClick={() => handleViewDetail(sub.submissionId)}
+                                                        onClick={() => handleViewDetail(sub)}
                                                         disabled={loadingDetail}
                                                     >
                                                         <i className="bi bi-eye"></i> Xem kết quả
@@ -563,7 +597,13 @@ export default function SubmissionHistoryPage() {
                                     <div
                                         key={sub.submissionId}
                                         className={styles.mobileCard}
-                                        onClick={() => handleViewDetail(sub.submissionId)}
+                                        onClick={() => handleViewDetail(sub)}
+                                        onKeyDown={(event) => {
+                                            if (event.key === 'Enter' || event.key === ' ') {
+                                                event.preventDefault();
+                                                handleViewDetail(sub);
+                                            }
+                                        }}
                                         role="button"
                                         tabIndex={0}
                                     >

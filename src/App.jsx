@@ -1,12 +1,13 @@
 import React, { lazy, Suspense } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useParams } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useParams, useLocation } from 'react-router-dom';
 import Layout from './components/layout/Layout';
 import ProtectedRoute from './components/routing/ProtectedRoute';
 import LoadingSpinner from './components/common/LoadingSpinner';
 
 const RedirectToStudentAssignment = () => {
   const { assignmentId } = useParams();
-  return <Navigate to={`/student/assignment/${assignmentId}`} replace />;
+  const location = useLocation();
+  return <Navigate to={`/student/assignments/${assignmentId}${location.search}${location.hash}`} state={location.state} replace />;
 };
 
 const Login = lazy(() => import('./features/auth/Login'));
@@ -119,7 +120,8 @@ function App() {
             <Route path="speaking/:exerciseId" element={<SpeakingPractice />} />
             <Route path="assignments" element={<StudentClassrooms />} />
             <Route path="assignment" element={<Navigate to="/student/assignments" replace />} />
-            <Route path="assignment/:assignmentId" element={<StudentAssignmentDetail />} />
+            <Route path="assignments/:assignmentId" element={<StudentAssignmentDetail />} />
+            <Route path="assignment/:assignmentId" element={<RedirectToStudentAssignment />} />
             <Route path="classrooms" element={<Navigate to="/student/assignments" replace />} />
             <Route path="classroom" element={<Navigate to="/student/assignments" replace />} />
             <Route path="classroom/assignment" element={<Navigate to="/student/assignments" replace />} />

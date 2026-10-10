@@ -132,12 +132,8 @@ export default function Layout() {
     const dimVeilRef = React.useRef(null);
     const edgeHandleRef = React.useRef(null);
 
-    // Return to parent route within app, preventing app exit:
-    // Any assignment route -> /student/classrooms (Classroom)
-    // Speaking practice -> /student/practice
-    // Sub-pages (classrooms, practice, history, profile) -> /student/dashboard
-    // Dashboard -> null (STOP, cannot return out of app)
-    const getParentRouteUrl = (pathname, userRole) => {
+    // Return to the parent screen within the student routes.
+    const getParentRouteUrl = (pathname, search) => {
         if (!pathname) return null;
         const clean = pathname.split('?')[0].replace(/\/+$/, '');
 
@@ -152,7 +148,13 @@ export default function Layout() {
         }
 
         // 2. Student hierarchy:
-        if (clean.includes('/assignment')) {
+        if (clean === '/student/history' && new URLSearchParams(search).has('id')) {
+            return '/student/history';
+        }
+        if (clean === '/student/assignments') {
+            return '/student/dashboard';
+        }
+        if (clean.startsWith('/student/assignments/') || clean.startsWith('/student/assignment/')) {
             return '/student/assignments';
         }
         if (clean.includes('/speaking')) {
@@ -183,7 +185,7 @@ export default function Layout() {
 
     // Calculate target route to navigate back to
     const getPreviousInternalUrl = () => {
-        return getParentRouteUrl(location.pathname, role);
+        return getParentRouteUrl(location.pathname, location.search);
     };
 
     // iOS-style left-edge swipe back gesture
@@ -297,7 +299,7 @@ export default function Layout() {
 
             const targetUrl = getPreviousInternalUrl();
 
-            if (committed && targetUrl && targetUrl !== location.pathname) {
+            if (committed && targetUrl && targetUrl !== `${location.pathname}${location.search}`) {
                 // Slide off and navigate
                 const mc = mainContentRef.current;
                 const dv = dimVeilRef.current;
@@ -350,7 +352,7 @@ export default function Layout() {
             window.removeEventListener('touchend', onTouchEnd);
             window.removeEventListener('touchcancel', onTouchEnd);
         };
-    }, [isSidebarOpen, isQuotaOpen, location.pathname, navigate, role]);
+    }, [isSidebarOpen, isQuotaOpen, location.pathname, location.search, navigate, role]);
 
     const openMyQuota = async () => {
         if (role !== 'Student') return;

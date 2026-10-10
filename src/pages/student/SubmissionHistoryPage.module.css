@@ -1114,6 +1114,11 @@
         z-index: 0;
     }
 
+    .detailWrapper {
+        position: relative;
+        z-index: 1;
+    }
+
     .heroBanner {
         position: relative;
         z-index: 1;

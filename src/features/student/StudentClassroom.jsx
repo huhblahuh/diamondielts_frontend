@@ -396,7 +396,7 @@ export default function StudentClassroom() {
                                         <div
                                             key={dl.assignmentId}
                                             className={`${styles.dlCard} ${isOverdue ? styles.cardOverdue : ''}`}
-                                            onClick={() => navigate(`/student/assignment/${dl.assignmentId}`, { state: { classId: selectedClass?.classId } })}
+                                            onClick={() => navigate(`/student/assignments/${dl.assignmentId}`, { state: { classId: selectedClass?.classId } })}
                                         >
                                             <div className={styles.cardHeader}>
                                                 <span className={`${styles.statusBadge} ${styles['status_' + status.type]}`}>
@@ -425,7 +425,7 @@ export default function StudentClassroom() {
                                                     className={`${styles.btnDo} ${isOverdue ? styles.btnReview : styles.btnStart}`}
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        navigate(`/student/assignment/${dl.assignmentId}`, { state: { classId: selectedClass?.classId } });
+                                                        navigate(`/student/assignments/${dl.assignmentId}`, { state: { classId: selectedClass?.classId } });
                                                     }}
                                                 >
                                                     <span>{isOverdue ? 'Xem lại bài' : 'Bắt đầu làm'}</span>

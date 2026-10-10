@@ -136,7 +136,7 @@ export default function StudentDashboard() {
 
     const openAssignment = (deadline) => {
         setDeadlineSheetOpen(false);
-        navigate(`/student/assignment/${deadline.assignmentId}`, { state: { classId: deadline.classId } });
+        navigate(`/student/assignments/${deadline.assignmentId}`, { state: { classId: deadline.classId } });
     };
 
     return (
