@@ -12,10 +12,10 @@
     border-radius: 24px;
     color: white;
     background:
-        radial-gradient(circle at 85% 20%, rgba(51, 182, 255, 0.32), transparent 24%),
-        radial-gradient(circle at 70% 110%, rgba(168, 85, 247, 0.28), transparent 34%),
-        linear-gradient(125deg, #061b5e 0%, #0735a4 53%, #005bff 100%);
-    box-shadow: 0 22px 48px rgba(6, 27, 94, 0.22);
+        radial-gradient(circle at 85% 20%, rgba(224, 183, 98, 0.32), transparent 24%),
+        radial-gradient(circle at 70% 110%, rgba(74, 95, 176, 0.28), transparent 34%),
+        linear-gradient(125deg, #101d54 0%, #1b2d75 53%, #101d54 100%);
+    box-shadow: 0 22px 48px rgba(16, 29, 84, 0.22);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -39,7 +39,7 @@
 .sectionLabel,
 .cardHeading span {
     display: block;
-    color: #72d1ff;
+    color: #6f80c4;
     font-size: 0.68rem;
     font-weight: 800;
     letter-spacing: 0.14em;
@@ -81,7 +81,7 @@
     background: white;
     border: 1px solid var(--di-border);
     border-radius: 18px;
-    box-shadow: 0 10px 28px rgba(0, 45, 130, 0.07);
+    box-shadow: 0 10px 28px rgba(16, 29, 84, 0.07);
 }
 
 .filters label {
@@ -109,7 +109,7 @@
     padding: 0 0.8rem;
     border: 1px solid var(--di-border);
     border-radius: 11px;
-    background: #f9fbff;
+    background: #fbf7ee;
     color: var(--di-text);
     outline: none;
 }
@@ -121,7 +121,7 @@
 .searchBox input:focus,
 .limitInput:focus {
     border-color: var(--di-blue);
-    box-shadow: 0 0 0 3px rgba(0, 91, 255, 0.1);
+    box-shadow: 0 0 0 3px rgba(16, 29, 84, 0.1);
 }
 
 .dateField {
@@ -149,11 +149,11 @@
     border-left: 0;
     border-radius: 0 11px 11px 0;
     color: var(--di-blue);
-    background: rgba(0, 91, 255, 0.06);
+    background: rgba(16, 29, 84, 0.06);
 }
 
 .calendarButton:hover {
-    background: rgba(0, 91, 255, 0.12);
+    background: rgba(16, 29, 84, 0.12);
 }
 
 .calendarButton i {
@@ -224,7 +224,7 @@
     border: 1px solid var(--di-border);
     border-radius: 20px;
     background: white;
-    box-shadow: 0 12px 34px rgba(0, 45, 130, 0.075);
+    box-shadow: 0 12px 34px rgba(16, 29, 84, 0.075);
 }
 
 .cardHeading,
@@ -290,8 +290,8 @@
     min-height: 40px;
     padding: 0 1rem;
     color: white;
-    background: linear-gradient(135deg, #7b3ff2, #9b5cff);
-    box-shadow: 0 8px 18px rgba(123, 63, 242, 0.22);
+    background: linear-gradient(135deg, #1b2d75, #6f80c4);
+    box-shadow: 0 8px 18px rgba(27, 45, 117, 0.22);
 }
 
 .classPrompt,
@@ -360,8 +360,8 @@
     min-height: 40px;
     padding: 0 1rem;
     color: var(--di-blue);
-    border: 1px solid rgba(0, 91, 255, 0.22);
-    background: rgba(0, 91, 255, 0.06);
+    border: 1px solid rgba(16, 29, 84, 0.22);
+    background: rgba(16, 29, 84, 0.06);
 }
 
 .tableWrap {
@@ -379,7 +379,7 @@
 .tableWrap th {
     padding: 0.82rem 0.75rem;
     color: #657695;
-    background: #f5f8fd;
+    background: #fbf7ee;
     font-size: 0.67rem;
     font-weight: 800;
     text-align: left;
@@ -395,7 +395,7 @@
 }
 
 .tableWrap tbody tr:hover {
-    background: #fbfdff;
+    background: #fbf7ee;
 }
 
 .studentCell {
@@ -412,7 +412,7 @@
     place-items: center;
     border-radius: 11px;
     color: white;
-    background: linear-gradient(135deg, #005bff, #33b6ff);
+    background: linear-gradient(135deg, #101d54, #e0b762);
     font-weight: 800;
 }
 
@@ -443,7 +443,7 @@
     width: 180px;
     height: 7px;
     border-radius: 999px;
-    background: #e9f0fb;
+    background: #fbf7ee;
     overflow: hidden;
 }
 
@@ -451,7 +451,7 @@
     display: block;
     height: 100%;
     border-radius: inherit;
-    background: linear-gradient(90deg, #005bff, #33b6ff);
+    background: linear-gradient(90deg, #101d54, #e0b762);
 }
 
 .progressTrack .progressDanger {
@@ -491,13 +491,13 @@
     border: none;
     border-radius: 9px;
     color: var(--di-blue);
-    background: rgba(0, 91, 255, 0.08);
+    background: rgba(16, 29, 84, 0.08);
     cursor: pointer;
 }
 
 .rowActions button:last-child {
-    color: #7b3ff2;
-    background: rgba(123, 63, 242, 0.08);
+    color: #1b2d75;
+    background: rgba(27, 45, 117, 0.08);
 }
 
 @media (max-width: 1180px) {

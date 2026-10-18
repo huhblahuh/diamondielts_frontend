@@ -12,7 +12,7 @@ ChartJS.register(
 );
 
 const MAX_PROGRESS_POINTS = 30;
-const OVERALL_COLOR = '#7c3aed';
+const OVERALL_COLOR = '#1b2d75';
 
 function sampleProgressPoints(points, limit = MAX_PROGRESS_POINTS) {
     if (points.length <= limit) return points;

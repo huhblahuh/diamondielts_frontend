@@ -70,7 +70,7 @@ const SpotTaskCreator = React.forwardRef(({ show, onClose, onAddTask, onDirtyCha
                 icon: 'warning',
                 title: 'Chú ý',
                 text: 'Vui lòng nhập nội dung yêu cầu đề bài!',
-                confirmButtonColor: '#3b82f6'
+                confirmButtonColor: '#2a3f94'
             });
             return;
         }
@@ -236,7 +236,7 @@ const SpotTaskCreator = React.forwardRef(({ show, onClose, onAddTask, onDirtyCha
                     type="button" 
                     className={styles.btnMiniAdd} 
                     onClick={handleAddTask}
-                    style={{ background: '#6366f1', color: '#ffffff' }}
+                    style={{ background: '#1b2d75', color: '#ffffff' }}
                 >
                     Thêm vào thư mục
                 </button>

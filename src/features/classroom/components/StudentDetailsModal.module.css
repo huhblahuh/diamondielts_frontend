@@ -4,7 +4,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(15, 23, 42, 0.45);
+    background-color: rgba(16, 29, 84, 0.45);
     backdrop-filter: blur(8px);
     display: flex;
     align-items: center;
@@ -27,7 +27,7 @@
 }
 
 .modalHeader {
-    background: linear-gradient(135deg, #4f46e5, #6366f1);
+    background: linear-gradient(135deg, #101d54, #1b2d75);
     padding: 1.25rem 1.75rem;
     display: flex;
     align-items: center;
@@ -89,7 +89,7 @@
 .studentMeta h3 {
     margin: 0 0 0.25rem 0;
     font-size: 1.2rem;
-    color: #0f172a;
+    color: #101d54;
     font-weight: 700;
 }
 
@@ -116,9 +116,9 @@
 }
 
 .statCard:hover {
-    border-color: #6366f1;
+    border-color: #1b2d75;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.05);
+    box-shadow: 0 4px 12px rgba(27, 45, 117, 0.05);
 }
 
 .statLabel {
@@ -133,13 +133,13 @@
 .statVal {
     font-size: 1.5rem;
     font-weight: 800;
-    color: #0f172a;
+    color: #101d54;
 }
 
 .statValAvg {
     font-size: 1.5rem;
     font-weight: 800;
-    color: #4f46e5;
+    color: #101d54;
 }
 
 /* Submission Table */
@@ -206,8 +206,8 @@
 }
 
 .typeWriting {
-    background: #e0f2fe;
-    color: #0369a1;
+    background: #fbf3de;
+    color: #1b2d75;
 }
 
 .typeOther {
@@ -251,8 +251,8 @@
 }
 
 .btnViewReview {
-    background-color: #eff6ff;
-    color: #2563eb;
+    background-color: #fbf6e9;
+    color: #101d54;
     border: none;
     padding: 0.4rem 0.8rem;
     border-radius: 6px;
@@ -266,8 +266,8 @@
 }
 
 .btnViewReview:hover {
-    background-color: #dbeafe;
-    color: #1d4ed8;
+    background-color: #f6e6b8;
+    color: #101d54;
 }
 
 .emptyState {
@@ -280,7 +280,7 @@
 .loader {
     padding: 3rem;
     text-align: center;
-    color: #4f46e5;
+    color: #101d54;
     font-weight: 600;
 }
 

@@ -1,0 +1,87 @@
+/* ══ Diamonds IELTS skin (toàn cục) ═══════════════════════════════════════
+   Đi cùng public/diamonds-kit.js. Kit vẽ phong cảnh, thanh trên cùng và
+   gắn class lên <body>:
+     body.dk-mode-scene  : có phong cảnh
+     body.dk-mode-plain  : nền trơn, có dải trời phía trên
+     body[data-dk-role]  : student | staff | auth
+   Phần riêng của từng màn nằm cuối file .module.css của màn đó,
+   trong khối "Diamonds IELTS skin". */
+
+:root {
+  --dsk-navy: #101d54;
+  --dsk-gold: #e0b762;
+  --dsk-gold-hi: #fff0a5;
+  --dsk-gold-grad: linear-gradient(180deg, #f8dd85, #e2b55a);
+  --dsk-glass: linear-gradient(160deg, rgba(255,255,255,.18), rgba(255,255,255,.05)), rgba(12,20,62,.42);
+  --dsk-glass-line: rgba(240,214,150,.45);
+  --dsk-glass-shadow: inset 0 1px 0 rgba(255,255,255,.4), 0 12px 32px rgba(4,8,30,.3);
+  --dsk-frost: rgba(255,255,255,.95);
+  --dsk-frost-line: rgba(240,214,150,.55);
+  --dsk-frost-shadow: 0 10px 30px rgba(4,8,30,.18);
+}
+
+/* nội dung app nằm trên lớp phong cảnh của kit */
+#root { position: relative; z-index: 1; }
+
+/* dải trời (màn nền trơn): web Speaking dùng bản thấp 64px cho đỡ chiếm chỗ,
+   thay cho thanh tiêu đề trắng cũ. Khung app chừa đúng chỗ này. */
+body.dk .dk-band { height: 64px; }
+body.dk-mode-plain #root { --dsk-band: 64px; }
+
+@media (min-width: 1025px) {
+  body.dk.dk-mode-plain .dk-band { display: none; }
+  body.dk-mode-plain #root { --dsk-band: 0px; }
+}
+
+/* nút chính: vàng, chữ navy */
+.dsk-btn-gold {
+  background: var(--dsk-gold-grad) !important;
+  color: var(--dsk-navy) !important;
+  border: 0 !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.6), 0 6px 16px rgba(160,110,20,.28) !important;
+}
+
+/* SweetAlert2 popup cùng hệ */
+.swal2-popup { font-family: 'Be Vietnam Pro', system-ui, sans-serif !important; border-radius: 22px !important; }
+.swal2-styled.swal2-confirm { background: linear-gradient(180deg, #f8dd85, #e2b55a) !important; color: #101d54 !important; font-weight: 800 !important; border-radius: 12px !important; }
+
+/* Speaking places the brand in its own navigation on wide screens. */
+@media (min-width: 1025px) {
+  body[data-dk-role="student"] .dk-top,
+  body[data-dk-role="staff"] .dk-top { display: none; }
+}
+
+/* On smaller screens the shared header becomes a simple left/right row. */
+@media (max-width: 1024px) {
+  body[data-dk-role="student"] .dk-top,
+  body[data-dk-role="staff"] .dk-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  body[data-dk-role="student"] .dk-top-l,
+  body[data-dk-role="staff"] .dk-top-l { display: none; }
+  body[data-dk-role="student"] .dk-logo,
+  body[data-dk-role="staff"] .dk-logo {
+    padding: 4px 0;
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+  body[data-dk-role="student"] .dk-logo .dk-wm i,
+  body[data-dk-role="staff"] .dk-logo .dk-wm i { color: #fff; }
+  body[data-dk-role="student"] .dk-logo .dk-app,
+  body[data-dk-role="staff"] .dk-logo .dk-app { display: none; }
+}
+
+/* Login keeps its brand beside the form; portal and theme share one corner. */
+body[data-dk-role="auth"] .dk-top {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+body[data-dk-role="auth"] .dk-logo { display: none; }
+body[data-dk-role="auth"] .dk-top-l { order: 1; }
+body[data-dk-role="auth"] .dk-top-r { order: 2; }

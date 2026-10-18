@@ -1,13 +1,13 @@
 .analyticsPage {
   min-height: 100%;
-  color: #10245a;
+  color: #101d54;
 }
 .analyticsHeader {
   margin-bottom: 14px;
 }
 .analyticsTitle h1 {
   margin: 0;
-  color: #0f285f;
+  color: #101d54;
   font-size: 1.25rem;
   font-weight: 700;
 }
@@ -45,13 +45,13 @@
 }
 .presets button:hover,
 .presets button:focus-visible {
-  color: #1d4ed8;
-  background: #eff6ff;
+  color: #101d54;
+  background: #fbf6e9;
   outline: none;
 }
 .presets .activePreset {
   color: #fff;
-  background: #2458d3;
+  background: #101d54;
 }
 .dateRange {
   gap: 7px;
@@ -62,7 +62,7 @@
   background: #fff;
 }
 .dateRange > i {
-  color: #2458d3;
+  color: #101d54;
 }
 .dateField {
   gap: 5px;
@@ -78,7 +78,7 @@
   width: 112px;
   border: 0;
   outline: 0;
-  color: #1e3a6d;
+  color: #101d54;
   background: transparent;
   font-size: 0.72rem;
   font-weight: 600;
@@ -100,7 +100,7 @@
   border: 1px solid #e5eaf2;
   border-radius: 16px;
   background: #fff;
-  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05);
+  box-shadow: 0 4px 16px rgba(16, 29, 84, 0.05);
 }
 .scoreCard {
   position: relative;
@@ -108,15 +108,15 @@
   padding: 24px 26px;
   overflow: hidden;
   color: #fff;
-  border-color: #173f81;
+  border-color: #101d54;
   background:
     radial-gradient(
       circle at 12% 5%,
-      rgba(54, 116, 226, 0.35),
+      rgba(42, 63, 148, 0.35),
       transparent 35%
     ),
-    linear-gradient(145deg, #092a78, #071951 75%);
-  box-shadow: 0 8px 22px rgba(7, 25, 81, 0.16);
+    linear-gradient(145deg, #101d54, #101d54 75%);
+  box-shadow: 0 8px 22px rgba(16, 29, 84, 0.16);
 }
 
 .scoreCard::after {
@@ -127,7 +127,7 @@
   right: 28%;
   top: 9%;
   transform: rotate(45deg);
-  border: 20px solid rgba(120, 160, 240, 0.05);
+  border: 20px solid rgba(111, 128, 196, 0.05);
   border-left-color: transparent;
   border-bottom-color: transparent;
 }
@@ -157,14 +157,14 @@
   line-height: 0.95;
 }
 .bigScore span {
-  color: #b7c9ee;
+  color: #cfd6ee;
   font-size: 0.76rem;
   font-weight: 500;
   letter-spacing: 0;
 }
 .attemptCount {
   margin: 9px 0 0;
-  color: #b8c9ec;
+  color: #cfd6ee;
   font-size: 0.72rem;
   font-weight: 400;
 }
@@ -178,7 +178,7 @@
   border-radius: 50%;
   background: conic-gradient(
     #f2c750 0 var(--score-angle),
-    rgba(64, 105, 188, 0.38) var(--score-angle) 360deg
+    rgba(42, 63, 148, 0.38) var(--score-angle) 360deg
   );
 }
 .scoreRing > div {
@@ -189,14 +189,14 @@
   justify-content: center;
   flex-direction: column;
   border-radius: 50%;
-  background: #10296f;
+  background: #101d54;
 }
 .scoreRing strong {
   font-size: 1.4rem;
 }
 .scoreRing span {
   margin-top: 2px;
-  color: #b8c9ed;
+  color: #cfd6ee;
   font-size: 0.64rem;
 }
 .scoreDivider {
@@ -229,7 +229,7 @@
 .criterion span {
   display: block;
   overflow: hidden;
-  color: #e8efff;
+  color: #fbf7ee;
   font-size: 0.7rem;
   font-weight: 500;
   text-overflow: ellipsis;
@@ -243,7 +243,7 @@
 .criterion small {
   display: block;
   margin-top: 3px;
-  color: #8eb5f7;
+  color: #cfd6ee;
   font-size: 0.62rem;
   font-weight: 500;
 }
@@ -252,7 +252,7 @@
   padding: 24px;
 }
 .cardEyebrow {
-  color: #10285f;
+  color: #101d54;
 }
 .distributionBody {
   height: 190px;
@@ -277,7 +277,7 @@
   pointer-events: none;
 }
 .doughnutCenter strong {
-  color: #112c67;
+  color: #101d54;
   font-size: 1.35rem;
 }
 .doughnutCenter span {
@@ -305,7 +305,7 @@
   border-radius: 50%;
 }
 .legendItem strong {
-  color: #132d66;
+  color: #101d54;
   font-size: 0.8rem;
 }
 .legendItem small {
@@ -338,13 +338,13 @@
   display: grid;
   place-items: center;
   border-radius: 9px;
-  color: #2458d3;
-  background: #eff6ff;
+  color: #101d54;
+  background: #fbf6e9;
   font-size: 0.9rem;
 }
 .scopeHeading h2 {
   margin: 0;
-  color: #10285f;
+  color: #101d54;
   font-size: 0.9rem;
   font-weight: 600;
 }
@@ -393,9 +393,9 @@
 }
 .classItem:hover,
 .classItem:focus-visible {
-  color: #1d4ed8;
-  border-color: #93b4ee;
-  background: #f8fbff;
+  color: #101d54;
+  border-color: #cfd6ee;
+  background: #fbf7ee;
   outline: none;
 }
 .classItem span {
@@ -415,16 +415,16 @@
 }
 .activeClass {
   color: #fff;
-  border-color: #2458d3;
-  background: #2458d3;
+  border-color: #101d54;
+  background: #101d54;
 }
 .activeClass:hover,
 .activeClass:focus-visible {
   color: #fff;
-  background: #1d4dbb;
+  background: #1b2d75;
 }
 .activeClass small {
-  color: #2458d3;
+  color: #101d54;
   background: #fff;
 }
 .studentFilter {
@@ -443,14 +443,14 @@
   padding: 8px 34px 8px 10px;
   border: 1px solid #dce5f1;
   border-radius: 9px;
-  color: #1e3a6d;
+  color: #101d54;
   background: #fff;
   font-size: 0.72rem;
   outline: none;
 }
 .studentFilter select:focus {
-  border-color: #5c90ee;
-  box-shadow: 0 0 0 3px rgba(92, 144, 238, 0.12);
+  border-color: #6f80c4;
+  box-shadow: 0 0 0 3px rgba(111, 128, 196, 0.12);
 }
 .scopeStatus {
   align-self: center;
@@ -476,7 +476,7 @@
 }
 .sectionHeading h2 {
   margin: 0;
-  color: #10285f;
+  color: #101d54;
   font-size: 1rem;
   font-weight: 600;
 }
@@ -506,7 +506,7 @@
   margin-bottom: 8px;
 }
 .skillToggle {
-  --toggle-color: #2458d3;
+  --toggle-color: #101d54;
   position: relative;
   display: inline-flex;
   align-items: center;
@@ -545,7 +545,7 @@
   opacity: 1;
 }
 .skillToggle:has(input:focus-visible) {
-  outline: 2px solid #2458d3;
+  outline: 2px solid #101d54;
   outline-offset: 4px;
   border-radius: 3px;
 }
@@ -561,7 +561,7 @@
   width: 23px;
   height: 3px;
   border-radius: 999px;
-  background: #7c3aed;
+  background: #1b2d75;
 }
 .legendHint {
   margin-left: auto;
@@ -578,7 +578,7 @@
   -webkit-overflow-scrolling: touch;
 }
 .chartScroll:focus-visible {
-  outline: 2px solid #2458d3;
+  outline: 2px solid #101d54;
   outline-offset: 2px;
 }
 .chartWrap {
@@ -607,8 +607,8 @@
 .spinner {
   width: 28px;
   height: 28px;
-  border: 3px solid #dfe9f8;
-  border-top-color: #2458d3;
+  border: 3px solid #fbf7ee;
+  border-top-color: #101d54;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -641,7 +641,7 @@
   font-size: 0.72rem;
 }
 .emptyState i {
-  color: #9bb8e8;
+  color: #cfd6ee;
   font-size: 1.7rem;
 }
 
@@ -740,7 +740,7 @@
   .compactProgressCard {
     padding: 14px 12px 10px;
     border-radius: 16px;
-    box-shadow: 0 8px 26px rgba(15, 40, 95, 0.08);
+    box-shadow: 0 8px 26px rgba(16, 29, 84, 0.08);
   }
   .compactProgressCard .progressHeader {
     gap: 10px;

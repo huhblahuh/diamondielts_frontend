@@ -11,14 +11,14 @@
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    z-index: 9999;
+    z-index: 1;
 }
 
 .loginContainer::before {
     content: '';
     position: absolute;
     top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(15, 23, 42, 0.5);
+    background: rgba(16, 29, 84, 0.5);
     z-index: 1;
 }
 
@@ -48,7 +48,7 @@
     border-radius: 16px;
     display: block;
     margin: 0 auto 1rem;
-    box-shadow: 0 8px 24px rgba(79, 70, 229, 0.4);
+    box-shadow: 0 8px 24px rgba(16, 29, 84, 0.4);
     object-fit: cover;
 }
 
@@ -92,8 +92,8 @@
 }
 
 .inputWrapper:focus-within {
-    border-color: #4f46e5;
-    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.25);
+    border-color: #101d54;
+    box-shadow: 0 0 0 3px rgba(16, 29, 84, 0.25);
 }
 
 .iconBox {
@@ -134,7 +134,7 @@
 
 .btnLogin {
     width: 100%;
-    background: linear-gradient(135deg, #4f46e5, #06b6d4);
+    background: linear-gradient(135deg, #101d54, #06b6d4);
     border: none;
     color: white;
     padding: 0.85rem;
@@ -274,3 +274,78 @@
     }
 }
 
+.input option { color: #1a1f36; background: #fff; }
+
+/* ══ Diamonds IELTS skin ════════════════════════════════════════════════
+   Màn đăng nhập nằm trên phong cảnh của kit: bỏ ảnh nền cũ, khung kính tối. */
+.loginContainer { background: transparent !important; padding-top: 86px; }
+.loginContainer::before { display: none !important; }
+.loginCard {
+    background: var(--dsk-glass) !important;
+    -webkit-backdrop-filter: blur(16px) saturate(1.5);
+    backdrop-filter: blur(16px) saturate(1.5);
+    border: 1px solid var(--dsk-glass-line) !important;
+    box-shadow: var(--dsk-glass-shadow) !important;
+    border-radius: 22px !important;
+    color: #fff;
+}
+.brandLogo { display: block; margin: 0 0 0.5rem; }
+.loginCard .brandWordmark {
+    margin: 0 0 1.1rem;
+    color: #fff !important;
+    font-size: 1rem;
+    font-weight: 800;
+}
+.brandWordmark span {
+    margin-left: 0.4rem;
+    padding-left: 0.55rem;
+    border-left: 1px solid rgba(255,255,255,.45);
+    color: var(--dsk-gold-hi);
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+.loginHeader { text-align: left; margin-bottom: 18px; }
+.loginHeader h1 { color: #fff; font-size: 22px; font-weight: 800; margin: 0; }
+.label { color: rgba(255,255,255,.72); font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.inputWrapper { background: rgba(255,255,255,.10) !important; border: 1.5px solid rgba(255,255,255,.30) !important; border-radius: 13px !important; min-height: 48px; }
+.inputWrapper:focus-within { border-color: var(--dsk-gold-hi) !important; box-shadow: 0 0 0 3px rgba(255,240,165,.22) !important; }
+.iconBox, .eyeButton { color: var(--dsk-gold) !important; background: transparent !important; }
+.input { color: #fff !important; background: transparent !important; font-weight: 600; }
+.input::placeholder { color: rgba(255,255,255,.6) !important; }
+.input option { color: #1a1f36; background: #fff; }
+.linkButton, .textLink { color: var(--dsk-gold-hi) !important; }
+.btnLogin {
+    background: var(--dsk-gold-grad) !important;
+    color: var(--dsk-navy) !important;
+    font-weight: 800 !important;
+    border-radius: 14px !important;
+    min-height: 48px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.6), 0 6px 16px rgba(160,110,20,.28) !important;
+}
+.loginCard p { color: rgba(255,255,255,.65) !important; }
+.helperText, .statusText { color: rgba(255,255,255,.75) !important; }
+
+/* Kit v3: keep the login readable when the user selects "Nền trơn". */
+:global(body.dk-mode-plain) .loginContainer { padding-top: 64px; }
+:global(body.dk-mode-plain) .loginCard {
+    background: #fff !important;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    border: 1.5px solid #e6d3a3 !important;
+    box-shadow: 0 4px 16px rgba(16,29,84,.08) !important;
+    color: #1a1f36;
+}
+:global(body.dk-mode-plain) .loginHeader h1 { color: #101d54; }
+:global(body.dk-mode-plain) .label { color: #4a5168; }
+:global(body.dk-mode-plain) .inputWrapper { background: #fff !important; border: 1.5px solid #c3c9da !important; }
+:global(body.dk-mode-plain) .inputWrapper:focus-within { border-color: #101d54 !important; box-shadow: 0 0 0 3px rgba(16,29,84,.15) !important; }
+:global(body.dk-mode-plain) .input { color: #1a1f36 !important; }
+:global(body.dk-mode-plain) .input::placeholder { color: #6b7288 !important; }
+:global(body.dk-mode-plain) .linkButton,
+:global(body.dk-mode-plain) .textLink { color: #9a671f !important; }
+:global(body.dk-mode-plain) .loginCard p { color: #4a5168 !important; }
+:global(body.dk-mode-plain) .loginCard .brandWordmark { color: #101d54 !important; }
+:global(body.dk-mode-plain) .brandWordmark span {
+    color: #815314;
+    border-left-color: #c3c9da;
+}

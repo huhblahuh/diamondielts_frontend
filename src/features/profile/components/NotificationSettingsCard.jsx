@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import {
     isPushSupported,
     subscribePush,
-    unsubscribePush,
     getPushStatus,
     getPushFailureMessage
 } from '../../../utils/pushNotification';
@@ -47,7 +46,7 @@ export default function NotificationSettingsCard({
         !isBlocked
     );
 
-    const handleBellClick = async () => {
+    const handleEnableClick = async () => {
         if (loading) return;
 
         if (!supported) {
@@ -60,55 +59,25 @@ export default function NotificationSettingsCard({
             return;
         }
 
-        const shouldEnable = !isActive;
         setLoading(true);
 
-        try {
-            if (shouldEnable) {
-                const res = await subscribePush();
-                if (res.success) {
-                    showToastSuccess('Đã bật thông báo deadline!');
-                    const updated = await getPushStatus();
-                    setLocalStatus(updated);
-                    if (onStatusChange) onStatusChange(updated);
-                    setPermission(Notification.permission);
-                } else if (res.permissionDenied) {
-                    setPermission('denied');
-                    showToastError('Bạn đã chặn quyền thông báo trên trình duyệt.');
-                } else {
-                    showToastError(getPushFailureMessage(res));
-                }
-            } else {
-                const ok = await unsubscribePush();
-                if (ok) {
-                    showToastSuccess('Đã tắt thông báo deadline.');
-                    const updated = await getPushStatus();
-                    setLocalStatus(updated);
-                    if (onStatusChange) onStatusChange(updated);
-                } else {
-                    showToastError('Không thể tắt thông báo. Vui lòng thử lại.');
-                }
-            }
-        } catch (err) {
-            console.error('Push toggle error:', err);
-            showToastError('Đã xảy ra lỗi khi thay đổi thông báo.');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleRenew = async () => {
-        setLoading(true);
         try {
             const res = await subscribePush();
             if (res.success) {
-                showToastSuccess('Đã kích hoạt lại thông báo!');
+                showToastSuccess('Đã bật thông báo deadline!');
                 const updated = await getPushStatus();
                 setLocalStatus(updated);
                 if (onStatusChange) onStatusChange(updated);
+                setPermission(Notification.permission);
+            } else if (res.permissionDenied) {
+                setPermission('denied');
+                showToastError('Bạn đã chặn quyền thông báo trên trình duyệt.');
             } else {
                 showToastError(getPushFailureMessage(res));
             }
+        } catch (err) {
+            console.error('Push enable error:', err);
+            showToastError('Đã xảy ra lỗi khi bật thông báo.');
         } finally {
             setLoading(false);
         }
@@ -163,7 +132,7 @@ export default function NotificationSettingsCard({
                                 className={`${styles.bellActionBtn} ${
                                     isActive ? styles.bellActive : styles.bellInactive
                                 } ${isBlocked ? styles.bellBlocked : ''}`}
-                                onClick={handleBellClick}
+                                onClick={handleEnableClick}
                                 disabled={loading || !supported}
                                 title={
                                     isBlocked
@@ -171,8 +140,8 @@ export default function NotificationSettingsCard({
                                         : !supported
                                         ? 'Trình duyệt không hỗ trợ'
                                         : isActive
-                                        ? 'Bấm để tắt thông báo'
-                                        : 'Bấm để bật thông báo'
+                                        ? 'Thông báo đã được cho phép trên trình duyệt này'
+                                        : 'Cho phép trình duyệt gửi thông báo deadline'
                                 }
                             >
                                 {loading ? (
@@ -189,9 +158,9 @@ export default function NotificationSettingsCard({
                                         ? 'Đang lưu...'
                                         : isBlocked
                                         ? 'Bị chặn'
-                                        : isActive
+                                    : isActive
                                         ? 'Đang bật'
-                                        : 'Tắt'}
+                                        : 'Cho phép thông báo'}
                                 </span>
                             </button>
                         </div>
@@ -199,15 +168,7 @@ export default function NotificationSettingsCard({
                         {/* Expired Action */}
                         {isExpired && !isBlocked && (
                             <div className={styles.notifAlertExpired}>
-                                <span>Phiên thông báo đã hết hạn.</span>
-                                <button
-                                    type="button"
-                                    className={styles.linkButton}
-                                    onClick={handleRenew}
-                                    disabled={loading}
-                                >
-                                    Gia hạn lại
-                                </button>
+                                <span>Phiên thông báo đã hết hạn. Bấm “Cho phép thông báo” để đăng ký lại.</span>
                             </div>
                         )}
 

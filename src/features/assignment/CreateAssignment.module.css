@@ -53,7 +53,7 @@
 }
 
 .panelTitle i {
-    color: #6366f1;
+    color: #1b2d75;
 }
 
 .formGroup {
@@ -81,25 +81,25 @@
 }
 
 .input:focus, .select:focus {
-    border-color: #6366f1;
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    border-color: #1b2d75;
+    box-shadow: 0 0 0 3px rgba(27, 45, 117, 0.1);
 }
 
 .summaryBox {
-    background: #eef2ff;
+    background: #fbf3de;
     border-radius: 8px;
     padding: 0.8rem;
     text-align: center;
     margin-bottom: 1.25rem;
-    border: 1px dashed #6366f1;
-    color: #4338ca;
+    border: 1px dashed #1b2d75;
+    color: #101d54;
     font-size: 0.85rem;
 }
 
 .btnSubmit {
     width: 100%;
     padding: 0.85rem;
-    background: #6366f1;
+    background: #1b2d75;
     border: none;
     color: white;
     font-size: 0.9rem;
@@ -110,7 +110,7 @@
 }
 
 .btnSubmit:hover:not(:disabled) {
-    background: #4f46e5;
+    background: #101d54;
 }
 
 .btnSubmit:disabled {
@@ -145,8 +145,8 @@
 }
 
 .exCardActive {
-    border-color: #6366f1;
-    background: #f5f3ff;
+    border-color: #1b2d75;
+    background: #fbf6e9;
 }
 
 .exCheck {
@@ -160,8 +160,8 @@
 
 .skillBadge {
     display: inline-block;
-    background: #e0e7ff;
-    color: #4338ca;
+    background: #f6e6b8;
+    color: #101d54;
     font-size: 0.7rem;
     font-weight: 700;
     padding: 0.15rem 0.5rem;
@@ -199,7 +199,7 @@
 .loader {
     text-align: center;
     padding: 2rem;
-    color: #6366f1;
+    color: #1b2d75;
     font-size: 0.85rem;
 }
 
@@ -220,9 +220,9 @@
 }
 
 .subBtn:hover {
-    border-color: #6366f1;
-    color: #6366f1;
-    background: #f5f3ff;
+    border-color: #1b2d75;
+    color: #1b2d75;
+    background: #fbf6e9;
 }
 
 .subBtn i {
@@ -325,7 +325,7 @@
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: rgba(15, 23, 42, 0.4);
+    background: rgba(16, 29, 84, 0.4);
     backdrop-filter: blur(4px);
     z-index: 9999;
     display: flex;

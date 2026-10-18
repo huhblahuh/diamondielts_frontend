@@ -26,11 +26,11 @@
 }
 
 .pageBtn:hover:not(:disabled) {
-    background: #eef2ff;
-    border-color: #6366f1;
-    color: #4f46e5;
+    background: #fbf3de;
+    border-color: #1b2d75;
+    color: #101d54;
     transform: translateY(-1px);
-    box-shadow: 0 2px 6px rgba(99, 102, 241, 0.15);
+    box-shadow: 0 2px 6px rgba(27, 45, 117, 0.15);
 }
 
 .pageBtn:disabled {
@@ -40,11 +40,11 @@
 }
 
 .pageBtn.active {
-    background: linear-gradient(135deg, #6366f1, #4f46e5);
-    border-color: #4f46e5;
+    background: linear-gradient(135deg, #1b2d75, #101d54);
+    border-color: #101d54;
     color: #ffffff;
     font-weight: 700;
-    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.35);
+    box-shadow: 0 2px 8px rgba(27, 45, 117, 0.35);
     cursor: default;
     transform: none;
 }
@@ -77,7 +77,7 @@
         border: 1px solid rgba(255, 255, 255, 0.7);
         border-radius: 999px;
         background: rgba(255, 255, 255, 0.9);
-        box-shadow: 0 12px 32px rgba(6, 27, 94, 0.18);
+        box-shadow: 0 12px 32px rgba(16, 29, 84, 0.18);
         backdrop-filter: blur(18px) saturate(150%);
         -webkit-backdrop-filter: blur(18px) saturate(150%);
     }
@@ -95,16 +95,16 @@
 
     .floatingOnMobile .previousPageBtn,
     .floatingOnMobile .nextPageBtn {
-        color: #0b63ed;
-        background: #edf4ff;
+        color: #2a3f94;
+        background: #fbf7ee;
         font-size: 1rem;
     }
 
     .floatingOnMobile .pageBtn.active {
         border-color: transparent;
         color: #fff;
-        background: linear-gradient(135deg, #2563eb, #56a7fa);
-        box-shadow: 0 5px 12px rgba(37, 99, 235, 0.3);
+        background: linear-gradient(135deg, #101d54, #6f80c4);
+        box-shadow: 0 5px 12px rgba(16, 29, 84, 0.3);
     }
 
     .floatingOnMobile .edgePageBtn,
@@ -118,11 +118,11 @@
         padding: 0.35rem 0.55rem;
         border-radius: 999px;
         color: #71809d;
-        background: #f3f7fc;
+        background: #fbf7ee;
         font-size: 0.68rem;
     }
 
     .floatingOnMobile .pageInfo strong {
-        color: #17335f;
+        color: #101d54;
     }
 }

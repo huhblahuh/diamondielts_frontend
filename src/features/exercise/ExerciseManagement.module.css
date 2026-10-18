@@ -50,26 +50,26 @@
     content: '';
     position: absolute;
     top: 0; left: 0; width: 100%; height: 4px;
-    background: linear-gradient(to right, #4f46e5, #06b6d4);
+    background: linear-gradient(to right, #101d54, #06b6d4);
     opacity: 0.8;
 }
 
 .card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 12px 20px -8px rgba(79, 70, 229, 0.25);
-    border-color: #818cf8;
+    box-shadow: 0 12px 20px -8px rgba(16, 29, 84, 0.25);
+    border-color: #6f80c4;
 }
 
 .cardIcon {
     width: 48px;
     height: 48px;
-    background: rgba(79, 70, 229, 0.1);
+    background: rgba(16, 29, 84, 0.1);
     border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 1.5rem;
-    color: #4f46e5;
+    color: #101d54;
     margin-bottom: 1.25rem;
 }
 
@@ -126,8 +126,8 @@
 
 .cardCreate:hover {
     background: #fff;
-    border-color: #4f46e5;
-    box-shadow: 0 10px 20px rgba(79,70,229,0.1);
+    border-color: #101d54;
+    box-shadow: 0 10px 20px rgba(16, 29, 84,0.1);
 }
 
 .plusCircle {
@@ -146,9 +146,9 @@
 }
 
 .cardCreate:hover .plusCircle {
-    border-color: #4f46e5;
-    color: #4f46e5;
-    background: rgba(79,70,229,0.05);
+    border-color: #101d54;
+    color: #101d54;
+    background: rgba(16, 29, 84,0.05);
     transform: scale(1.1);
 }
 
@@ -216,7 +216,7 @@
     content: '';
     position: absolute;
     top: 0; left: 0; right: 0; height: 3px;
-    background: #4f46e5; /* Default fallback */
+    background: #101d54; /* Default fallback */
     border-radius: 3px 3px 0 0;
 }
 
@@ -224,8 +224,8 @@
 .tabSpeaking.activeTab::after { background: #ec4899; }
 .tabSpeaking.activeTab i { color: #ec4899; opacity: 1;}
 
-.tabReading.activeTab::after { background: #3b82f6; }
-.tabReading.activeTab i { color: #3b82f6; opacity: 1; }
+.tabReading.activeTab::after { background: #2a3f94; }
+.tabReading.activeTab i { color: #2a3f94; opacity: 1; }
 
 .tabListening.activeTab::after { background: #10b981; }
 .tabListening.activeTab i { color: #10b981; opacity: 1; }
@@ -233,8 +233,8 @@
 .tabWriting.activeTab::after { background: #f59e0b; }
 .tabWriting.activeTab i { color: #f59e0b; opacity: 1; }
 
-.tabQuestion.activeTab::after { background: #6366f1; }
-.tabQuestion.activeTab i { color: #6366f1; opacity: 1; }
+.tabQuestion.activeTab::after { background: #1b2d75; }
+.tabQuestion.activeTab i { color: #1b2d75; opacity: 1; }
 
 /* The Content Designer Form Area */
 .designerBody {
@@ -246,7 +246,7 @@
 }
 .designerHeader h3 {
     font-size: 1.5rem;
-    color: #0f172a;
+    color: #101d54;
     margin-bottom: 0.5rem;
 }
 .designerHeader p {
@@ -293,8 +293,8 @@
 }
 
 .styledSelect:focus, .styledInput:focus {
-    border-color: #4f46e5;
-    box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+    border-color: #101d54;
+    box-shadow: 0 0 0 4px rgba(16, 29, 84, 0.1);
 }
 
 /* Editor Wrapper Fix */
@@ -306,7 +306,7 @@
     transition: border 0.2s;
 }
 .editorWrapper:focus-within {
-    border-color: #4f46e5;
+    border-color: #101d54;
 }
 
 /* Premium Floating Footer Button */
@@ -319,7 +319,7 @@
 }
 
 .saveBtn {
-    background: linear-gradient(135deg, #4f46e5, #6366f1);
+    background: linear-gradient(135deg, #101d54, #1b2d75);
     color: white;
     border: none;
     padding: 0.875rem 2.5rem;
@@ -330,13 +330,13 @@
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.3);
+    box-shadow: 0 10px 15px -3px rgba(16, 29, 84, 0.3);
     transition: all 0.2s;
 }
 
 .saveBtn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 15px 25px -5px rgba(79, 70, 229, 0.4);
+    box-shadow: 0 15px 25px -5px rgba(16, 29, 84, 0.4);
     filter: brightness(1.05);
 }
 
@@ -422,7 +422,7 @@
 
 .miniActionBtn:hover {
     background: #e2e8f0;
-    color: #0f172a;
+    color: #101d54;
 }
 
 /* --- QUESTION BUILDER STYLES --- */
@@ -585,7 +585,7 @@
     margin-bottom: 2rem;
     box-shadow: 0 4px 15px rgba(0,0,0,0.03);
     position: relative;
-    border-left: 5px solid #4f46e5;
+    border-left: 5px solid #101d54;
 }
 
 .blockHeader {
@@ -610,8 +610,8 @@
     border-radius: 6px;
     font-size: 0.75rem;
     font-weight: 700;
-    background: #e0e7ff;
-    color: #4f46e5;
+    background: #f6e6b8;
+    color: #101d54;
 }
 
 .addBlockMenu {
@@ -638,9 +638,9 @@
 
 .addBlockBtn:hover {
     background: #fff;
-    border-color: #4f46e5;
-    color: #4f46e5;
-    box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.1);
+    border-color: #101d54;
+    color: #101d54;
+    box-shadow: 0 4px 6px -1px rgba(16, 29, 84, 0.1);
 }
 
 .questionRow {
@@ -677,9 +677,9 @@
     height: 0;
 }
 .gap-badge {
-    background-color: #dbeafe;
-    color: #1e40af;
-    border: 1px solid #bfdbfe;
+    background-color: #f6e6b8;
+    color: #101d54;
+    border: 1px solid #ecd9a6;
     border-radius: 6px;
     padding: 2px 8px;
     margin: 0 4px;
@@ -692,7 +692,7 @@
 /* --- ADMIN EXERCISE SHELL --- */
 .headingIcon {
     margin-right: 0.65rem;
-    color: #4f46e5;
+    color: #101d54;
 }
 
 .deleteTopicBtn {
@@ -725,7 +725,7 @@
 .filterBtn:focus-visible,
 .rowActionBtn:focus-visible,
 .closeBtn:focus-visible {
-    outline: 3px solid rgba(99, 102, 241, 0.25);
+    outline: 3px solid rgba(27, 45, 117, 0.25);
     outline-offset: 2px;
 }
 
@@ -736,7 +736,7 @@
 }
 
 .card:hover .cardArrow {
-    color: #4f46e5;
+    color: #101d54;
     transform: translateX(3px);
 }
 
@@ -766,8 +766,8 @@
 }
 
 .backBtn:hover {
-    background: #eef2ff;
-    color: #4f46e5;
+    background: #fbf3de;
+    color: #101d54;
 }
 
 .topicHero {
@@ -781,8 +781,8 @@
     border-radius: 1rem;
     background:
         radial-gradient(circle at 92% 15%, rgba(255, 255, 255, 0.18), transparent 25%),
-        linear-gradient(135deg, #6366f1 0%, #4338ca 100%);
-    box-shadow: 0 14px 28px -14px rgba(67, 56, 202, 0.55);
+        linear-gradient(135deg, #1b2d75 0%, #101d54 100%);
+    box-shadow: 0 14px 28px -14px rgba(16, 29, 84, 0.55);
     color: #fff;
 }
 
@@ -801,7 +801,7 @@
 .topicHeroEyebrow {
     display: block;
     margin-bottom: 0.25rem;
-    color: #c7d2fe;
+    color: #ecd49a;
     font-size: 0.72rem;
     font-weight: 800;
     letter-spacing: 0.09em;
@@ -817,7 +817,7 @@
 .topicHero p {
     max-width: 780px;
     margin: 0.45rem 0 0;
-    color: #e0e7ff;
+    color: #f6e6b8;
     font-size: 0.92rem;
     line-height: 1.55;
 }
@@ -829,7 +829,7 @@
     border: 1px solid #e2e8f0;
     border-radius: 0.9rem;
     background: #fff;
-    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
+    box-shadow: 0 4px 16px rgba(16, 29, 84, 0.04);
 }
 
 .listHeader {
@@ -847,13 +847,13 @@
     align-items: center;
     gap: 0.55rem;
     margin: 0;
-    color: #0f172a;
+    color: #101d54;
     font-size: 1.2rem;
     font-weight: 800;
 }
 
 .listTitle i {
-    color: #6366f1;
+    color: #1b2d75;
 }
 
 .listSubtitle {
@@ -898,13 +898,13 @@
 }
 
 .primaryToolbarBtn {
-    background: linear-gradient(135deg, #4f46e5, #6366f1);
-    box-shadow: 0 5px 12px -5px rgba(79, 70, 229, 0.7);
+    background: linear-gradient(135deg, #101d54, #1b2d75);
+    box-shadow: 0 5px 12px -5px rgba(16, 29, 84, 0.7);
 }
 
 .scriptToolbarBtn {
-    background: linear-gradient(135deg, #7c3aed, #8b5cf6);
-    box-shadow: 0 5px 12px -5px rgba(124, 58, 237, 0.7);
+    background: linear-gradient(135deg, #1b2d75, #2a3f94);
+    box-shadow: 0 5px 12px -5px rgba(42, 63, 148, 0.7);
 }
 
 .excelToolbarBtn {
@@ -946,9 +946,9 @@
 
 .filterBtn:hover,
 .filterBtnActive {
-    border-color: #a5b4fc;
-    background: #eef2ff;
-    color: #4338ca;
+    border-color: #cfd6ee;
+    background: #fbf3de;
+    color: #101d54;
 }
 
 .tableWrapper {
@@ -1030,14 +1030,14 @@
 }
 
 .editBtn {
-    border: 1px solid #bfdbfe;
-    background: #eff6ff;
-    color: #2563eb;
+    border: 1px solid #ecd9a6;
+    background: #fbf6e9;
+    color: #101d54;
 }
 
 .editBtn:hover {
-    border-color: #93c5fd;
-    background: #dbeafe;
+    border-color: #cfd6ee;
+    background: #f6e6b8;
 }
 
 .deleteBtn {
@@ -1071,8 +1071,8 @@
     height: 0.9rem;
     margin-right: 0.35rem;
     vertical-align: -0.1rem;
-    border: 2px solid #c7d2fe;
-    border-top-color: #4f46e5;
+    border: 2px solid #ecd49a;
+    border-top-color: #101d54;
     border-radius: 50%;
     animation: exerciseSpin 0.75s linear infinite;
 }
@@ -1089,7 +1089,7 @@
     display: grid;
     padding: 1.25rem;
     place-items: center;
-    background: rgba(15, 23, 42, 0.6);
+    background: rgba(16, 29, 84, 0.6);
     backdrop-filter: blur(4px);
     animation: modalFade 0.2s ease-out;
 }
@@ -1101,7 +1101,7 @@
     border: 1px solid #e2e8f0;
     border-radius: 1rem;
     background: #fff;
-    box-shadow: 0 28px 70px -20px rgba(15, 23, 42, 0.55);
+    box-shadow: 0 28px 70px -20px rgba(16, 29, 84, 0.55);
     animation: modalRise 0.25s ease-out;
 }
 
@@ -1124,7 +1124,7 @@
 
 .modalHeader h3 {
     margin: 0;
-    color: #0f172a;
+    color: #101d54;
     font-size: 1.25rem;
 }
 
@@ -1220,10 +1220,10 @@
 }
 
 .btnSubmit {
-    border: 1px solid #4f46e5;
-    background: linear-gradient(135deg, #4f46e5, #6366f1);
+    border: 1px solid #101d54;
+    background: linear-gradient(135deg, #101d54, #1b2d75);
     color: #fff;
-    box-shadow: 0 6px 14px -7px rgba(79, 70, 229, 0.8);
+    box-shadow: 0 6px 14px -7px rgba(16, 29, 84, 0.8);
 }
 
 .btnSubmit:disabled {
@@ -1279,13 +1279,13 @@
     align-items: center;
     justify-content: center;
     gap: 0.55rem;
-    color: #0f172a;
+    color: #101d54;
     font-size: 1.2rem;
     font-weight: 800;
 }
 
 .importDialog :global(.exercise-dialog-title--excel i) { color: #10b981; }
-.scriptDialog :global(.exercise-dialog-title--script i) { color: #6366f1; }
+.scriptDialog :global(.exercise-dialog-title--script i) { color: #1b2d75; }
 
 .importDialog :global(.exercise-import-content) {
     margin-top: 0.75rem;
@@ -1295,9 +1295,9 @@
 .importDialog :global(.exercise-template-card) {
     margin-bottom: 1.1rem;
     padding: 1rem;
-    border: 1px solid #bae6fd;
+    border: 1px solid #cfd6ee;
     border-radius: 0.75rem;
-    background: linear-gradient(135deg, #f0fdf4, #e0f2fe);
+    background: linear-gradient(135deg, #f0fdf4, #fbf3de);
 }
 
 .importDialog :global(.exercise-template-row) {
@@ -1309,14 +1309,14 @@
 
 .importDialog :global(.exercise-template-title) {
     margin-bottom: 0.2rem;
-    color: #0f172a;
+    color: #101d54;
     font-size: 0.9rem;
     font-weight: 800;
 }
 
 .importDialog :global(.exercise-template-title i) {
     margin-right: 0.4rem;
-    color: #0284c7;
+    color: #1b2d75;
 }
 
 .importDialog :global(.exercise-template-copy) {
@@ -1331,8 +1331,8 @@
     padding: 0.55rem 0.9rem;
     border: 0;
     border-radius: 0.55rem;
-    background: linear-gradient(135deg, #0284c7, #2563eb);
-    box-shadow: 0 5px 12px -5px rgba(37, 99, 235, 0.75);
+    background: linear-gradient(135deg, #1b2d75, #101d54);
+    box-shadow: 0 5px 12px -5px rgba(16, 29, 84, 0.75);
     color: #fff;
     font-size: 0.8rem;
     font-weight: 700;
@@ -1357,7 +1357,7 @@
 
 .importDialog :global(.exercise-rules-title i),
 .scriptDialog :global(.exercise-script-rules i) {
-    color: #6366f1;
+    color: #1b2d75;
 }
 
 .importDialog :global(.exercise-rules-list) {
@@ -1380,8 +1380,8 @@
 .importDialog :global(.exercise-rule-row code) {
     padding: 0.15rem 0.45rem;
     border-radius: 0.35rem;
-    background: #e0e7ff;
-    color: #3730a3;
+    background: #f6e6b8;
+    color: #101d54;
     font-weight: 700;
 }
 .importDialog :global(.exercise-rule-row em) { color: #64748b; }
@@ -1402,8 +1402,8 @@
     padding: 0.4rem 0.7rem;
     border: 0;
     border-radius: 0.45rem;
-    background: #e0e7ff;
-    color: #4338ca;
+    background: #f6e6b8;
+    color: #101d54;
     font-size: 0.78rem;
     font-weight: 700;
     cursor: pointer;
@@ -1416,8 +1416,8 @@
     border: 1px solid #334155;
     border-radius: 0.6rem;
     outline: none;
-    background: #0f172a;
-    color: #7dd3fc;
+    background: #101d54;
+    color: #6f80c4;
     font-family: Consolas, Monaco, "Courier New", monospace;
     font-size: 0.82rem;
     line-height: 1.5;
@@ -1425,8 +1425,8 @@
 }
 
 .scriptDialog :global(#swal-script-input:focus) {
-    border-color: #818cf8;
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+    border-color: #6f80c4;
+    box-shadow: 0 0 0 3px rgba(27, 45, 117, 0.2);
 }
 
 .scriptDialog :global(.exercise-script-rules) {

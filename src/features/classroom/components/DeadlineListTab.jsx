@@ -75,7 +75,7 @@ export default function DeadlineListTab({ deadlines = [], onEditFolder, onDelete
                                 <td className={styles.boldText}>
                                     <span 
                                         onClick={() => onEditFolder(dl)}
-                                        style={{ cursor: 'pointer', color: '#2563eb', fontWeight: 600 }}
+                                        style={{ cursor: 'pointer', color: '#101d54', fontWeight: 600 }}
                                     >
                                         {dl.title}
                                     </span>
@@ -95,7 +95,7 @@ export default function DeadlineListTab({ deadlines = [], onEditFolder, onDelete
                                             className={styles.btnAction}
                                             onClick={() => onViewSubmissions && onViewSubmissions(dl.assignmentId)}
                                             title="Xem bài nộp của học sinh"
-                                            style={{background: '#eef2ff', color: '#4f46e5', border: '1px solid #c7d2fe'}}
+                                            style={{background: '#fbf3de', color: '#101d54', border: '1px solid #ecd49a'}}
                                         >
                                             <i className="bi bi-journal-check"></i> Bài nộp
                                         </button>

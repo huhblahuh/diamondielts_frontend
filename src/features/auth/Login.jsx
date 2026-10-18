@@ -97,8 +97,9 @@ export default function Login() {
                 )}
                 <div hidden={showForgotPassword}>
                         <div className={styles.loginHeader}>
-                            <img src={siteLogo} alt="Diamond Ielts" className={styles.brandLogo} />
-                            <h1>Diamond Ielts</h1>
+                            <img src={siteLogo} alt="Diamonds IELTS" className={styles.brandLogo} />
+                            <p className={styles.brandWordmark}>Diamonds IELTS <span>Speaking</span></p>
+                            <h1>Đăng nhập</h1>
                         </div>
 
                         <form onSubmit={handleSubmit}>

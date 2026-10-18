@@ -207,7 +207,7 @@ export default function AssignmentBuilder({ items, setItems, onOpenBank }) {
                     <div className={styles.modalContent} style={{width:'750px'}}>
                         <div className={styles.modalHeader}>
                             <div>
-                                <h4 style={{margin:0}}><i className="bi bi-file-earmark-arrow-up-fill" style={{color:'#2563eb'}}></i> Thiết kế Task Nộp File Tự luận</h4>
+                                <h4 style={{margin:0}}><i className="bi bi-file-earmark-arrow-up-fill" style={{color:'#101d54'}}></i> Thiết kế Task Nộp File Tự luận</h4>
                                 <p style={{margin:0, fontSize:'0.8rem', color:'#64748b'}}>Tạo không gian nộp bài kèm hướng dẫn và tài liệu đính kèm (nếu có).</p>
                             </div>
                             <button type="button" onClick={() => setShowFileSubmissionBuilder(false)} className={styles.closeBtn}>&times;</button>
@@ -233,7 +233,7 @@ export default function AssignmentBuilder({ items, setItems, onOpenBank }) {
                                         <input type="file" onChange={handleFileChange} disabled={isUploading} style={{display:'none'}} accept=".pdf,.doc,.docx,.zip,.rar" />
                                     </label>
                                     {isUploading && (
-                                        <div style={{fontSize:'0.9rem', color:'#2563eb'}}>
+                                        <div style={{fontSize:'0.9rem', color:'#101d54'}}>
                                             <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Đang đẩy file lên Cloud...
                                         </div>
                                     )}
@@ -260,7 +260,7 @@ export default function AssignmentBuilder({ items, setItems, onOpenBank }) {
                         </div>
                         <div className={styles.modalFooter}>
                             <button type="button" onClick={() => setShowFileSubmissionBuilder(false)} className={styles.btnSecondary}>Hủy bỏ</button>
-                            <button type="button" onClick={handleAddFileSubmissionConfirm} className={styles.btnSubmit} style={{background:'#2563eb'}}>Chèn Vào Danh Sách</button>
+                            <button type="button" onClick={handleAddFileSubmissionConfirm} className={styles.btnSubmit} style={{background:'#101d54'}}>Chèn Vào Danh Sách</button>
                         </div>
                     </div>
                 </div>

@@ -32,8 +32,20 @@ export default function ExerciseList({
         return question.length > 85 ? `${question.substring(0, 85)}...` : question || 'N/A';
     };
 
-    const handleDownloadTemplate = () => {
-        window.open('/api/teacher/exercise/import-excel/template', '_blank');
+    const handleDownloadTemplate = async () => {
+        try {
+            const file = await exerciseService.downloadTemplate();
+            const url = URL.createObjectURL(file);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'Speaking_Exercise_Template.xlsx';
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 0);
+        } catch {
+            Swal.fire('Lỗi', 'Không thể tải tệp mẫu. Vui lòng thử lại.', 'error');
+        }
     };
 
     const handleImportExcel = async () => {
@@ -86,7 +98,7 @@ export default function ExerciseList({
             showCancelButton: true,
             confirmButtonText: 'Tải lên & Nhập',
             cancelButtonText: 'Hủy bỏ',
-            confirmButtonColor: '#4f46e5',
+            confirmButtonColor: '#101d54',
             cancelButtonColor: '#94a3b8',
             didOpen: () => {
                 const btn = document.getElementById('swal-download-template');
@@ -184,7 +196,7 @@ export default function ExerciseList({
             showCancelButton: true,
             confirmButtonText: 'Nhập dữ liệu',
             cancelButtonText: 'Hủy bỏ',
-            confirmButtonColor: '#6366f1',
+            confirmButtonColor: '#1b2d75',
             cancelButtonColor: '#94a3b8',
             didOpen: () => {
                 const sampleBtn = document.getElementById('btn-insert-sample');

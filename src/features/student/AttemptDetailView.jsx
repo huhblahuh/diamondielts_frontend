@@ -128,13 +128,10 @@ const wordTone = (score = 0) => {
     return 'pronWordWeak';
 };
 const getPhonemeTone = (ph) => {
-    const expected = ph?.phoneme || '';
-    const spoken = ph?.spokenPhoneme || expected;
     const score = ph?.accuracyScore ?? ph?.spokenScore ?? 100;
-    if (score >= 80) return 'phonemeInlineGood';
-    if (spoken !== expected || score < 50) return 'phonemeInlineBad';
-    if (score <= 70) return 'phonemeInlineWarn';
-    return 'phonemeInlineGood';
+    if (score > 80) return 'phonemeInlineGood';
+    if (score >= 65) return 'phonemeInlineWarn';
+    return 'phonemeInlineBad';
 };
 // ── TTS ──
 let cachedVoices = [];
@@ -223,6 +220,8 @@ export default function AttemptDetailView({ results }) {
     const [selectedIssue, setSelectedIssue] = useState(null);
     const [popover, setPopover] = useState(null);
     const audioRef = useRef(null);
+    const [unavailableAudioSource, setUnavailableAudioSource] = useState(null);
+    const hasPlayableAudio = Boolean(audioSource && unavailableAudioSource !== audioSource);
     const [playing, setPlaying] = useState(false);
     const [curTime, setCurTime] = useState(0);
     const [duration, setDuration] = useState(0);
@@ -244,6 +243,11 @@ export default function AttemptDetailView({ results }) {
             activeSegmentListenerRef.current = null;
         }
     }, []);
+    const handleAudioError = () => {
+        stopActiveSegmentListener();
+        setPlaying(false);
+        setUnavailableAudioSource(audioSource);
+    };
     useEffect(() => {
         return () => {
             stopActiveSegmentListener();
@@ -401,7 +405,10 @@ export default function AttemptDetailView({ results }) {
         if (!a) return;
         stopActiveSegmentListener();
         if (a.paused) {
-            a.play().catch(err => console.warn("Audio play error:", err));
+            a.play().catch(err => {
+                if (a.error) handleAudioError();
+                else console.warn("Audio play error:", err);
+            });
         } else {
             a.pause();
         }
@@ -463,7 +470,10 @@ export default function AttemptDetailView({ results }) {
             console.log('[playSegment] after seek, a.currentTime=', a.currentTime);
             const playPromise = a.play();
             if (playPromise !== undefined) {
-                playPromise.catch(err => console.warn("Segment playback error:", err));
+                playPromise.catch(err => {
+                    if (a.error) handleAudioError();
+                    else console.warn("Segment playback error:", err);
+                });
             }
 
             if (targetEnd > safeStart) {
@@ -519,7 +529,7 @@ export default function AttemptDetailView({ results }) {
         } else {
             executePlay();
         }
-    }, [stopActiveSegmentListener]);
+    }, [stopActiveSegmentListener, audioSource]);
     // ── build transcript HTML ──
     const buildTranscriptHtml = () => {
         const raw = results.transcript || '';
@@ -780,7 +790,7 @@ export default function AttemptDetailView({ results }) {
                         dangerouslySetInnerHTML={{ __html: buildTranscriptHtml() }}
                     />
                     {/* Audio Player Dock */}
-                    {audioSource && (
+                    {hasPlayableAudio && (
                         <div className={s.audioSection}>
                             <button className={s.playBtn} onClick={togglePlay} type="button">
                                 <i className={`bi ${playing ? 'bi-pause-fill' : 'bi-play-fill'}`} style={!playing ? { marginLeft: 2 } : {}} />
@@ -795,7 +805,7 @@ export default function AttemptDetailView({ results }) {
                                 step="any"
                                 onChange={(e) => seekAudio(parseFloat(e.target.value))}
                                 style={{
-                                    background: `linear-gradient(to right, #4f46e5 0%, #4f46e5 ${progressPct}%, #e2e8f0 ${progressPct}%, #e2e8f0 100%)`
+                                    background: `linear-gradient(to right, #101d54 0%, #101d54 ${progressPct}%, #e2e8f0 ${progressPct}%, #e2e8f0 100%)`
                                 }}
                             />
                             <span className={s.audioDur}>{fmtTime(duration)}</span>
@@ -806,6 +816,7 @@ export default function AttemptDetailView({ results }) {
                                 onTimeUpdate={onTimeUpdate}
                                 onLoadedMetadata={syncAudioDuration}
                                 onDurationChange={syncAudioDuration}
+                                onError={handleAudioError}
                                 onPlay={() => setPlaying(true)}
                                 onPause={() => setPlaying(false)}
                                 onEnded={() => {
@@ -822,15 +833,15 @@ export default function AttemptDetailView({ results }) {
                     <div
                         className={s.errorCardsCard}
                         style={{
-                            borderColor: activeTab === 'suggest' ? '#d8b4fe' :
+                            borderColor: activeTab === 'suggest' ? '#cfd6ee' :
                                 selectedIssue?.cat === 'lexical' ? 'var(--color-lexical)' :
                                     selectedIssue?.cat === 'grammar' ? 'var(--color-grammar)' :
                                         selectedIssue?.cat === 'fluency' ? 'var(--color-fluency)' :
                                             selectedIssue?.cat === 'pronun' ? 'var(--color-pron)' : 'var(--border)',
-                            boxShadow: activeTab === 'suggest' ? '0 4px 12px rgba(109, 40, 217, 0.1)' :
+                            boxShadow: activeTab === 'suggest' ? '0 4px 12px rgba(42, 63, 148, 0.1)' :
                                 selectedIssue?.cat === 'lexical' ? '0 4px 12px rgba(16, 163, 127, 0.1)' :
                                     selectedIssue?.cat === 'grammar' ? '0 4px 12px rgba(240, 81, 82, 0.1)' :
-                                        selectedIssue?.cat === 'fluency' ? '0 4px 12px rgba(0, 112, 243, 0.1)' :
+                                        selectedIssue?.cat === 'fluency' ? '0 4px 12px rgba(42, 63, 148, 0.1)' :
                                             selectedIssue?.cat === 'pronun' ? '0 4px 12px rgba(245, 166, 35, 0.1)' : 'none',
                             position: 'relative',
                             top: 0
@@ -838,8 +849,8 @@ export default function AttemptDetailView({ results }) {
                     >
                         {activeTab === 'suggest' ? (
                             <>
-                                <div className={s.errorCardsTitle} style={{ color: '#6d28d9' }}>
-                                    <div className={s.statusDot} style={{ backgroundColor: '#6d28d9' }} />
+                                <div className={s.errorCardsTitle} style={{ color: '#101d54' }}>
+                                    <div className={s.statusDot} style={{ backgroundColor: '#101d54' }} />
                                     GỢI Ý CẢI THIỆN
                                 </div>
                                 <div className={s.panelBody} style={{ color: 'var(--text-main)' }}>
@@ -849,7 +860,7 @@ export default function AttemptDetailView({ results }) {
                                 </div>
                                 {getSuggestedVocab().length > 0 && (
                                     <div style={{ marginTop: '16px', borderTop: '1px solid var(--border)', paddingTop: '16px', paddingLeft: '1.25rem', paddingRight: '1.25rem', paddingBottom: '1.25rem' }}>
-                                        <div style={{ fontWeight: 600, fontSize: '0.9rem', color: '#6d28d9', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                        <div style={{ fontWeight: 600, fontSize: '0.9rem', color: '#101d54', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                                             <i className="bi bi-book-half"></i> Từ vựng mới trong bài mẫu:
                                         </div>
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '350px', overflowY: 'auto', paddingRight: '4px' }}>
@@ -858,16 +869,16 @@ export default function AttemptDetailView({ results }) {
                                                     key={idx}
                                                     style={{
                                                         padding: '10px 14px',
-                                                        backgroundColor: '#f5f3ff',
+                                                        backgroundColor: '#fbf6e9',
                                                         borderRadius: '8px',
-                                                        border: '1px solid #ddd6fe',
+                                                        border: '1px solid #ecd49a',
                                                         display: 'flex',
                                                         flexDirection: 'column',
                                                         gap: '4px'
                                                     }}
                                                 >
                                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                        <strong style={{ color: '#6d28d9', fontSize: '0.92rem' }}>{item.word}</strong>
+                                                        <strong style={{ color: '#101d54', fontSize: '0.92rem' }}>{item.word}</strong>
                                                         <button
                                                             onClick={() => speakWord(item.word)}
                                                             style={{
@@ -884,7 +895,7 @@ export default function AttemptDetailView({ results }) {
                                                             🔊
                                                         </button>
                                                     </div>
-                                                    <div style={{ color: '#4b5563', fontSize: '0.82rem', borderTop: '1px dashed #e9d5ff', paddingTop: '4px', marginTop: '2px' }}>
+                                                    <div style={{ color: '#4b5563', fontSize: '0.82rem', borderTop: '1px dashed #fbf7ee', paddingTop: '4px', marginTop: '2px' }}>
                                                         {item.definition}
                                                     </div>
                                                 </div>
@@ -976,7 +987,7 @@ export default function AttemptDetailView({ results }) {
                                             </div>
                                         </div>
                                         <div className={s.pronActions}>
-                                            <button
+                                            {hasPlayableAudio && <button
                                                 type="button"
                                                 className={`${s.pronActionBtn} ${s.pronPlaySeg}`}
                                                 onClick={() => {
@@ -989,7 +1000,7 @@ export default function AttemptDetailView({ results }) {
                                                 title="Nghe lại bài nói của bạn"
                                             >
                                                 🔊 Nghe lại
-                                            </button>
+                                            </button>}
                                             <button
                                                 type="button"
                                                 className={`${s.pronActionBtn} ${s.pronSpeakWord}`}
@@ -1021,7 +1032,7 @@ export default function AttemptDetailView({ results }) {
                             className={s.errorCardsCard}
                             style={{
                                 borderColor: 'var(--color-fluency)',
-                                boxShadow: '0 4px 12px rgba(0, 112, 243, 0.05)',
+                                boxShadow: '0 4px 12px rgba(42, 63, 148, 0.05)',
                                 minHeight: 'auto',
                                 top: 0
                             }}
@@ -1064,7 +1075,7 @@ export default function AttemptDetailView({ results }) {
                             style={{
                                 color: popover.type === 'lexical' ? 'var(--color-lexical)' :
                                     popover.type === 'grammar' ? 'var(--color-grammar)' :
-                                        popover.type === 'pronun' ? 'var(--color-pron)' : '#6d28d9'
+                                        popover.type === 'pronun' ? 'var(--color-pron)' : '#101d54'
                             }}
                         >
                             {popover.type === 'lexical' ? 'TỪ VỰNG & TRÔI CHẢY' :
@@ -1076,7 +1087,7 @@ export default function AttemptDetailView({ results }) {
 
                     {popover.type === 'suggest' && (
                         <div className={s.popContent}>
-                            <div className={s.popRow}><strong style={{ color: '#6d28d9' }}>EN:</strong> {popover.eng}</div>
+                            <div className={s.popRow}><strong style={{ color: '#101d54' }}>EN:</strong> {popover.eng}</div>
                             <div className={s.popRow}><strong style={{ color: '#10b981' }}>VI:</strong> {popover.vie}</div>
                         </div>
                     )}
@@ -1131,7 +1142,7 @@ export default function AttemptDetailView({ results }) {
                                 </div>
                             </div>
                             <div className={s.pronActions}>
-                                <button
+                                {hasPlayableAudio && <button
                                     type="button"
                                     className={`${s.pronActionBtn} ${s.pronPlaySeg}`}
                                     onClick={() => {
@@ -1140,7 +1151,7 @@ export default function AttemptDetailView({ results }) {
                                     }}
                                 >
                                     🔊 Nghe lại
-                                </button>
+                                </button>}
                                 <button
                                     type="button"
                                     className={`${s.pronActionBtn} ${s.pronSpeakWord}`}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import axiosClient from '../../api/axiosClient';
 import styles from './PracticeOverview.module.css';
@@ -6,6 +6,8 @@ import Swal from 'sweetalert2';
 import { normalizeSpeakingContent } from '../../utils/speakingContent';
 import SpeakingPractice from './SpeakingPractice';
 import HeroArtwork from '../../components/common/HeroArtwork';
+
+const PART_OPTIONS = ['Part 1', 'Part 2', 'Part 3'];
 
 function highlightMatch(text, term) {
     if (!term || !text) return text;
@@ -108,11 +110,17 @@ export default function PracticeOverview() {
     const [searchResultsByTopic, setSearchResultsByTopic] = useState({});
     const [isSearching, setIsSearching] = useState(false);
     const [topicPages, setTopicPages] = useState({});
+    const [filterOpen, setFilterOpen] = useState(false);
+    const [filterData, setFilterData] = useState(null);
+    const [filterError, setFilterError] = useState(false);
+    const filterRef = useRef(null);
 
     const [searchParams, setSearchParams] = useSearchParams();
     const exerciseId = searchParams.get('exerciseId') || searchParams.get('exerciseid');
     const topicIdParam = searchParams.get('topicId') || searchParams.get('topicid');
     const partParam = searchParams.get('part');
+    const hasActiveFilter = Boolean(partParam);
+    const filterKey = partParam || '';
 
     const practiceParams = (extra = {}) => ({
         ...(partParam ? { part: partParam } : {}),
@@ -123,6 +131,53 @@ export default function PracticeOverview() {
         const params = new URLSearchParams({ skill: 'SPEAKING', ...practiceParams(extra) });
         return params.toString();
     };
+
+    const updateFilter = (nextPart) => {
+        setSearchParams({
+            ...(nextPart ? { part: nextPart } : {}),
+        });
+        setOpenTopicId(null);
+    };
+
+    useEffect(() => {
+        if (!filterOpen) return;
+        const handlePointerDown = (event) => {
+            if (!filterRef.current?.contains(event.target)) setFilterOpen(false);
+        };
+        const handleKeyDown = (event) => {
+            if (event.key === 'Escape') setFilterOpen(false);
+        };
+        document.addEventListener('pointerdown', handlePointerDown);
+        document.addEventListener('keydown', handleKeyDown);
+        return () => {
+            document.removeEventListener('pointerdown', handlePointerDown);
+            document.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [filterOpen]);
+
+    useEffect(() => {
+        if (!hasActiveFilter) {
+            setFilterData(null);
+            setFilterError(false);
+            return;
+        }
+        let cancelled = false;
+        setFilterData(null);
+        setFilterError(false);
+        axiosClient.get(`/student/exercise?${exerciseQuery()}`)
+            .then((results) => {
+                if (cancelled) return;
+                const topicIds = new Set((Array.isArray(results) ? results : [])
+                    .map(ex => ex.topicId).filter(Boolean));
+                setFilterData({ key: filterKey, topicIds });
+            })
+            .catch((err) => {
+                if (cancelled) return;
+                console.error('Lỗi khi lọc bài tập:', err);
+                setFilterError(true);
+            });
+        return () => { cancelled = true; };
+    }, [filterKey]);
 
     // Desktop: 3 cards/row, Tablet: 2 cards/row, Mobile (<= 720px): 1 card/row
     const getGroupSize = () => {
@@ -206,12 +261,14 @@ export default function PracticeOverview() {
             return;
         }
 
+        let cancelled = false;
         const timer = setTimeout(async () => {
             try {
                 setIsSearching(true);
                 const results = await axiosClient.get(
-                    `/student/exercise/search?${exerciseQuery({ q: clean })}`
+                    `/student/exercise?${exerciseQuery({ search: clean })}`
                 );
+                if (cancelled) return;
                 const grouped = {};
                 if (Array.isArray(results)) {
                     results.forEach(ex => {
@@ -224,13 +281,16 @@ export default function PracticeOverview() {
                 }
                 setSearchResultsByTopic(grouped);
             } catch (err) {
-                console.error('Lỗi khi tìm kiếm câu hỏi:', err);
+                if (!cancelled) console.error('Lỗi khi tìm kiếm câu hỏi:', err);
             } finally {
-                setIsSearching(false);
+                if (!cancelled) setIsSearching(false);
             }
         }, 300);
 
-        return () => clearTimeout(timer);
+        return () => {
+            cancelled = true;
+            clearTimeout(timer);
+        };
     }, [searchTerm, partParam]);
 
     useEffect(() => {
@@ -288,9 +348,7 @@ export default function PracticeOverview() {
         setOpenTopicId(topic.id);
         setSearchParams(practiceParams({ type: 'speaking', topicId: topic.id }));
 
-        const hasCached =
-            Object.prototype.hasOwnProperty.call(exercisesMap, topic.id) ||
-            (searchResultsByTopic[topic.id] && searchResultsByTopic[topic.id].length > 0);
+        const hasCached = Object.prototype.hasOwnProperty.call(exercisesMap, topic.id);
 
         if (!hasCached) {
             setLoadingTopicId(topic.id);
@@ -341,8 +399,10 @@ export default function PracticeOverview() {
     };
 
     const cleanTerm = searchTerm.trim().toLowerCase();
+    const filterLoading = hasActiveFilter && filterData?.key !== filterKey && !filterError;
 
     const filteredTopics = topics.filter((t) => {
+        if (hasActiveFilter && filterData?.key === filterKey && !filterData.topicIds.has(t.id)) return false;
         if (!cleanTerm) return true;
         const matchName = t.name?.toLowerCase().includes(cleanTerm);
         const matchDesc = t.description?.toLowerCase().includes(cleanTerm);
@@ -367,7 +427,7 @@ export default function PracticeOverview() {
                 <SpeakingPractice onBack={handleBackFromExercise} />
             ) : (
                 <>
-                    <section className={styles.hero}>
+                    <section className={`${styles.hero} ${filterOpen ? styles.heroFilterOpen : ''}`}>
                         <div className={styles.heroMain}>
                             <div className={styles.heroIcon}>
                                 <i className="fa-regular fa-rectangle-list"></i>
@@ -381,39 +441,77 @@ export default function PracticeOverview() {
 
                         <HeroArtwork variant="practice" className={styles.heroArtwork} />
 
-                        <div className={styles.heroSearch}>
-                            {isSearching ? (
-                                <i className={`fa-solid fa-spinner fa-spin ${styles.searchIcon}`}></i>
-                            ) : (
-                                <i className={`fa-solid fa-magnifying-glass ${styles.searchIcon}`}></i>
-                            )}
-                            <input
-                                type="text"
-                                className={styles.searchInput}
-                                placeholder="Tìm kiếm chủ đề, câu hỏi..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                            />
-                            {searchTerm && (
-                                <button
-                                    type="button"
-                                    className={styles.clearSearchBtn}
-                                    onClick={() => setSearchTerm('')}
-                                    title="Xóa tìm kiếm"
-                                    aria-label="Xóa tìm kiếm"
-                                >
-                                    <i className="fa-solid fa-xmark"></i>
-                                </button>
+                        <div className={styles.searchControls} ref={filterRef}>
+                            <div className={styles.heroSearch}>
+                                {isSearching ? (
+                                    <i className={`fa-solid fa-spinner fa-spin ${styles.searchIcon}`}></i>
+                                ) : (
+                                    <i className={`fa-solid fa-magnifying-glass ${styles.searchIcon}`}></i>
+                                )}
+                                <input
+                                    type="text"
+                                    className={styles.searchInput}
+                                    placeholder="Tìm kiếm chủ đề, câu hỏi..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                />
+                                {searchTerm && (
+                                    <button
+                                        type="button"
+                                        className={styles.clearSearchBtn}
+                                        onClick={() => setSearchTerm('')}
+                                        title="Xóa tìm kiếm"
+                                        aria-label="Xóa tìm kiếm"
+                                    >
+                                        <i className="fa-solid fa-xmark"></i>
+                                    </button>
+                                )}
+                            </div>
+                            <button
+                                type="button"
+                                className={`${styles.filterButton} ${hasActiveFilter ? styles.filterButtonActive : ''}`}
+                                onClick={() => setFilterOpen(open => !open)}
+                                aria-expanded={filterOpen}
+                                aria-controls="practice-filter-panel"
+                                aria-label="Lọc theo Part"
+                                title="Lọc theo Part"
+                            >
+                                <i className="fa-solid fa-sliders"></i>
+                                {hasActiveFilter && <span className={styles.filterDot} />}
+                            </button>
+                            {filterOpen && (
+                                <div id="practice-filter-panel" className={styles.filterPanel}>
+                                    <div className={styles.filterPanelHeader}>
+                                        <strong>Lọc theo Part</strong>
+                                        {hasActiveFilter && (
+                                            <button type="button" onClick={() => updateFilter(null)}>
+                                                Đặt lại
+                                            </button>
+                                        )}
+                                    </div>
+                                    <label className={styles.filterLabel} htmlFor="practice-part-filter">Part</label>
+                                    <select
+                                        id="practice-part-filter"
+                                        className={styles.filterSelect}
+                                        value={partParam || ''}
+                                        onChange={(e) => updateFilter(e.target.value || null)}
+                                    >
+                                        <option value="">Tất cả Part</option>
+                                        {PART_OPTIONS.map(part => <option key={part} value={part}>{part}</option>)}
+                                    </select>
+                                </div>
                             )}
                         </div>
                     </section>
 
                     <section className={styles.topicRows}>
-                        {loadingTopics ? (
+                        {loadingTopics || filterLoading ? (
                             <div className={styles.loadingArea}>
                                 <i className="fa-solid fa-spinner fa-spin" style={{ marginRight: 8 }}></i>
-                                Đang tải danh sách chủ đề & câu hỏi...
+                                {filterLoading ? 'Đang lọc bài tập...' : 'Đang tải danh sách chủ đề & câu hỏi...'}
                             </div>
+                        ) : filterError ? (
+                            <div className={styles.emptyState}>Không thể tải bộ lọc bài tập. Vui lòng thử lại.</div>
                         ) : topics.length === 0 ? (
                             <div className={styles.emptyState}>Chưa có chủ đề luyện tập nào.</div>
                         ) : filteredTopics.length === 0 ? (
@@ -422,12 +520,15 @@ export default function PracticeOverview() {
                                     <i className="fa-solid fa-magnifying-glass"></i>
                                 </div>
                                 <p>
-                                    Không tìm thấy chủ đề hoặc câu hỏi nào phù hợp với <strong>"{searchTerm}"</strong>
+                                    Không có bài tập phù hợp với từ khóa hoặc bộ lọc đã chọn.
                                 </p>
                                 <button
                                     type="button"
                                     className={styles.resetSearchBtn}
-                                    onClick={() => setSearchTerm('')}
+                                    onClick={() => {
+                                        setSearchTerm('');
+                                        updateFilter(null);
+                                    }}
                                 >
                                     Xem tất cả chủ đề
                                 </button>

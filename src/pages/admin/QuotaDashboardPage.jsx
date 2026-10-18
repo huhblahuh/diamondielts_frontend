@@ -33,11 +33,6 @@ const numberFormatter = new Intl.NumberFormat('vi-VN');
 const hourFormatter = new Intl.NumberFormat('vi-VN', {
     maximumFractionDigits: 4,
 });
-const quotaTimeFrames = [
-    { value: 'Daily', label: 'Hàng ngày' },
-    { value: 'Weekly', label: 'Hàng tuần' },
-    { value: 'Monthly', label: 'Hàng tháng' },
-];
 
 function toDateInput(date) {
     const year = date.getFullYear();
@@ -194,7 +189,7 @@ export default function QuotaDashboardPage() {
     const [quotaDrafts, setQuotaDrafts] = useState({});
     const [selectedStudents, setSelectedStudents] = useState([]);
     const [bulkLimit, setBulkLimit] = useState('10');
-    const [quotaTimeFrame, setQuotaTimeFrame] = useState('Monthly');
+    const quotaTimeFrame = 'Monthly';
     const [quotaSearch, setQuotaSearch] = useState('');
     const [loadingOverview, setLoadingOverview] = useState(true);
     const [loadingQuotas, setLoadingQuotas] = useState(false);
@@ -296,14 +291,6 @@ export default function QuotaDashboardPage() {
         }
     };
 
-    const handleQuotaTimeFrameChange = (event) => {
-        const nextTimeFrame = event.target.value;
-        setQuotaTimeFrame(nextTimeFrame);
-        if (filters.classId) {
-            loadQuotas(filters.classId, quotaSearch, nextTimeFrame);
-        }
-    };
-
     const updateQuota = async (payload, successMessage) => {
         if (!filters.classId) return;
         setSaving(true);
@@ -396,9 +383,9 @@ export default function QuotaDashboardPage() {
                 mode: 'resetUsed',
                 timeFrame: quotaTimeFrame,
                 studentIds: [studentId],
-                reason: 'Reset điểm quota đã sử dụng từ Admin Dashboard',
+                reason: 'Reset diamond đã sử dụng từ Admin Dashboard',
             },
-            'Đã reset điểm quota đã sử dụng',
+            'Đã reset diamond đã sử dụng',
         );
     };
 
@@ -424,9 +411,9 @@ export default function QuotaDashboardPage() {
             {
                 label: 'Input token',
                 data: overview?.trend?.map((item) => item.inputTokens) || [],
-                borderColor: '#005BFF',
-                backgroundColor: 'rgba(0, 91, 255, 0.12)',
-                pointBackgroundColor: '#005BFF',
+                borderColor: '#101d54',
+                backgroundColor: 'rgba(16, 29, 84, 0.12)',
+                pointBackgroundColor: '#101d54',
                 pointBorderColor: '#ffffff',
                 pointBorderWidth: 2,
                 pointRadius: 4,
@@ -437,9 +424,9 @@ export default function QuotaDashboardPage() {
             {
                 label: 'Output token',
                 data: overview?.trend?.map((item) => item.outputTokens) || [],
-                borderColor: '#7B3FF2',
-                backgroundColor: 'rgba(123, 63, 242, 0.12)',
-                pointBackgroundColor: '#7B3FF2',
+                borderColor: '#1b2d75',
+                backgroundColor: 'rgba(27, 45, 117, 0.12)',
+                pointBackgroundColor: '#1b2d75',
                 pointBorderColor: '#ffffff',
                 pointBorderWidth: 2,
                 pointRadius: 4,
@@ -456,9 +443,9 @@ export default function QuotaDashboardPage() {
             {
                 label: 'Azure Speech (giờ)',
                 data: overview?.trend?.map((item) => item.azureSpeechHours) || [],
-                borderColor: '#005BFF',
-                backgroundColor: 'rgba(0, 91, 255, 0.12)',
-                pointBackgroundColor: '#005BFF',
+                borderColor: '#101d54',
+                backgroundColor: 'rgba(16, 29, 84, 0.12)',
+                pointBackgroundColor: '#101d54',
                 pointBorderColor: '#ffffff',
                 pointBorderWidth: 2,
                 pointRadius: 4,
@@ -506,7 +493,7 @@ export default function QuotaDashboardPage() {
             x: { grid: { display: false } },
             y: {
                 beginAtZero: true,
-                grid: { color: 'rgba(19, 33, 60, 0.06)' },
+                grid: { color: 'rgba(16, 29, 84, 0.06)' },
                 ticks: {
                     callback: (value) => numberFormatter.format(value),
                 },
@@ -530,7 +517,7 @@ export default function QuotaDashboardPage() {
             x: { grid: { display: false } },
             y: {
                 beginAtZero: true,
-                grid: { color: 'rgba(19, 33, 60, 0.06)' },
+                grid: { color: 'rgba(16, 29, 84, 0.06)' },
                 ticks: {
                     callback: (value) =>
                         `${hourFormatter.format(value)} giờ`,
@@ -645,27 +632,16 @@ export default function QuotaDashboardPage() {
             <section className={styles.quotaCard}>
                 <div className={styles.quotaHeader}>
                     <div>
-                        <span className={styles.sectionLabel}>FREE SPEAKING LIMIT</span>
-                        <h2>Điều phối điểm quota theo lớp</h2>
+                        <span className={styles.sectionLabel}>MONTHLY DIAMOND</span>
+                        <h2>Điều phối diamond theo lớp</h2>
                         <p>
                             Quota vẫn thuộc từng học viên; lớp chỉ là phạm vi thao tác hàng loạt.
                         </p>
                     </div>
                     <div className={styles.bulkControls}>
                             <div>
-                                <small>Chu kỳ quota</small>
-                                <select
-                                    value={quotaTimeFrame}
-                                    onChange={handleQuotaTimeFrameChange}
-                                    aria-label="Chu kỳ quota"
-                                    disabled={saving || loadingQuotas}
-                                >
-                                    {quotaTimeFrames.map((item) => (
-                                        <option key={item.value} value={item.value}>
-                                            {item.label}
-                                        </option>
-                                    ))}
-                                </select>
+                                <small>Chu kỳ diamond</small>
+                                <strong>Hàng tháng</strong>
                             </div>
                             {filters.classId && (
                                 <>
@@ -745,8 +721,8 @@ export default function QuotaDashboardPage() {
                                             </th>
                                             <th>Học viên</th>
                                             <th>Tiến độ sử dụng</th>
-                                            <th>Còn lại</th>
-                                            <th>Limit</th>
+                                            <th>Diamond còn lại</th>
+                                            <th>Limit tháng</th>
                                             <th>Thao tác</th>
                                         </tr>
                                     </thead>
@@ -784,7 +760,7 @@ export default function QuotaDashboardPage() {
                                                 </td>
                                                 <td>
                                                     <span className={`${styles.remainingBadge} ${item.isExhausted ? styles.exhausted : ''}`}>
-                                                        {numberFormatter.format(item.remaining)} điểm
+                                                        {numberFormatter.format(item.remaining)} diamond
                                                     </span>
                                                 </td>
                                                 <td>
@@ -812,8 +788,8 @@ export default function QuotaDashboardPage() {
                                                         <button
                                                             type="button"
                                                             title={filters.classId
-                                                                ? 'Reset điểm đã dùng'
-                                                                : 'Chọn lớp để reset điểm đã dùng'}
+                                                                ? 'Reset diamond đã dùng'
+                                                                : 'Chọn lớp để reset diamond đã dùng'}
                                                             onClick={() => resetStudentUsage(item.userId)}
                                                             disabled={saving || !filters.classId}
                                                         >

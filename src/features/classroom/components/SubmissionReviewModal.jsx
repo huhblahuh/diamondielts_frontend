@@ -35,8 +35,11 @@ function SpeakingSubmissionViewer({ attempt, onGrade }) {
     const [view, setView] = useState('overview'); // 'overview' | 'detail'
     const audioRef = useRef(null);
     const [playing, setPlaying] = useState(false);
+    const [unavailableAudioSource, setUnavailableAudioSource] = useState(null);
 
     const audioPayload = attempt.payloads?.find(p => p.dataType === 'AUDIO_URL');
+    const audioSource = audioPayload?.downloadUrl;
+    const hasPlayableAudio = Boolean(audioSource && unavailableAudioSource !== audioSource);
     const jsonPayload = attempt.payloads?.find(p => p.dataType === 'JSON_RESULT');
     const results = jsonPayload ? tryParseJson(jsonPayload.dataValue) : null;
     const hasAIResult = results && (results.fluency_coherence || results.pronunciationReport);
@@ -62,14 +65,20 @@ function SpeakingSubmissionViewer({ attempt, onGrade }) {
     return (
         <div className={s.speakingViewer}>
             {/* Audio Player */}
-            {audioPayload?.downloadUrl ? (
+            {hasPlayableAudio ? (
                 <div className={s.audioPlayer}>
                     <button
                         className={`${s.playBtn} ${playing ? s.playing : ''}`}
                         onClick={() => {
                             const a = audioRef.current;
                             if (!a) return;
-                            a.paused ? a.play() : a.pause();
+                            if (a.paused) {
+                                a.play().catch(() => {
+                                    if (a.error) setUnavailableAudioSource(audioSource);
+                                });
+                            } else {
+                                a.pause();
+                            }
                         }}
                     >
                         <i className={`bi ${playing ? 'bi-pause-fill' : 'bi-play-fill'}`} />
@@ -83,13 +92,17 @@ function SpeakingSubmissionViewer({ attempt, onGrade }) {
                             onPlay={() => setPlaying(true)}
                             onPause={() => setPlaying(false)}
                             onEnded={() => setPlaying(false)}
+                            onError={() => {
+                                setPlaying(false);
+                                setUnavailableAudioSource(audioSource);
+                            }}
                         />
-                        <audio src={audioPayload.downloadUrl} controls className={s.nativeAudio} />
+                        <audio src={audioSource} controls className={s.nativeAudio} onError={() => setUnavailableAudioSource(audioSource)} />
                     </div>
                 </div>
             ) : (
                 <div className={s.noAudio}>
-                    <i className="bi bi-mic-mute" /> Không có file âm thanh
+                    <i className="bi bi-mic-mute" /> {audioSource ? 'Không thể phát file âm thanh' : 'Không có file âm thanh'}
                 </div>
             )}
 

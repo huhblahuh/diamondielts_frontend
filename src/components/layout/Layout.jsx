@@ -1,4 +1,5 @@
-import React, { Suspense, useEffect, useState, useRef } from 'react';
+import React, { Suspense, useCallback, useEffect, useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import styles from './Layout.module.css';
 import siteLogo from '../../assets/site-logo.webp';
@@ -12,8 +13,6 @@ import {
 } from '../../utils/pushNotification';
 
 const QUOTA_PERIODS = [
-    { value: 'Daily', label: 'Theo ngày' },
-    { value: 'Weekly', label: 'Theo tuần' },
     { value: 'Monthly', label: 'Theo tháng' },
 ];
 
@@ -37,19 +36,46 @@ export default function Layout() {
     const [user, setUser] = useState(() => authService.getCurrentUser() || {});
     const role = user.role || 'Student';
     const isStudentMobileView = role === 'Student';
+    const practiceSearchParams = new URLSearchParams(location.search);
+    const isSpeakingStudioView = role === 'Student' && (
+        location.pathname.startsWith('/student/speaking/') ||
+        (location.pathname === '/student/practice' && (
+            practiceSearchParams.has('exerciseId') ||
+            practiceSearchParams.has('exerciseid')
+        ))
+    );
 
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [mobileHeaderHost, setMobileHeaderHost] = useState(null);
     const [isQuotaOpen, setIsQuotaOpen] = useState(false);
     const [mySpeakingQuota, setMySpeakingQuota] = useState(
         user.speakingQuota || null,
     );
     const [isQuotaLoading, setIsQuotaLoading] = useState(false);
     const [quotaError, setQuotaError] = useState('');
-    const [showAllQuotaPeriods, setShowAllQuotaPeriods] = useState(false);
     const [quotaClock, setQuotaClock] = useState(Date.now());
     const [customHeader, setCustomHeader] = useState(null);
     const [pushStatus, setPushStatus] = useState(null);
     const pushInitializedRef = useRef(false);
+
+    useEffect(() => {
+        const findHeader = () => document.querySelector('.dk-top-r');
+        const existingHeader = findHeader();
+        if (existingHeader) {
+            setMobileHeaderHost(existingHeader);
+            return undefined;
+        }
+
+        const observer = new MutationObserver(() => {
+            const header = findHeader();
+            if (header) {
+                setMobileHeaderHost(header);
+                observer.disconnect();
+            }
+        });
+        observer.observe(document.body, { childList: true });
+        return () => observer.disconnect();
+    }, []);
 
     useEffect(() => {
         setCustomHeader(null);
@@ -131,6 +157,13 @@ export default function Layout() {
     const mainContentRef = React.useRef(null);
     const dimVeilRef = React.useRef(null);
     const edgeHandleRef = React.useRef(null);
+    const backHandlerRef = useRef(null);
+    const registerBackHandler = useCallback((handler) => {
+        backHandlerRef.current = handler;
+        return () => {
+            if (backHandlerRef.current === handler) backHandlerRef.current = null;
+        };
+    }, []);
 
     // Return to the parent screen within the student routes.
     const getParentRouteUrl = (pathname, search) => {
@@ -147,9 +180,23 @@ export default function Layout() {
             return null;
         }
 
+        const settingsSection = clean.match(/^\/(student|teacher|admin)\/settings\/[^/]+$/);
+        if (settingsSection) {
+            return `/${settingsSection[1]}/settings`;
+        }
+
         // 2. Student hierarchy:
         if (clean === '/student/history' && new URLSearchParams(search).has('id')) {
             return '/student/history';
+        }
+        if (clean === '/student/practice') {
+            const params = new URLSearchParams(search);
+            if (params.has('exerciseId') || params.has('exerciseid')) {
+                params.delete('exerciseId');
+                params.delete('exerciseid');
+                const query = params.toString();
+                return `/student/practice${query ? `?${query}` : ''}`;
+            }
         }
         if (clean === '/student/assignments') {
             return '/student/dashboard';
@@ -215,6 +262,8 @@ export default function Layout() {
             if (window.innerWidth > 768) return;
             if (e.touches.length !== 1) return;
             if (isSidebarOpen || isQuotaOpen) return;
+            const backHandler = backHandlerRef.current;
+            if (backHandler?.canSwipeBack?.() === false) return;
 
             const touch = e.touches[0];
             // Only fire from left edge zone
@@ -227,7 +276,7 @@ export default function Layout() {
             ) return;
 
             // No parent route → don't track
-            if (!getPreviousInternalUrl()) return;
+            if (!backHandler?.canHandleBack?.() && !getPreviousInternalUrl()) return;
 
             startX = touch.clientX;
             startY = touch.clientY;
@@ -293,13 +342,14 @@ export default function Layout() {
             active = false;
             gestureBlocked = false;
 
+            const backHandler = backHandlerRef.current;
             const dx = lastX - startX;
             const screenW = window.innerWidth || 390;
-            const committed = dx * DAMPING >= screenW * THRESHOLD_RATIO;
+            const committed = backHandler?.canSwipeBack?.() !== false && dx * DAMPING >= screenW * THRESHOLD_RATIO;
+            const handleInPage = backHandler?.canHandleBack?.() ? backHandler.handleBack : null;
+            const targetUrl = handleInPage ? null : getPreviousInternalUrl();
 
-            const targetUrl = getPreviousInternalUrl();
-
-            if (committed && targetUrl && targetUrl !== `${location.pathname}${location.search}`) {
+            if (committed && (handleInPage || (targetUrl && targetUrl !== `${location.pathname}${location.search}`))) {
                 // Slide off and navigate
                 const mc = mainContentRef.current;
                 const dv = dimVeilRef.current;
@@ -317,7 +367,8 @@ export default function Layout() {
                 }
 
                 setTimeout(() => {
-                    navigate(targetUrl);
+                    if (handleInPage) handleInPage();
+                    else navigate(targetUrl);
                     resetStyles();
                 }, dur + 10);
             } else {
@@ -340,23 +391,27 @@ export default function Layout() {
             }
         };
 
+        const onTouchCancel = () => {
+            lastX = startX;
+            onTouchEnd();
+        };
+
         // touchmove must be non-passive so we can preventDefault during active drag
         window.addEventListener('touchstart', onTouchStart, { passive: true });
         window.addEventListener('touchmove', onTouchMove, { passive: false });
         window.addEventListener('touchend', onTouchEnd, { passive: true });
-        window.addEventListener('touchcancel', onTouchEnd, { passive: true });
+        window.addEventListener('touchcancel', onTouchCancel, { passive: true });
 
         return () => {
             window.removeEventListener('touchstart', onTouchStart);
             window.removeEventListener('touchmove', onTouchMove);
             window.removeEventListener('touchend', onTouchEnd);
-            window.removeEventListener('touchcancel', onTouchEnd);
+            window.removeEventListener('touchcancel', onTouchCancel);
         };
     }, [isSidebarOpen, isQuotaOpen, location.pathname, location.search, navigate, role]);
 
     const openMyQuota = async () => {
         if (role !== 'Student') return;
-        setShowAllQuotaPeriods(false);
         setIsQuotaOpen(true);
         setIsQuotaLoading(true);
         setQuotaError('');
@@ -449,11 +504,31 @@ export default function Layout() {
                 .find((item) => item.timeFrame === period.value),
         }))
         .filter((item) => Boolean(item.quota));
-    const hasAdditionalQuotaPeriods = availableQuotaPeriods
-        .some((item) => item.period.value !== 'Daily');
 
     return (
         <div className={styles.wrapper}>
+            {mobileHeaderHost && createPortal(
+                <div className={styles.mobileHeaderActions}>
+                    {role === 'Student' && (
+                        <button
+                            type="button"
+                            onClick={() => navigate('/student/settings/notification')}
+                            aria-label="Cài đặt thông báo"
+                        >
+                            <i className="bi bi-bell" aria-hidden="true" />
+                        </button>
+                    )}
+                    <button
+                        type="button"
+                        onClick={() => setIsSidebarOpen((open) => !open)}
+                        aria-label={isSidebarOpen ? 'Đóng menu' : 'Mở menu'}
+                        aria-expanded={isSidebarOpen}
+                    >
+                        <i className={`bi ${isSidebarOpen ? 'bi-x-lg' : 'bi-list'}`} aria-hidden="true" />
+                    </button>
+                </div>,
+                mobileHeaderHost,
+            )}
             {/* Mobile Overlay */}
             <div
                 className={`${styles.sidebarOverlay} ${isSidebarOpen ? styles.overlayActive : ''}`}
@@ -465,9 +540,9 @@ export default function Layout() {
                 {/* Brand */}
                 <div className={styles.brand}>
                     <div className={styles.brandTitle}>
-                        <img src={siteLogo} alt="Diamond Ielts" className={styles.brandLogo} />
+                        <img src={siteLogo} alt="Diamonds IELTS" className={styles.brandLogo} />
                         <div className={styles.brandText}>
-                            <span className={styles.brandName}>Diamond Ielts</span>
+                            <span className={styles.brandName}>Diamonds IELTS</span>
                             <span className={styles.brandSub}>IELTS Speaking</span>
                         </div>
                     </div>
@@ -515,6 +590,15 @@ export default function Layout() {
                 </nav>
 
                 {/* Sidebar Logout */}
+                <button
+                    type="button"
+                    className={styles.sidebarTheme}
+                    onClick={() => document.querySelector('.dk-themebtn')?.click()}
+                    aria-label="Đổi phong cảnh hoặc nền trơn"
+                >
+                    <i className="bi bi-palette" aria-hidden="true" />
+                    <span>Đổi giao diện</span>
+                </button>
                 <div className={styles.sidebarLogout}>
                     <button onClick={handleLogout} className={styles.btnLogoutFull} title="Đăng xuất">
                         <i className="bi bi-box-arrow-left"></i>
@@ -551,7 +635,7 @@ export default function Layout() {
                         <h2>{(role === 'Teacher' || role === 'Admin') ? 'Bảng Điều Khiển Giáo Viên' : 'Cổng Học Viên / Student Portal'}</h2>
                     )}
                 </header>
-                <div className={`${styles.pageBody} ${isStudentMobileView ? styles.studentPageBody : ''}`}>
+                <div className={`${styles.pageBody} ${isStudentMobileView ? styles.studentPageBody : ''} ${isSpeakingStudioView ? styles.speakingStudioPageBody : ''}`}>
                     <Suspense fallback={<PageSkeleton />}>
                         <Outlet context={{
                             setCustomHeader,
@@ -561,6 +645,7 @@ export default function Layout() {
                             mySpeakingQuota,
                             isQuotaLoading,
                             openMyQuota,
+                            registerBackHandler,
                         }} />
                     </Suspense>
                 </div>
@@ -583,9 +668,9 @@ export default function Layout() {
                     >
                         <div className={styles.quotaModalHeader}>
                             <div>
-                                <span>ĐIỂM QUOTA SPEAKING</span>
-                                <h2 id="my-quota-title">Hạn mức của tôi</h2>
-                                <p>Quota dùng cho các bài luyện Speaking tự do.</p>
+                                <span>DIAMOND SPEAKING</span>
+                                <h2 id="my-quota-title">Diamond của tôi</h2>
+                                <p>Diamond dùng cho các bài luyện Speaking tự do và được cấp lại mỗi tháng.</p>
                             </div>
                             <button
                                 type="button"
@@ -610,11 +695,11 @@ export default function Layout() {
                             ) : !mySpeakingQuota || availableQuotaPeriods.length === 0 ? (
                                 <div className={styles.quotaState}>
                                     <i className="bi bi-inbox" />
-                                    Tài khoản chưa được thiết lập quota Speaking.
+                                    Tài khoản chưa được cấp diamond.
                                 </div>
                             ) : (
                                 <article className={styles.quotaItem}>
-                                    <div className={`${styles.quotaPeriods} ${showAllQuotaPeriods ? styles.quotaPeriodsExpanded : ''}`}>
+                                    <div className={styles.quotaPeriods}>
                                         {availableQuotaPeriods.map(({ period, quota }) => {
                                             const usagePercentage = Math.min(
                                                 100,
@@ -624,15 +709,15 @@ export default function Layout() {
                                             return (
                                                 <section
                                                     key={period.value}
-                                                    className={`${styles.quotaPeriodCard} ${period.value !== 'Daily' ? styles.quotaPeriodSecondary : ''}`}
+                                                    className={styles.quotaPeriodCard}
                                                 >
                                                     <div className={styles.quotaItemTop}>
                                                         <div>
                                                             <strong>{period.label}</strong>
-                                                            <small>{Number(quota.used).toLocaleString('vi-VN')} điểm đã dùng</small>
+                                                            <small>{Number(quota.used).toLocaleString('vi-VN')} diamond đã dùng</small>
                                                         </div>
                                                         <span>
-                                                            {Number(quota.remaining).toLocaleString('vi-VN')}/{Number(quota.limit).toLocaleString('vi-VN')} điểm
+                                                            {Number(quota.remaining).toLocaleString('vi-VN')}/{Number(quota.limit).toLocaleString('vi-VN')} diamond
                                                         </span>
                                                     </div>
                                                     <div className={styles.quotaProgress}>
@@ -647,16 +732,6 @@ export default function Layout() {
                                             );
                                         })}
                                     </div>
-                                    {hasAdditionalQuotaPeriods && (
-                                        <button
-                                            type="button"
-                                            className={styles.quotaPeriodToggle}
-                                            onClick={() => setShowAllQuotaPeriods((current) => !current)}
-                                        >
-                                            {showAllQuotaPeriods ? 'Chỉ theo ngày' : 'Tất cả'}
-                                            <i className={`bi ${showAllQuotaPeriods ? 'bi-chevron-up' : 'bi-chevron-down'}`} />
-                                        </button>
-                                    )}
                                 </article>
                             )}
                         </div>

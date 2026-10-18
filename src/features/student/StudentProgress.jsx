@@ -115,7 +115,7 @@ export default function StudentProgress() {
                     compact
                     points={summary?.progress || []}
                     headerActions={dateFilter}
-                    title="Biểu đồ điểm Speaking"
+                    title="Xu hướng điểm"
                     subtitle="Điểm trung bình theo ngày"
                 />
             )}

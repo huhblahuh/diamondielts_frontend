@@ -190,7 +190,7 @@ export default function StudentProfile() {
                             <i className="bi bi-box-arrow-right" />
                             <span>Đăng xuất tài khoản</span>
                         </button>
-                        <span className={styles.appVersion}>Diamond IELTS • Phiên bản 1.0</span>
+                        <span className={styles.appVersion}>Diamonds IELTS • Phiên bản 1.0</span>
                     </div>
                 </aside>
 

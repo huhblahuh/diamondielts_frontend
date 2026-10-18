@@ -58,7 +58,7 @@
 }
 
 .spinnerRing div:nth-child(1) {
-    border-top-color: #6366f1;
+    border-top-color: #1b2d75;
     animation-delay: -0.45s;
 }
 
@@ -68,7 +68,7 @@
 }
 
 .spinnerRing div:nth-child(3) {
-    border-top-color: #4f46e5;
+    border-top-color: #101d54;
     animation-delay: -0.15s;
 }
 

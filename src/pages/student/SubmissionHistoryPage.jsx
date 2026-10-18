@@ -322,7 +322,7 @@ export default function SubmissionHistoryPage() {
                         <h5 style={{ margin: '0 0 0.5rem 0', color: '#475569' }}>File ghi âm / tài liệu bài nộp:</h5>
                         {audioUrl ? (
                             <div style={{ backgroundColor: '#f8fafc', padding: '1.5rem', borderRadius: '12px', border: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'center' }}>
-                                <i className="bi bi-music-note-beamed" style={{ fontSize: '2rem', color: '#2563eb' }}></i>
+                                <i className="bi bi-music-note-beamed" style={{ fontSize: '2rem', color: '#101d54' }}></i>
                                 <span style={{ fontSize: '0.85rem', color: '#64748b' }}>
                                     {audioPayload.fileName || 'speaking_submission.webm'}
                                 </span>

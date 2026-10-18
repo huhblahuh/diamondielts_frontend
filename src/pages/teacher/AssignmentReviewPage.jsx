@@ -565,7 +565,7 @@ export default function AssignmentReviewPage() {
                             {data.items?.length} hạng mục
                             <span className={s.metaSep}>·</span>
                             <i className="bi bi-people" />
-                            Nộp bài: <strong style={{ color: '#4f46e5' }}>{data.submittedStudents}/{data.totalStudents}</strong> học sinh
+                            Nộp bài: <strong style={{ color: '#101d54' }}>{data.submittedStudents}/{data.totalStudents}</strong> học sinh
                         </p>
                     </div>
                 </div>

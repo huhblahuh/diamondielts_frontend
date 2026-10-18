@@ -99,7 +99,7 @@ export default function CommonAttachmentUploader({
                 icon: 'error',
                 title: 'Thất bại',
                 text: 'Không thể tải file lên. Vui lòng thử lại.',
-                confirmButtonColor: '#3b82f6'
+                confirmButtonColor: '#2a3f94'
             });
         } finally {
             setIsUploading(false);
@@ -160,7 +160,7 @@ export default function CommonAttachmentUploader({
                 )}
 
                 {isUploading && (
-                    <div style={{ fontSize: '0.75rem', color: '#2563eb', display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 500 }}>
+                    <div style={{ fontSize: '0.75rem', color: '#101d54', display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 500 }}>
                         <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true" style={{ width: '0.85rem', height: '0.85rem' }}></span>
                         Đang đẩy file lên Cloud...
                     </div>
@@ -175,7 +175,7 @@ export default function CommonAttachmentUploader({
                             <li key={idx} style={{ fontSize: '0.75rem', color: '#334155', listStyleType: 'none' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
                                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', color: '#334155' }}>
-                                        <i className="bi bi-file-earmark-text" style={{ color: '#6366f1', fontSize: '0.85rem' }}></i>
+                                        <i className="bi bi-file-earmark-text" style={{ color: '#1b2d75', fontSize: '0.85rem' }}></i>
                                         <span style={{ fontWeight: 500, wordBreak: 'break-all' }}>{fl.fileName}</span>
                                         <span style={{ fontSize: '0.65rem', color: '#475569', background: '#e2e8f0', padding: '1px 5px', borderRadius: '4px', fontWeight: 600 }}>
                                             {fl.dataType}

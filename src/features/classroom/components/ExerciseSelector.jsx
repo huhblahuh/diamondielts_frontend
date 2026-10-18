@@ -146,7 +146,7 @@ export default function ExerciseSelector({ show, onClose, oldExercises = [], onS
             <div className={styles.folderModalContent} style={{ width: '95%', maxWidth: '1200px', height: '90vh', maxHeight: '90vh', overflow: 'hidden' }} onClick={e => e.stopPropagation()}>
                 <div className={styles.modalHeader}>
                     <h4 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
-                        <i className="bi bi-database-fill-add" style={{ color: '#6366f1' }}></i>
+                        <i className="bi bi-database-fill-add" style={{ color: '#1b2d75' }}></i>
                         <span>📂 NGÂN HÀNG ĐỀ - LỌC & CHỌN HÀNG LOẠT</span>
                     </h4>
                     <button className={styles.btnClose} onClick={onClose} style={{ border: 'none', background: 'none', fontSize: '1.5rem', cursor: 'pointer' }}>&times;</button>
@@ -179,9 +179,9 @@ export default function ExerciseSelector({ show, onClose, oldExercises = [], onS
                                             padding: '0.35rem 0.85rem',
                                             fontSize: '0.78rem',
                                             borderRadius: '20px',
-                                            background: skillFilter === skill ? '#6366f1' : '#ffffff',
+                                            background: skillFilter === skill ? '#1b2d75' : '#ffffff',
                                             color: skillFilter === skill ? '#ffffff' : '#475569',
-                                            borderColor: skillFilter === skill ? '#6366f1' : '#cbd5e1',
+                                            borderColor: skillFilter === skill ? '#1b2d75' : '#cbd5e1',
                                             boxShadow: 'none',
                                             cursor: 'pointer'
                                         }}
@@ -194,8 +194,8 @@ export default function ExerciseSelector({ show, onClose, oldExercises = [], onS
 
                             {/* Bulk Attempts adjustment */}
                             {hasSelectedSpeaking && (
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', background: '#f5f3ff', padding: '0.25rem 0.75rem', borderRadius: '8px', border: '1px solid #ddd6fe' }}>
-                                    <span style={{ fontWeight: 600, color: '#6d28d9', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', background: '#fbf6e9', padding: '0.25rem 0.75rem', borderRadius: '8px', border: '1px solid #ecd49a' }}>
+                                    <span style={{ fontWeight: 600, color: '#101d54', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                                         <i className="bi bi-sliders"></i> Lượt nộp đồng loạt bài đã chọn:
                                     </span>
                                     <input 
@@ -318,7 +318,7 @@ export default function ExerciseSelector({ show, onClose, oldExercises = [], onS
                                 <i className="bi bi-chevron-left" style={{ marginRight: '0.25rem' }}></i> Trước
                             </button>
                             <span style={{ fontSize: '0.85rem', color: '#475569' }}>
-                                Trang <strong style={{ color: '#6366f1' }}>{currentPage}</strong> / {totalPages}
+                                Trang <strong style={{ color: '#1b2d75' }}>{currentPage}</strong> / {totalPages}
                             </span>
                             <button 
                                 type="button" 
@@ -345,15 +345,15 @@ export default function ExerciseSelector({ show, onClose, oldExercises = [], onS
 
                 <div className={styles.folderFooter}>
                     <span style={{ marginRight: 'auto', fontSize: '0.85rem', color: '#475569', fontWeight: 700 }}>
-                        <i className="bi bi-patch-check-fill" style={{ color: '#6366f1', marginRight: '0.25rem' }}></i>
-                        Đã chọn: <strong style={{ color: '#6366f1', fontSize: '1rem' }}>{selectedIds.length}</strong> bài tập
+                        <i className="bi bi-patch-check-fill" style={{ color: '#1b2d75', marginRight: '0.25rem' }}></i>
+                        Đã chọn: <strong style={{ color: '#1b2d75', fontSize: '1rem' }}>{selectedIds.length}</strong> bài tập
                     </span>
                     <button type="button" className={styles.btnActionOutline} onClick={onClose} style={{ cursor: 'pointer' }}>Hủy bỏ</button>
                     <button 
                         type="button" 
                         className={styles.btnMiniAdd} 
                         style={{ 
-                            background: selectedIds.length === 0 ? '#cbd5e1' : '#6366f1', 
+                            background: selectedIds.length === 0 ? '#cbd5e1' : '#1b2d75',
                             color: '#ffffff', 
                             padding: '0.5rem 1.25rem',
                             cursor: selectedIds.length === 0 ? 'not-allowed' : 'pointer'

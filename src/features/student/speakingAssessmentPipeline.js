@@ -323,6 +323,18 @@ export class SpeakingAssessmentPipeline {
         this.mediaRecorder.ondataavailable = event => {
             if (event.data?.size) this.mediaChunks.push(event.data);
         };
+        this.mediaRecorder.addEventListener('stop', () => {
+            if (!this.stopping) {
+                this.fatalError = new Error(
+                    'Ghi âm đã dừng trước khi bạn kết thúc. Vui lòng ghi âm lại.'
+                );
+                this.resolveFinished();
+            }
+        }, { once: true });
+        this.mediaRecorder.addEventListener('error', () => {
+            this.fatalError = new Error('Không thể tiếp tục ghi âm. Vui lòng ghi âm lại.');
+            this.resolveFinished();
+        }, { once: true });
         this.mediaRecorder.start(250);
     }
 

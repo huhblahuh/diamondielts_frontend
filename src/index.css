@@ -1,51 +1,51 @@
 /* ── Diamond IELTS Design System ─────────────────────────────────────────── */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap');
 
 :root {
     /* Brand Colors */
-    --di-navy:   #061B5E;
-    --di-blue:   #005BFF;
-    --di-sky:    #33B6FF;
-    --di-purple: #7B3FF2;
-    --di-violet: #A855F7;
-    --di-gold:   #F7B731;
+    --di-navy:   #101d54;
+    --di-blue:   #101d54;
+    --di-sky:    #e0b762;
+    --di-purple: #1b2d75;
+    --di-violet: #4a5fb0;
+    --di-gold:   #E0B762;
 
     /* Backgrounds & Surfaces */
-    --di-bg:     #F5F9FF;
+    --di-bg:     #F4F5FA;
     --di-card:   #FFFFFF;
 
     /* Text */
-    --di-text:   #13213C;
+    --di-text:   #101d54;
     --di-muted:  #6B7A99;
-    --di-border: #DDE8F8;
+    --di-border: #fbf7ee;
 
     /* Effects */
-    --di-shadow: 0 16px 40px rgba(0, 45, 130, 0.10);
+    --di-shadow: 0 16px 40px rgba(16, 29, 84, 0.10);
     --di-radius: 22px;
 
     /* Gradients */
-    --di-grad-sidebar: linear-gradient(180deg, #061B5E 0%, #0A2472 60%, #0D2D8A 100%);
-    --di-grad-hero:    linear-gradient(120deg, #0833A2 0%, #005BFF 50%, #1A76FF 100%);
-    --di-grad-purple:  linear-gradient(135deg, #7B3FF2 0%, #A855F7 100%);
-    --di-grad-gold:    linear-gradient(135deg, #F7B731 0%, #F59E0B 100%);
-    --di-grad-blue:    linear-gradient(135deg, #005BFF 0%, #33B6FF 100%);
+    --di-grad-sidebar: linear-gradient(180deg, #101d54 0%, #101d54 60%, #101d54 100%);
+    --di-grad-hero:    linear-gradient(120deg, #101d54 0%, #101d54 50%, #1b2d75 100%);
+    --di-grad-purple:  linear-gradient(135deg, #1b2d75 0%, #4a5fb0 100%);
+    --di-grad-gold:    linear-gradient(180deg, #F8DD85 0%, #E2B55A 100%);
+    --di-grad-blue:    linear-gradient(135deg, #101d54 0%, #1b2d75 100%);
 
     /* Legacy aliases for backward compat */
-    --primary:       #005BFF;
-    --primary-dark:  #061B5E;
-    --accent:        #33B6FF;
-    --bg-main:       #F5F9FF;
-    --text-main:     #13213C;
+    --primary:       #101d54;
+    --primary-dark:  #101d54;
+    --accent:        #e0b762;
+    --bg-main:       #F4F5FA;
+    --text-main:     #101d54;
     --text-muted:    #6B7A99;
     --card-bg:       #FFFFFF;
-    --border-color:  #DDE8F8;
+    --border-color:  #fbf7ee;
 }
 
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
+    font-family: 'Be Vietnam Pro', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
 }
 
 body {
@@ -100,7 +100,7 @@ body {
     width: 2rem;
     height: 2rem;
     vertical-align: -0.125em;
-    border: 3px solid rgba(0, 91, 255, 0.15);
+    border: 3px solid rgba(16, 29, 84, 0.15);
     border-right-color: transparent;
     border-radius: 50%;
     animation: spinner-border-anim 0.75s linear infinite !important;

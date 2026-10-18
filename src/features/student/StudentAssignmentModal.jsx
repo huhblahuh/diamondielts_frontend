@@ -421,7 +421,7 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
                     confirmButtonText: 'Cấp quyền & Thử lại',
                     showCancelButton: true,
                     cancelButtonText: 'Đóng',
-                    confirmButtonColor: '#4f46e5'
+                    confirmButtonColor: '#101d54'
                 }).then((result) => {
                     if (result.isConfirmed) {
                         navigator.mediaDevices.getUserMedia({ audio: true })
@@ -476,7 +476,10 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
             console.error(err);
             assessmentPipelineRef.current = null;
             setSpeakingStatus(prev => ({ ...prev, [itemId]: 'idle' }));
-            showToastError('Không thể xử lý bài nói. Vui lòng thử lại.');
+            const recordingError = /Ghi âm đã dừng|Không thể tiếp tục ghi âm/.test(err?.message || '')
+                ? err.message
+                : 'Không thể xử lý bài nói. Vui lòng thử lại.';
+            showToastError(recordingError);
         }
     };
 

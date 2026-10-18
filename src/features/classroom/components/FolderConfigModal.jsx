@@ -244,18 +244,18 @@ export default function FolderConfigModal({ show, onClose, assignmentId, classId
         ], null, 2);
 
         const { value: importedItems } = await Swal.fire({
-            title: '<div style="display:flex;align-items:center;justify-content:center;gap:.5rem;font-size:1.2rem;font-weight:700;color:#0f172a"><i class="bi bi-code-square" style="color:#6366f1"></i> Nhập bài tập bằng Script</div>',
+            title: '<div style="display:flex;align-items:center;justify-content:center;gap:.5rem;font-size:1.2rem;font-weight:700;color:#101d54"><i class="bi bi-code-square" style="color:#1b2d75"></i> Nhập bài tập bằng Script</div>',
             html: `
                 <div style="text-align:left;margin-top:.5rem">
                     <div style="display:flex;justify-content:space-between;align-items:center;gap:.75rem;margin-bottom:.5rem">
                         <span style="font-size:.85rem;font-weight:600;color:#475569">Dán mảng JSON bài tập bên dưới:</span>
-                        <button id="folder-script-sample" type="button" style="background:#e0e7ff;color:#4338ca;border:0;padding:.35rem .75rem;border-radius:6px;font-size:.78rem;font-weight:600;cursor:pointer;white-space:nowrap">
+                        <button id="folder-script-sample" type="button" style="background:#f6e6b8;color:#101d54;border:0;padding:.35rem .75rem;border-radius:6px;font-size:.78rem;font-weight:600;cursor:pointer;white-space:nowrap">
                             <i class="bi bi-magic"></i> Chèn JSON mẫu
                         </button>
                     </div>
-                    <textarea id="folder-script-input" rows="13" spellcheck="false" style="width:100%;box-sizing:border-box;font-family:Consolas,Monaco,'Courier New',monospace;font-size:.82rem;padding:.75rem;border-radius:8px;border:1px solid #cbd5e1;background:#0f172a;color:#38bdf8;outline:none;line-height:1.45" placeholder='[{ "Type": "Part 2", "Question": "...", "Suggestions": ["..."], "MaxAttempts": 3 }]'></textarea>
+                    <textarea id="folder-script-input" rows="13" spellcheck="false" style="width:100%;box-sizing:border-box;font-family:Consolas,Monaco,'Courier New',monospace;font-size:.82rem;padding:.75rem;border-radius:8px;border:1px solid #cbd5e1;background:#101d54;color:#2a3f94;outline:none;line-height:1.45" placeholder='[{ "Type": "Part 2", "Question": "...", "Suggestions": ["..."], "MaxAttempts": 3 }]'></textarea>
                     <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:.75rem;margin-top:.75rem;font-size:.8rem;color:#475569">
-                        <div style="font-weight:700;color:#1e293b;margin-bottom:.35rem"><i class="bi bi-info-circle-fill" style="color:#6366f1"></i> Cấu trúc hỗ trợ</div>
+                        <div style="font-weight:700;color:#1e293b;margin-bottom:.35rem"><i class="bi bi-info-circle-fill" style="color:#1b2d75"></i> Cấu trúc hỗ trợ</div>
                         <ul style="margin:0;padding-left:1.2rem;display:grid;gap:.2rem">
                             <li><strong>Type:</strong> Part 1, Part 2 hoặc Part 3</li>
                             <li><strong>Question:</strong> nội dung đề bài, không được trống</li>
@@ -269,7 +269,7 @@ export default function FolderConfigModal({ show, onClose, assignmentId, classId
             showCancelButton: true,
             confirmButtonText: 'Thêm vào thư mục',
             cancelButtonText: 'Hủy bỏ',
-            confirmButtonColor: '#6366f1',
+            confirmButtonColor: '#1b2d75',
             cancelButtonColor: '#94a3b8',
             didOpen: () => {
                 const sampleButton = document.getElementById('folder-script-sample');
@@ -373,7 +373,7 @@ export default function FolderConfigModal({ show, onClose, assignmentId, classId
                 text: 'Bạn có bài tập đang được tạo nhưng chưa thêm vào thư mục. Bạn có muốn tiếp tục lưu và tự động thêm bài tập này không?',
                 icon: 'warning',
                 showCancelButton: true,
-                confirmButtonColor: '#2563eb',
+                confirmButtonColor: '#101d54',
                 cancelButtonColor: '#64748b',
                 confirmButtonText: 'Tiếp tục',
                 cancelButtonText: 'Hủy'
@@ -392,7 +392,7 @@ export default function FolderConfigModal({ show, onClose, assignmentId, classId
                         icon: 'warning',
                         title: 'Chú ý',
                         text: 'Nội dung bài tập đang soạn thảo trống. Vui lòng nhập nội dung đề bài trước khi lưu!',
-                        confirmButtonColor: '#3b82f6'
+                        confirmButtonColor: '#2a3f94'
                     });
                     return;
                 }
@@ -529,7 +529,7 @@ export default function FolderConfigModal({ show, onClose, assignmentId, classId
                 text: 'Bài tập bạn đang soạn chưa được thêm vào thư mục. Bấm "Lưu" để tự động thêm bài và lưu thư mục lại, hoặc "Hủy bỏ" để thoát không lưu.',
                 icon: 'question',
                 showCancelButton: true,
-                confirmButtonColor: '#2563eb',
+                confirmButtonColor: '#101d54',
                 cancelButtonColor: '#64748b',
                 confirmButtonText: 'Lưu',
                 cancelButtonText: 'Hủy bỏ'
@@ -550,7 +550,7 @@ export default function FolderConfigModal({ show, onClose, assignmentId, classId
                         icon: 'warning',
                         title: 'Chú ý',
                         text: 'Nội dung bài tập đang soạn thảo trống. Vui lòng nhập nội dung đề bài trước khi lưu!',
-                        confirmButtonColor: '#3b82f6'
+                        confirmButtonColor: '#2a3f94'
                     });
                 }
             } else {
@@ -572,7 +572,7 @@ export default function FolderConfigModal({ show, onClose, assignmentId, classId
                     <button className={styles.btnClose} onClick={handleClose}>&times;</button>
                 </div>
 
-                {loading && <div style={{ textAlign: 'center', padding: '2rem', color: '#6366f1', fontWeight: 600 }}>Đang nạp dữ liệu cấu hình...</div>}
+                {loading && <div style={{ textAlign: 'center', padding: '2rem', color: '#1b2d75', fontWeight: 600 }}>Đang nạp dữ liệu cấu hình...</div>}
 
                 {!loading && (
                     <div className={styles.folderBody}>
@@ -653,7 +653,7 @@ export default function FolderConfigModal({ show, onClose, assignmentId, classId
                         <div className={styles.folderTasksSection}>
                             <div className={styles.folderTasksTitle}>
                                 <span>
-                                    <i className="bi bi-collection-fill" style={{ color: '#6366f1', marginRight: '0.35rem' }}></i>
+                                    <i className="bi bi-collection-fill" style={{ color: '#1b2d75', marginRight: '0.35rem' }}></i>
                                     Các bài tập bên trong thư mục ({folderItems.length})
                                 </span>
                                 <div className={styles.folderActionBtns}>
@@ -837,7 +837,7 @@ export default function FolderConfigModal({ show, onClose, assignmentId, classId
                                 <button
                                     type="button"
                                     className={styles.btnMiniAdd}
-                                    style={{ background: '#2563eb', padding: '0.5rem 1.25rem' }}
+                                    style={{ background: '#101d54', padding: '0.5rem 1.25rem' }}
                                     onClick={() => saveFolder(true)}
                                 >
                                     <i className="bi bi-send-check-fill" style={{ marginRight: '0.35rem' }}></i>
@@ -858,7 +858,7 @@ export default function FolderConfigModal({ show, onClose, assignmentId, classId
                                 <button
                                     type="button"
                                     className={styles.btnMiniAdd}
-                                    style={{ background: '#6366f1', padding: '0.5rem 1.25rem' }}
+                                    style={{ background: '#1b2d75', padding: '0.5rem 1.25rem' }}
                                     onClick={() => saveFolder(true)}
                                 >
                                     <i className="bi bi-send-fill" style={{ marginRight: '0.35rem' }}></i>

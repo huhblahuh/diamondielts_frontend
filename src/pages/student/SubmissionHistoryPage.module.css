@@ -21,7 +21,7 @@
    ───────────────────────────────────────────────────────────── */
 .heroBanner {
     min-height: 110px;
-    background: linear-gradient(135deg, #1877f2 0%, #1e60eb 45%, #2563eb 80%, #1d4ed8 100%);
+    background: linear-gradient(135deg, #101d54 0%, #2a3f94 45%, #101d54 80%, #101d54 100%);
     border-radius: var(--di-radius, 22px);
     padding: 1.25rem 2rem;
     color: #ffffff;
@@ -31,7 +31,7 @@
     position: relative;
     overflow: hidden;
     margin-bottom: 1.5rem;
-    box-shadow: 0 12px 40px rgba(0, 91, 255, 0.15);
+    box-shadow: 0 12px 40px rgba(16, 29, 84, 0.15);
     border: 1px solid rgba(255, 255, 255, 0.12);
     box-sizing: border-box;
 }
@@ -143,15 +143,15 @@
 }
 
 .tabActive {
-    background: #3b5bfd !important;
-    border-color: #3b5bfd !important;
+    background: #1b2d75 !important;
+    border-color: #1b2d75 !important;
     color: #ffffff !important;
-    box-shadow: 0 4px 12px rgba(59, 91, 253, 0.25);
+    box-shadow: 0 4px 12px rgba(111, 128, 196, 0.25);
 }
 
 .tabActive:hover {
-    background: #304ee0 !important;
-    border-color: #304ee0 !important;
+    background: #2a3f94 !important;
+    border-color: #2a3f94 !important;
     color: #ffffff !important;
 }
 
@@ -190,8 +190,8 @@
 }
 
 .searchInput:focus {
-    border-color: #3b5bfd;
-    box-shadow: 0 0 0 3px rgba(59, 91, 253, 0.12);
+    border-color: #1b2d75;
+    box-shadow: 0 0 0 3px rgba(111, 128, 196, 0.12);
 }
 
 .searchInput::placeholder {
@@ -246,9 +246,9 @@
 }
 
 .dateActive {
-    border-color: #3b5bfd;
-    color: #3b5bfd;
-    background: #f0f4ff;
+    border-color: #1b2d75;
+    color: #1b2d75;
+    background: #fbf7ee;
 }
 
 .dateLabel {
@@ -305,8 +305,8 @@
 }
 
 .dateMenuItemActive {
-    background: #eff6ff;
-    color: #2563eb;
+    background: #fbf6e9;
+    color: #101d54;
     font-weight: 600;
 }
 
@@ -366,7 +366,7 @@
 }
 
 .table tbody tr:hover {
-    background-color: #f8faff;
+    background-color: #fbf7ee;
 }
 
 .colIndex {
@@ -462,8 +462,8 @@
 }
 
 .statusPending {
-    background-color: #e0f2fe;
-    color: #0284c7;
+    background-color: #fbf3de;
+    color: #1b2d75;
 }
 
 .colScore {
@@ -506,8 +506,8 @@
     gap: 5px;
     padding: 0.45rem 0.95rem;
     border-radius: 10px;
-    background-color: #eff6ff;
-    color: #2563eb;
+    background-color: #fbf6e9;
+    color: #101d54;
     border: none;
     font-size: 0.82rem;
     font-weight: 600;
@@ -516,8 +516,8 @@
 }
 
 .btnView:hover {
-    background-color: #dbeafe;
-    color: #1d4ed8;
+    background-color: #f6e6b8;
+    color: #101d54;
     transform: translateY(-1px);
 }
 
@@ -612,11 +612,11 @@
 }
 
 .pageNumberActive {
-    background: #3b5bfd !important;
-    border-color: #3b5bfd !important;
+    background: #1b2d75 !important;
+    border-color: #1b2d75 !important;
     color: #ffffff !important;
     font-weight: 700 !important;
-    box-shadow: 0 2px 8px rgba(59, 91, 253, 0.25);
+    box-shadow: 0 2px 8px rgba(111, 128, 196, 0.25);
 }
 
 .paginationEllipsis {
@@ -641,7 +641,7 @@
     width: 38px;
     height: 38px;
     border: 3px solid #e2e8f0;
-    border-top-color: #3b5bfd;
+    border-top-color: #1b2d75;
     border-radius: 50%;
     animation: spin 0.7s linear infinite;
 }
@@ -715,7 +715,7 @@
 
 .btnBack {
     background: #ffffff;
-    color: #3b5bfd;
+    color: #1b2d75;
     border: 1px solid #e2e8f0;
     padding: 0.55rem 1.1rem;
     border-radius: 10px;
@@ -761,7 +761,7 @@
 @media (max-width: 768px) {
     .container {
         padding: 0;
-        background: #f4f9ff;
+        background: #fbf7ee;
         min-height: 100vh;
     }
 
@@ -918,7 +918,7 @@
 
     .mobileCard:active {
         transform: scale(0.99);
-        background: #f8faff;
+        background: #fbf7ee;
     }
 
     .mobileAvatar {
@@ -945,7 +945,7 @@
     .mobileCardTitle {
         font-weight: 700;
         font-size: 1rem;
-        color: #101d4f;
+        color: #101d54;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -972,8 +972,8 @@
     }
 
     .mobileSkillSpeaking {
-        color: #1261e8;
-        background: #eaf2ff;
+        color: #2a3f94;
+        background: #fbf6e9;
     }
 
     .mobileSkillFile {
@@ -1045,7 +1045,7 @@
         margin-bottom: 0.85rem;
         border-radius: 14px;
         border: 1px solid #edf2f7;
-        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+        box-shadow: 0 2px 8px rgba(16, 29, 84, 0.04);
         backdrop-filter: blur(10px);
     }
 
@@ -1091,7 +1091,7 @@
         overflow-x: hidden;
         min-height: calc(100dvh - 76px);
         padding: 0 0 2rem;
-        background: #f8fbff;
+        background: #fbf7ee;
     }
 
     /* Long, smooth color blend extending down the page */
@@ -1103,12 +1103,12 @@
         right: 0;
         height: 340px;
         background: linear-gradient(180deg,
-            #061b5e 0%,
-            #0a2f8a 100px,
-            rgba(24, 119, 242, 0.75) 170px,
-            rgba(24, 119, 242, 0.35) 240px,
-            rgba(248, 251, 255, 0.1) 300px,
-            #f8fbff 340px
+            #101d54 0%,
+            #101d54 100px,
+            rgba(42, 63, 148, 0.75) 170px,
+            rgba(42, 63, 148, 0.35) 240px,
+            rgba(251, 247, 238, 0.1) 300px,
+            #fbf7ee 340px
         );
         pointer-events: none;
         z-index: 0;
@@ -1210,7 +1210,7 @@
         padding: 0 2.45rem 0 3.1rem;
         border-color: #dbe6f5;
         border-radius: 14px;
-        color: #1a2e57;
+        color: #101d54;
         background: rgba(255, 255, 255, 0.58);
         font-size: 0.92rem;
         box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.8);
@@ -1233,13 +1233,13 @@
         color: #536483;
         background: rgba(255, 255, 255, 0.82);
         font-size: 1.35rem;
-        box-shadow: 0 8px 22px rgba(20, 61, 120, 0.06);
+        box-shadow: 0 8px 22px rgba(16, 29, 84, 0.06);
     }
 
     .dateActive {
-        color: #0b5ff5;
-        border-color: #bad2ff;
-        background: #f7faff;
+        color: #2a3f94;
+        border-color: #cfd6ee;
+        background: #fbf7ee;
     }
 
     .dateMenu {
@@ -1252,7 +1252,7 @@
         border-color: #dce7f6;
         border-radius: 15px;
         background: rgba(255, 255, 255, 0.97);
-        box-shadow: 0 18px 45px rgba(24, 58, 110, 0.18);
+        box-shadow: 0 18px 45px rgba(16, 29, 84, 0.18);
         backdrop-filter: blur(18px);
     }
 
@@ -1294,8 +1294,8 @@
     }
 
     .dateMenuItemActive {
-        color: #075ce8;
-        background: #eef5ff;
+        color: #2a3f94;
+        background: #fbf6e9;
         font-weight: 700;
     }
 
@@ -1312,7 +1312,7 @@
         border-color: rgba(220, 231, 246, 0.75);
         border-radius: 18px;
         background: rgba(255, 255, 255, 0.92);
-        box-shadow: 0 12px 34px rgba(62, 106, 169, 0.09);
+        box-shadow: 0 12px 34px rgba(42, 63, 148, 0.09);
         backdrop-filter: blur(16px);
     }
 
@@ -1325,7 +1325,7 @@
     }
 
     .mobileCardTitle {
-        color: #071b4d;
+        color: #101d54;
         font-size: clamp(0.95rem, 4.2vw, 1.08rem);
         font-weight: 800;
         letter-spacing: -0.025em;
@@ -1372,8 +1372,8 @@
         display: grid;
         place-items: center;
         border-radius: 50%;
-        color: #0764f7;
-        background: linear-gradient(135deg, #eef5ff, #e4efff);
+        color: #2a3f94;
+        background: linear-gradient(135deg, #fbf6e9, #fbf7ee);
         font-size: 1rem;
     }
 
@@ -1458,7 +1458,7 @@
         padding: 1rem 5rem 1rem 1rem;
         border-radius: 16px;
         background: #fff;
-        box-shadow: 0 5px 16px rgba(62, 106, 169, 0.08);
+        box-shadow: 0 5px 16px rgba(42, 63, 148, 0.08);
         backdrop-filter: none;
     }
 
@@ -1474,4 +1474,36 @@
         width: 34px;
         height: 34px;
     }
+}
+
+/* ══ Diamonds IELTS skin ════════════════════════════════════════════════ */
+:global(body.dk-mode-scene) .container { background: transparent; }
+:global(body.dk-mode-scene) .container::before { display: none; }
+:global(body.dk-mode-scene) .heroBanner {
+  background: var(--dsk-glass);
+  -webkit-backdrop-filter: blur(16px) saturate(1.5);
+  backdrop-filter: blur(16px) saturate(1.5);
+  border: 1px solid var(--dsk-glass-line);
+  box-shadow: var(--dsk-glass-shadow);
+}
+:global(body.dk-mode-scene) .mainCard,
+:global(body.dk-mode-scene) .mobileCard,
+:global(body.dk-mode-scene) .paginationBar {
+  background: var(--dsk-frost);
+  border-color: var(--dsk-frost-line);
+  box-shadow: var(--dsk-frost-shadow);
+}
+:global(body.dk-mode-scene) .detailWrapper {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+@media (max-width: 768px) {
+  :global(body.dk-mode-scene) .heroBanner { margin: 0 .65rem .75rem; border-radius: 20px; }
+  .mainCard {
+    margin-inline: .65rem;
+    padding: .65rem .8rem 2.5rem;
+    border-radius: 20px;
+  }
+  .filterRow { padding-top: .3rem; }
 }

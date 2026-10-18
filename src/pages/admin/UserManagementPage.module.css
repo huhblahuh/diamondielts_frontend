@@ -21,7 +21,7 @@
 .header h3 {
     font-size: 1.5rem;
     font-weight: 700;
-    color: #0f172a;
+    color: #101d54;
     margin-bottom: 0.25rem;
 }
 
@@ -38,8 +38,8 @@
 
 .btnImportExcel {
     background: #ffffff;
-    color: #4f46e5;
-    border: 1px solid #c7d2fe;
+    color: #101d54;
+    border: 1px solid #ecd49a;
     padding: 0.625rem 1.25rem;
     border-radius: 8px;
     font-weight: 600;
@@ -52,12 +52,12 @@
 }
 
 .btnImportExcel:hover {
-    background: #eef2ff;
-    border-color: #818cf8;
+    background: #fbf3de;
+    border-color: #6f80c4;
 }
 
 .btnAddUser {
-    background: linear-gradient(135deg, #4f46e5, #6366f1);
+    background: linear-gradient(135deg, #101d54, #1b2d75);
     color: white;
     border: none;
     padding: 0.625rem 1.25rem;
@@ -68,14 +68,14 @@
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2), 0 2px 4px -1px rgba(79, 70, 229, 0.1);
+    box-shadow: 0 4px 6px -1px rgba(16, 29, 84, 0.2), 0 2px 4px -1px rgba(16, 29, 84, 0.1);
     transition: all 0.2s;
 }
 
 .btnAddUser:hover {
-    background: linear-gradient(135deg, #4338ca, #4f46e5);
+    background: linear-gradient(135deg, #101d54, #101d54);
     transform: translateY(-1px);
-    box-shadow: 0 6px 12px -2px rgba(79, 70, 229, 0.3);
+    box-shadow: 0 6px 12px -2px rgba(16, 29, 84, 0.3);
 }
 
 .btnAddUser:active {
@@ -131,8 +131,8 @@
 
 .searchInput:focus {
     background: #ffffff;
-    border-color: #6366f1;
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+    border-color: #1b2d75;
+    box-shadow: 0 0 0 3px rgba(27, 45, 117, 0.15);
 }
 
 .filters {
@@ -154,7 +154,7 @@
 }
 
 .select:focus {
-    border-color: #6366f1;
+    border-color: #1b2d75;
 }
 
 .btnReset {
@@ -174,7 +174,7 @@
 
 .btnReset:hover {
     background: #e2e8f0;
-    color: #0f172a;
+    color: #101d54;
 }
 
 /* Table Panel */
@@ -245,7 +245,7 @@
 }
 
 .badgeStudent {
-    background: linear-gradient(135deg, #3b82f6, #60a5fa);
+    background: linear-gradient(135deg, #2a3f94, #6f80c4);
 }
 
 .badgeTeacher {
@@ -253,12 +253,12 @@
 }
 
 .badgeAdmin {
-    background: linear-gradient(135deg, #7c3aed, #a78bfa);
+    background: linear-gradient(135deg, #1b2d75, #cfd6ee);
 }
 
 .fullNameText {
     font-weight: 600;
-    color: #0f172a;
+    color: #101d54;
 }
 
 .roleBadge {
@@ -296,13 +296,13 @@
 }
 
 .btnEdit {
-    background-color: #eff6ff;
-    color: #2563eb;
+    background-color: #fbf6e9;
+    color: #101d54;
 }
 
 .btnEdit:hover {
-    background-color: #dbeafe;
-    color: #1d4ed8;
+    background-color: #f6e6b8;
+    color: #101d54;
 }
 
 .btnDelete {
@@ -322,7 +322,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(15, 23, 42, 0.4);
+    background-color: rgba(16, 29, 84, 0.4);
     backdrop-filter: blur(4px);
     display: flex;
     align-items: center;
@@ -363,7 +363,7 @@
 .modalHeader h4 {
     font-size: 1.125rem;
     font-weight: 700;
-    color: #0f172a;
+    color: #101d54;
     margin: 0;
 }
 
@@ -430,14 +430,14 @@
     border-radius: 8px;
     padding: 0.625rem 0.75rem;
     font-size: 0.875rem;
-    color: #0f172a;
+    color: #101d54;
     outline: none;
     transition: all 0.15s;
 }
 
 .formGroup input:focus, .formGroup select:focus {
-    border-color: #6366f1;
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+    border-color: #1b2d75;
+    box-shadow: 0 0 0 3px rgba(27, 45, 117, 0.15);
 }
 
 .classCell {
@@ -470,7 +470,7 @@
 }
 
 .classOption:hover {
-    background: #eef2ff;
+    background: #fbf3de;
 }
 
 .classOption input {
@@ -519,11 +519,11 @@
 
 .btnCancel:hover {
     background: #f1f5f9;
-    color: #0f172a;
+    color: #101d54;
 }
 
 .btnSave {
-    background: linear-gradient(135deg, #4f46e5, #6366f1);
+    background: linear-gradient(135deg, #101d54, #1b2d75);
     color: white;
     border: none;
     padding: 0.625rem 1.5rem;
@@ -531,12 +531,12 @@
     font-weight: 600;
     font-size: 0.875rem;
     cursor: pointer;
-    box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2);
+    box-shadow: 0 4px 6px -1px rgba(16, 29, 84, 0.2);
     transition: all 0.2s;
 }
 
 .btnSave:hover {
-    background: linear-gradient(135deg, #4338ca, #4f46e5);
+    background: linear-gradient(135deg, #101d54, #101d54);
 }
 
 .btnSave:disabled {
@@ -561,9 +561,9 @@
     align-items: center;
     gap: 0.75rem 1rem;
     padding: 1rem;
-    border: 1px dashed #a5b4fc;
+    border: 1px dashed #cfd6ee;
     border-radius: 10px;
-    background: #f8faff;
+    background: #fbf7ee;
 }
 
 .excelUploadBox > i {
@@ -593,10 +593,10 @@
 .btnTemplate {
     grid-column: 3;
     grid-row: 1 / span 2;
-    border: 1px solid #c7d2fe;
+    border: 1px solid #ecd49a;
     border-radius: 8px;
     background: #ffffff;
-    color: #4338ca;
+    color: #101d54;
     padding: 0.55rem 0.8rem;
     font-size: 0.78rem;
     font-weight: 600;
@@ -694,9 +694,9 @@
 }
 
 .btnPreview {
-    background: #eef2ff;
-    border: 1px solid #c7d2fe;
-    color: #4338ca;
+    background: #fbf3de;
+    border: 1px solid #ecd49a;
+    color: #101d54;
     padding: 0.625rem 1.25rem;
     border-radius: 8px;
     font-weight: 600;

@@ -15,7 +15,7 @@ ChartJS.register(
     LinearScale, LineElement, PointElement, Tooltip,
 );
 
-const BAND_COLORS = ['#d9e9ff', '#b8d3ff', '#8bb6fb', '#5c90ee', '#3268d9', '#173f9e', '#199bb1'];
+const BAND_COLORS = ['#fbf7ee', '#cfd6ee', '#cfd6ee', '#6f80c4', '#2a3f94', '#1b2d75', '#199bb1'];
 
 function toDateInput(date) {
     const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);

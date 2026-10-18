@@ -113,8 +113,8 @@ export default function ExerciseBankModal({ exercises, onClose, onSelect }) {
                                         alignItems: 'center',
                                         gap: '1rem',
                                         padding: '0.75rem 1rem',
-                                        background: isChecked ? '#f5f3ff' : '#ffffff',
-                                        border: isChecked ? '1px solid #6366f1' : '1px solid #e2e8f0',
+                                        background: isChecked ? '#fbf6e9' : '#ffffff',
+                                        border: isChecked ? '1px solid #1b2d75' : '1px solid #e2e8f0',
                                         borderRadius: '8px',
                                         cursor: 'pointer',
                                         transition: 'all 0.15s'
@@ -129,8 +129,8 @@ export default function ExerciseBankModal({ exercises, onClose, onSelect }) {
                                     />
                                     <div style={{ flex: 1 }}>
                                         <span style={{
-                                            background: ex.skillType === 'SPEAKING' ? '#fee2e2' : '#e0e7ff',
-                                            color: ex.skillType === 'SPEAKING' ? '#ef4444' : '#6366f1',
+                                            background: ex.skillType === 'SPEAKING' ? '#fee2e2' : '#f6e6b8',
+                                            color: ex.skillType === 'SPEAKING' ? '#ef4444' : '#1b2d75',
                                             padding: '0.15rem 0.4rem',
                                             borderRadius: '4px',
                                             fontSize: '0.7rem',
@@ -216,7 +216,7 @@ export default function ExerciseBankModal({ exercises, onClose, onSelect }) {
                             disabled={selectedList.length === 0}
                             style={{
                                 padding: '0.5rem 1.25rem',
-                                background: '#6366f1',
+                                background: '#1b2d75',
                                 border: 'none',
                                 borderRadius: '8px',
                                 fontSize: '0.85rem',

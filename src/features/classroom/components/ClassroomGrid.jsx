@@ -7,7 +7,7 @@ export default function ClassroomGrid({ classes = [], onSelect, onCreate, onEdit
             <div className={styles.header}>
                 <div>
                     <h3 className={styles.title}>
-                        <i className="bi bi-mortarboard-fill" style={{ color: '#6366f1', marginRight: '0.75rem' }}></i>
+                        <i className="bi bi-mortarboard-fill" style={{ color: '#1b2d75', marginRight: '0.75rem' }}></i>
                         Quản lý lớp học
                     </h3>
                 </div>

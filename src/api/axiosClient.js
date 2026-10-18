@@ -1,8 +1,6 @@
 import axios from 'axios';
 
-// Default to the current origin. During development Vite proxies /api to the
-// local ASP.NET backend; deployments can still override this with VITE_API_URL.
-const API_URL = import.meta.env.VITE_API_URL || '/api';
+const API_URL = 'https://api.diamondielts.com/api';
 
 const axiosClient = axios.create({
     baseURL: API_URL,

@@ -21,7 +21,7 @@
 .title {
     font-size: 1.6rem;
     font-weight: 800;
-    color: #0f172a;
+    color: #101d54;
     letter-spacing: -0.025em;
     display: flex;
     align-items: center;
@@ -37,14 +37,14 @@
 }
 
 .highlightCount {
-    background: #eef2ff;
-    color: #4f46e5;
+    background: #fbf3de;
+    color: #101d54;
     padding: 0.125rem 0.5rem;
     border-radius: 9999px;
     font-weight: 700;
     font-size: 0.85rem;
     display: inline-block;
-    border: 1px solid #e0e7ff;
+    border: 1px solid #f6e6b8;
 }
 
 /* Class Grid */
@@ -67,7 +67,7 @@
 .classCard:hover {
     transform: translateY(-4px);
     box-shadow: 0 12px 24px rgba(0,0,0,0.06);
-    border-color: #6366f1;
+    border-color: #1b2d75;
 }
 
 .classHeader {
@@ -84,12 +84,12 @@
 
 .classCard:hover .classHeader i {
     transform: translateX(4px);
-    color: #6366f1;
+    color: #1b2d75;
 }
 
 .levelBadge {
-    background: #eff6ff;
-    color: #2563eb;
+    background: #fbf6e9;
+    color: #101d54;
     font-size: 0.7rem;
     font-weight: 700;
     padding: 0.25rem 0.75rem;
@@ -135,7 +135,7 @@
 
 .progressFill {
     height: 100%;
-    background: linear-gradient(90deg, #6366f1, #06b6d4);
+    background: linear-gradient(90deg, #1b2d75, #06b6d4);
     border-radius: 3px;
 }
 
@@ -169,7 +169,7 @@
 .btnBack:hover { color: #1e293b; }
 
 .btnDeadline {
-    background: linear-gradient(135deg, #6366f1, #4f46e5);
+    background: linear-gradient(135deg, #1b2d75, #101d54);
     color: white;
     border: none;
     padding: 0.6rem 1.25rem;
@@ -180,10 +180,10 @@
     align-items: center;
     gap: 0.5rem;
     cursor: pointer;
-    box-shadow: 0 4px 12px rgba(99,102,241,0.2);
+    box-shadow: 0 4px 12px rgba(27, 45, 117,0.2);
 }
 
-.btnDeadline:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(99,102,241,0.3); }
+.btnDeadline:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(27, 45, 117,0.3); }
 
 /* Tab Switcher styling */
 .tabSwitcher {
@@ -303,8 +303,8 @@
 
 .tableSearch:focus-within {
     background: #ffffff;
-    border-color: #818cf8;
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+    border-color: #6f80c4;
+    box-shadow: 0 0 0 3px rgba(27, 45, 117, 0.12);
 }
 
 .tableSearch input {
@@ -400,9 +400,9 @@
     overflow: hidden;
     border: 2px solid #ffffff;
     border-radius: 50%;
-    background: linear-gradient(135deg, #e0e7ff, #dbeafe);
+    background: linear-gradient(135deg, #f6e6b8, #f6e6b8);
     box-shadow: 0 0 0 1px #e2e8f0;
-    color: #4338ca;
+    color: #101d54;
     font-size: 0.72rem;
     font-weight: 800;
     letter-spacing: 0.02em;
@@ -447,7 +447,7 @@
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: rgba(15, 23, 42, 0.4);
+    background: rgba(16, 29, 84, 0.4);
     backdrop-filter: blur(4px);
     z-index: 9999;
     display: flex;
@@ -543,8 +543,8 @@
 
 .typeCard:hover {
     background: #ffffff;
-    border-color: #6366f1;
-    box-shadow: 0 4px 12px rgba(99,102,241,0.1);
+    border-color: #1b2d75;
+    box-shadow: 0 4px 12px rgba(27, 45, 117,0.1);
     transform: translateY(-2px);
 }
 
@@ -559,7 +559,7 @@
     flex-shrink: 0;
 }
 
-.iconLib { background: #eff6ff; color: #2563eb; }
+.iconLib { background: #fbf6e9; color: #101d54; }
 .iconMic { background: #fdf2f8; color: #db2777; }
 .iconFile { background: #ecfdf5; color: #10b981; }
 
@@ -592,8 +592,8 @@
 
 .btnUserAdd:hover {
     background: #f8fafc;
-    border-color: #6366f1;
-    color: #6366f1;
+    border-color: #1b2d75;
+    color: #1b2d75;
 }
 
 .userListScroll {
@@ -618,8 +618,8 @@
 }
 
 .memberSearch:focus-within {
-    border-color: #6366f1;
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+    border-color: #1b2d75;
+    box-shadow: 0 0 0 3px rgba(27, 45, 117, 0.12);
 }
 
 .memberSearch input {
@@ -652,15 +652,15 @@
 }
 
 .memberFilters button:hover {
-    border-color: #a5b4fc;
-    color: #4f46e5;
+    border-color: #cfd6ee;
+    color: #101d54;
 }
 
 .memberFilters .memberFilterActive {
-    border-color: #4f46e5;
+    border-color: #101d54;
     color: #fff;
-    background: #4f46e5;
-    box-shadow: 0 3px 8px rgba(79, 70, 229, 0.2);
+    background: #101d54;
+    box-shadow: 0 3px 8px rgba(16, 29, 84, 0.2);
 }
 
 .memberSelectionBar {
@@ -689,7 +689,7 @@
 .memberCheckbox {
     width: 17px;
     height: 17px;
-    accent-color: #4f46e5;
+    accent-color: #101d54;
     cursor: pointer;
 }
 
@@ -713,12 +713,12 @@
 }
 
 .userItemSelected {
-    background: #eef2ff;
-    box-shadow: inset 3px 0 #4f46e5;
+    background: #fbf3de;
+    box-shadow: inset 3px 0 #101d54;
 }
 
 .userItemSelected:hover {
-    background: #e9edff;
+    background: #fbf7ee;
 }
 
 .memberAvatar {
@@ -727,8 +727,8 @@
     display: grid;
     place-items: center;
     border-radius: 50%;
-    color: #4338ca;
-    background: #e0e7ff;
+    color: #101d54;
+    background: #f6e6b8;
     font-size: 0.8rem;
     font-weight: 800;
 }
@@ -766,8 +766,8 @@
 }
 
 .studentRoleBadge {
-    color: #0369a1;
-    background: #e0f2fe;
+    color: #1b2d75;
+    background: #fbf3de;
 }
 
 .teacherRoleBadge {
@@ -827,15 +827,15 @@
     display: inline-flex;
     align-items: center;
     gap: 0.45rem;
-    border: 1px solid #4f46e5;
+    border: 1px solid #101d54;
     color: #fff;
-    background: #4f46e5;
-    box-shadow: 0 4px 10px rgba(79, 70, 229, 0.2);
+    background: #101d54;
+    box-shadow: 0 4px 10px rgba(16, 29, 84, 0.2);
 }
 
 .btnMemberSubmit:hover:not(:disabled) {
-    border-color: #4338ca;
-    background: #4338ca;
+    border-color: #101d54;
+    background: #101d54;
 }
 
 .btnMemberSubmit:disabled,
@@ -886,7 +886,7 @@
 }
 
 .btnMiniAdd {
-    background: #4f46e5;
+    background: #101d54;
     color: white;
     border: none;
     padding: 0.4rem 0.8rem;
@@ -898,7 +898,7 @@
 }
 
 .btnMiniAdd:hover {
-    background: #4338ca;
+    background: #101d54;
     transform: translateY(-1px);
 }
 
@@ -927,7 +927,7 @@
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: rgba(15, 23, 42, 0.45);
+    background: rgba(16, 29, 84, 0.45);
     backdrop-filter: blur(5px);
     z-index: 9999;
     display: flex;
@@ -985,7 +985,7 @@
 }
 
 .folderInput:focus {
-    border-color: #6366f1;
+    border-color: #1b2d75;
 }
 
 .folderTextarea {
@@ -1000,7 +1000,7 @@
 }
 
 .folderTextarea:focus {
-    border-color: #6366f1;
+    border-color: #1b2d75;
 }
 
 .folderTasksSection {
@@ -1100,10 +1100,10 @@
     align-items: center;
     gap: 0.4rem;
     padding: 0.5rem 0.85rem;
-    border: 1px solid #c7d2fe;
+    border: 1px solid #ecd49a;
     border-radius: 8px;
-    background: #eef2ff;
-    color: #4f46e5;
+    background: #fbf3de;
+    color: #101d54;
     cursor: pointer;
     font-size: 0.82rem;
     font-weight: 700;
@@ -1111,9 +1111,9 @@
 }
 
 .btnDeadlineReminder:hover {
-    background: #4f46e5;
+    background: #101d54;
     color: #ffffff;
-    border-color: #4f46e5;
+    border-color: #101d54;
 }
 
 .reminderStatus {
@@ -1130,7 +1130,7 @@
     align-items: center;
     justify-content: center;
     padding: 1rem;
-    background: rgba(15, 23, 42, 0.58);
+    background: rgba(16, 29, 84, 0.58);
     backdrop-filter: blur(6px);
     animation: fadeInOverlay 0.2s ease;
 }
@@ -1138,7 +1138,7 @@
 .reminderModal {
     width: min(100%, 620px);
     overflow: hidden;
-    border: 1px solid rgba(199, 210, 254, 0.9);
+    border: 1px solid rgba(251, 247, 238, 0.9);
     border-radius: 18px;
     background: #ffffff;
     box-shadow: 0 28px 70px -24px rgba(30, 41, 59, 0.5);
@@ -1152,12 +1152,12 @@
     gap: 0.9rem;
     align-items: flex-start;
     padding: 1.35rem 1.5rem;
-    border-bottom: 1px solid #e0e7ff;
-    background: linear-gradient(135deg, #f8faff 0%, #eef2ff 100%);
+    border-bottom: 1px solid #f6e6b8;
+    background: linear-gradient(135deg, #fbf7ee 0%, #fbf3de 100%);
 }
 
 .reminderModalHeader > div:nth-child(2) > span {
-    color: #6366f1;
+    color: #1b2d75;
     font-size: 0.7rem;
     font-weight: 800;
     letter-spacing: 0.12em;
@@ -1182,9 +1182,9 @@
     height: 42px;
     place-items: center;
     border-radius: 12px;
-    background: #4f46e5;
+    background: #101d54;
     color: #ffffff;
-    box-shadow: 0 8px 18px rgba(79, 70, 229, 0.25);
+    box-shadow: 0 8px 18px rgba(16, 29, 84, 0.25);
 }
 
 .reminderModalClose {
@@ -1200,8 +1200,8 @@
 }
 
 .reminderModalClose:hover {
-    background: #e0e7ff;
-    color: #3730a3;
+    background: #f6e6b8;
+    color: #101d54;
 }
 
 .reminderModalBody {
@@ -1290,8 +1290,8 @@
 }
 
 .reminderModeOption:hover {
-    border-color: #a5b4fc;
-    background: #fafaff;
+    border-color: #cfd6ee;
+    background: #fbf7ee;
 }
 
 .reminderModeOption input {
@@ -1304,15 +1304,15 @@
 }
 
 .reminderModeOption:focus-within {
-    border-color: #6366f1;
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+    border-color: #1b2d75;
+    box-shadow: 0 0 0 3px rgba(27, 45, 117, 0.12);
 }
 
 .reminderModeOptionActive {
-    border-color: #6366f1;
-    background: #f5f7ff;
-    color: #4f46e5;
-    box-shadow: 0 6px 16px rgba(79, 70, 229, 0.08);
+    border-color: #1b2d75;
+    background: #fbf7ee;
+    color: #101d54;
+    box-shadow: 0 6px 16px rgba(16, 29, 84, 0.08);
 }
 
 .reminderModeIcon {
@@ -1321,8 +1321,8 @@
     height: 34px;
     place-items: center;
     border-radius: 9px;
-    background: #eef2ff;
-    color: #6366f1;
+    background: #fbf3de;
+    color: #1b2d75;
 }
 
 .reminderModeText {
@@ -1393,8 +1393,8 @@
 }
 
 .reminderNumberInput:focus-within {
-    border-color: #6366f1;
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+    border-color: #1b2d75;
+    box-shadow: 0 0 0 3px rgba(27, 45, 117, 0.12);
 }
 
 .reminderNumberInput input {
@@ -1422,8 +1422,8 @@
 
 .reminderField input:focus,
 .reminderField select:focus {
-    border-color: #6366f1;
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+    border-color: #1b2d75;
+    box-shadow: 0 0 0 3px rgba(27, 45, 117, 0.12);
 }
 
 .reminderPreview {
@@ -1432,16 +1432,16 @@
     justify-content: space-between;
     gap: 1rem;
     padding: 0.9rem 1rem;
-    border: 1px solid #c7d2fe;
+    border: 1px solid #ecd49a;
     border-radius: 12px;
-    background: #f5f7ff;
+    background: #fbf7ee;
 }
 
 .reminderPreview > div {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    color: #6366f1;
+    color: #1b2d75;
 }
 
 .reminderPreview span {
@@ -1451,7 +1451,7 @@
 }
 
 .reminderPreview strong {
-    color: #3730a3;
+    color: #101d54;
     font-size: 0.88rem;
     text-align: right;
 }
@@ -1520,10 +1520,10 @@
 }
 
 .btnReminderApply {
-    border: 1px solid #4f46e5;
-    background: #4f46e5;
+    border: 1px solid #101d54;
+    background: #101d54;
     color: #ffffff;
-    box-shadow: 0 6px 14px rgba(79, 70, 229, 0.2);
+    box-shadow: 0 6px 14px rgba(16, 29, 84, 0.2);
 }
 
 .btnCancelReminder:hover {
@@ -1531,12 +1531,12 @@
 }
 
 .btnReminderClose:hover {
-    border-color: #6366f1;
-    color: #4f46e5;
+    border-color: #1b2d75;
+    color: #101d54;
 }
 
 .btnReminderApply:hover {
-    background: #4338ca;
+    background: #101d54;
 }
 
 @media (max-width: 640px) {
@@ -1599,8 +1599,8 @@
 }
 
 .folderTaskCardExpanded {
-    border-color: #c7d2fe;
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.08);
+    border-color: #ecd49a;
+    box-shadow: 0 4px 12px rgba(27, 45, 117, 0.08);
 }
 
 .folderTaskHeader {
@@ -1625,7 +1625,7 @@
 }
 
 .folderTaskToggle:focus-visible {
-    outline: 2px solid #818cf8;
+    outline: 2px solid #6f80c4;
     outline-offset: 4px;
     border-radius: 4px;
 }
@@ -1638,8 +1638,8 @@
     align-items: center;
     justify-content: center;
     flex: 0 0 auto;
-    background: #eef2ff;
-    color: #4f46e5;
+    background: #fbf3de;
+    color: #101d54;
     font-size: 0.75rem;
     font-weight: 800;
 }
@@ -1687,9 +1687,9 @@
 }
 
 .badgeListening {
-    color: #4338ca;
-    background: #e0e7ff;
-    border: 1px solid #c7d2fe;
+    color: #101d54;
+    background: #f6e6b8;
+    border: 1px solid #ecd49a;
 }
 
 .badgeFile {
@@ -1800,7 +1800,7 @@
 }
 
 .folderTaskAttachments li i {
-    color: #6366f1;
+    color: #1b2d75;
 }
 
 .folderTaskAttachments li small {
@@ -1833,8 +1833,8 @@
 }
 
 .btnActionOutline:hover {
-    border-color: #6366f1;
-    color: #6366f1;
+    border-color: #1b2d75;
+    color: #1b2d75;
 }
 
 .inlineCreator {
@@ -1886,7 +1886,7 @@
 
 /* Classroom CRUD Styles */
 .btnCreateClass {
-    background: linear-gradient(135deg, #4f46e5, #6366f1);
+    background: linear-gradient(135deg, #101d54, #1b2d75);
     color: white;
     border: none;
     padding: 0.625rem 1.25rem;
@@ -1897,12 +1897,12 @@
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2);
+    box-shadow: 0 4px 6px -1px rgba(16, 29, 84, 0.2);
     transition: all 0.2s;
 }
 
 .btnCreateClass:hover {
-    background: linear-gradient(135deg, #4338ca, #4f46e5);
+    background: linear-gradient(135deg, #101d54, #101d54);
     transform: translateY(-1px);
 }
 
@@ -1932,7 +1932,7 @@
 
 .miniBtnEdit:hover {
     background-color: #e2e8f0;
-    color: #0f172a;
+    color: #101d54;
 }
 
 .miniBtnDelete {

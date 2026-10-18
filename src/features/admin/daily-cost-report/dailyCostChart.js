@@ -67,8 +67,8 @@ export function buildCostProjection(report, from, to) {
                 {
                     label: 'Chi phí lũy kế thực tế',
                     data: actualData,
-                    borderColor: '#005bff',
-                    backgroundColor: 'rgba(0, 91, 255, 0.1)',
+                    borderColor: '#101d54',
+                    backgroundColor: 'rgba(16, 29, 84, 0.1)',
                     borderWidth: 3,
                     pointRadius: 3,
                     pointHoverRadius: 5,
@@ -79,7 +79,7 @@ export function buildCostProjection(report, from, to) {
                 {
                     label: 'Dự báo theo trung bình ngày',
                     data: forecastData,
-                    borderColor: '#7b3ff2',
+                    borderColor: '#1b2d75',
                     borderDash: [7, 6],
                     borderWidth: 3,
                     pointRadius: 0,
@@ -113,7 +113,7 @@ export const costChartOptions = {
         },
         y: {
             beginAtZero: true,
-            grid: { color: 'rgba(19, 33, 60, 0.06)' },
+            grid: { color: 'rgba(16, 29, 84, 0.06)' },
             ticks: { callback: (value) => usdFormatter.format(value) },
         },
     },

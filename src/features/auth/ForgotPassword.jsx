@@ -147,7 +147,8 @@ export default function ForgotPassword({ embedded = false, onBack }) {
     const content = (
         <>
                 <div className={styles.loginHeader}>
-                    <img src={siteLogo} alt="Diamond Ielts" className={styles.brandLogo} />
+                    <img src={siteLogo} alt="Diamonds IELTS" className={styles.brandLogo} />
+                    <p className={styles.brandWordmark}>Diamonds IELTS <span>Speaking</span></p>
                     <h1>{step === STEPS.SUCCESS ? 'Đặt lại thành công' : 'Quên mật khẩu'}</h1>
                 </div>
 

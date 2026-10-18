@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useParams, useLocatio
 import Layout from './components/layout/Layout';
 import ProtectedRoute from './components/routing/ProtectedRoute';
 import LoadingSpinner from './components/common/LoadingSpinner';
+import DiamondsSkin from './components/diamonds/DiamondsSkin';
 
 const RedirectToStudentAssignment = () => {
   const { assignmentId } = useParams();
@@ -49,6 +50,7 @@ function App() {
 
   return (
     <Router>
+      <DiamondsSkin />
       <Routes>
         {/* Tự động chuyển hướng dựa trên Role */}
         <Route path="/" element={<Navigate to={getRedirectPath()} replace />} />

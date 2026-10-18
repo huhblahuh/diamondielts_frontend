@@ -3,7 +3,7 @@
     border: 1px solid var(--di-border);
     border-radius: 20px;
     background: white;
-    box-shadow: 0 12px 34px rgba(0, 45, 130, 0.075);
+    box-shadow: 0 12px 34px rgba(16, 29, 84, 0.075);
 }
 
 .header {
@@ -16,7 +16,7 @@
 
 .header > div:first-child > span {
     display: block;
-    color: #005bff;
+    color: #101d54;
     font-size: 0.68rem;
     font-weight: 800;
     letter-spacing: 0.1em;
@@ -46,9 +46,9 @@
     min-width: 0;
     flex-direction: column;
     padding: 0.85rem 1rem;
-    border: 1px solid #e7eef9;
+    border: 1px solid #fbf7ee;
     border-radius: 13px;
-    background: #f9fbff;
+    background: #fbf7ee;
 }
 
 .summaryGrid span,
@@ -65,7 +65,7 @@
 }
 
 .summaryGrid > div:last-child strong {
-    color: #7b3ff2;
+    color: #1b2d75;
 }
 
 .chartWrap {
@@ -81,7 +81,7 @@
     gap: 0.75rem;
     color: var(--di-muted);
     border-radius: 14px;
-    background: #f9fbff;
+    background: #fbf7ee;
     font-size: 0.8rem;
 }
 
@@ -92,9 +92,9 @@
 
 .error button {
     padding: 0.55rem 0.8rem;
-    border: 1px solid rgba(0, 91, 255, 0.22);
+    border: 1px solid rgba(16, 29, 84, 0.22);
     border-radius: 9px;
-    color: #005bff;
+    color: #101d54;
     background: white;
     cursor: pointer;
     font-weight: 700;

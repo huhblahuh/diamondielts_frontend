@@ -24,6 +24,8 @@
 .settingsPage {
   width: 100%;
   max-width: 1200px;
+  height: 100%;
+  min-height: 580px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
@@ -36,26 +38,32 @@
 .settingsShell {
   display: grid;
   grid-template-columns: 290px minmax(0, 1fr);
-  min-height: 580px;
+  flex: 1;
+  min-height: 0;
   border-radius: 24px;
   overflow: hidden;
   background: #ffffff;
-  border: 1px solid rgba(0, 45, 130, 0.08);
-  box-shadow: 0 16px 48px rgba(0, 45, 130, 0.07);
+  border: 1px solid rgba(16, 29, 84, 0.08);
+  box-shadow: 0 16px 48px rgba(16, 29, 84, 0.07);
 }
 
 /* ── Left Sidebar / Mobile Root Menu ────────────────────────────── */
 .settingsSidebar {
   padding: 1.75rem 1.4rem;
   border-right: 1px solid rgba(255, 255, 255, 0.18);
-  background: linear-gradient(165deg, #0056e0 0%, #0076f7 50%, #00a6ff 100%);
+  background: linear-gradient(165deg, #101d54 0%, #2a3f94 50%, #2a3f94 100%);
   color: #ffffff;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   position: relative;
-  overflow: hidden;
+  overflow-y: auto;
+  scrollbar-width: none;
   box-sizing: border-box;
+}
+
+.settingsSidebar::-webkit-scrollbar {
+  display: none;
 }
 
 .settingsSidebar::before {
@@ -100,7 +108,7 @@
   color: #ffffff;
   background: rgba(255, 255, 255, 0.24);
   border: 2.5px solid rgba(255, 255, 255, 0.85);
-  box-shadow: 0 4px 16px rgba(0, 20, 70, 0.25);
+  box-shadow: 0 4px 16px rgba(16, 29, 84, 0.25);
   font-weight: 800;
   font-size: 1.35rem;
   user-select: none;
@@ -120,7 +128,7 @@
   height: 13px;
   border-radius: 50%;
   background: #22c55e;
-  border: 2.5px solid #0056e0;
+  border: 2.5px solid #101d54;
   box-shadow: 0 0 8px rgba(34, 197, 94, 0.7);
 }
 
@@ -243,7 +251,7 @@
 .settingsNavItemActive {
   background: rgba(255, 255, 255, 0.28);
   border-color: rgba(255, 255, 255, 0.6);
-  box-shadow: 0 4px 18px rgba(0, 30, 90, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.45);
+  box-shadow: 0 4px 18px rgba(16, 29, 84, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.45);
 }
 
 .navIconBox {
@@ -269,8 +277,8 @@
 }
 
 .navIconSecurity {
-  background: linear-gradient(135deg, rgba(168, 85, 247, 0.45), rgba(126, 34, 206, 0.35));
-  border: 1px solid rgba(216, 180, 254, 0.45);
+  background: linear-gradient(135deg, rgba(74, 95, 176, 0.45), rgba(42, 63, 148, 0.35));
+  border: 1px solid rgba(207, 214, 238, 0.45);
 }
 
 .navIconNotification {
@@ -364,6 +372,9 @@
 .settingsContent {
   padding: 2rem 2.2rem;
   min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
   background: #ffffff;
   box-sizing: border-box;
 }
@@ -379,7 +390,7 @@
 .contentHeading h2 {
   font-size: 1.4rem;
   font-weight: 800;
-  color: #0f172a;
+  color: #101d54;
   margin: 0 0 0.3rem;
 }
 
@@ -415,7 +426,7 @@
 .cardHeading h2 {
   font-size: 1.15rem;
   font-weight: 700;
-  color: #0f172a;
+  color: #101d54;
   margin: 0;
 }
 
@@ -436,15 +447,15 @@
 }
 
 .blue {
-  background: #eff6ff;
-  color: #2563eb;
-  border: 1px solid #bfdbfe;
+  background: #fbf6e9;
+  color: #101d54;
+  border: 1px solid #ecd9a6;
 }
 
 .purple {
-  background: #faf5ff;
-  color: #7c3aed;
-  border: 1px solid #ddd6fe;
+  background: #fbf7ee;
+  color: #1b2d75;
+  border: 1px solid #ecd49a;
 }
 
 .amber {
@@ -495,7 +506,7 @@
   gap: 1.5rem;
   padding: 1.25rem;
   border-radius: 18px;
-  background: #f8fbff;
+  background: #fbf7ee;
   border: 1px solid #e2e8f0;
   margin-bottom: 1.4rem;
 }
@@ -507,13 +518,13 @@
   border-radius: 50%;
   overflow: hidden;
   border: 3.5px solid #ffffff;
-  box-shadow: 0 4px 18px rgba(0, 45, 130, 0.16);
+  box-shadow: 0 4px 18px rgba(16, 29, 84, 0.16);
   display: grid;
   place-items: center;
   font-size: 1.9rem;
   font-weight: 800;
   color: #ffffff;
-  background: linear-gradient(135deg, #0056e0, #00a6ff);
+  background: linear-gradient(135deg, #101d54, #2a3f94);
   user-select: none;
 }
 
@@ -534,7 +545,7 @@
 .avatarActions strong {
   font-size: 0.95rem;
   font-weight: 700;
-  color: #0f172a;
+  color: #101d54;
 }
 
 .avatarActions p {
@@ -574,7 +585,7 @@
   border: 1.5px solid #cbd5e1;
   background: #ffffff;
   font-size: 16px;
-  color: #0f172a;
+  color: #101d54;
   transition: all 0.2s ease;
   box-sizing: border-box;
   outline: none;
@@ -582,8 +593,8 @@
 }
 
 .form input:focus {
-  border-color: #0056e0;
-  box-shadow: 0 0 0 3.5px rgba(0, 86, 224, 0.15);
+  border-color: #101d54;
+  box-shadow: 0 0 0 3.5px rgba(27, 45, 117, 0.15);
 }
 
 .form input:disabled {
@@ -632,7 +643,7 @@
 
 .passwordToggleBtn:hover,
 .passwordToggleBtn:active {
-  color: #0056e0;
+  color: #101d54;
 }
 
 /* ── Buttons ────────────────────────────────────────────────────── */
@@ -645,20 +656,20 @@
   padding: 0 1.5rem;
   border-radius: 12px;
   border: none;
-  background: linear-gradient(135deg, #0056e0 0%, #0076f7 100%);
+  background: linear-gradient(135deg, #101d54 0%, #2a3f94 100%);
   color: #ffffff;
   font-size: 0.94rem;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 4px 14px rgba(0, 86, 224, 0.25);
+  box-shadow: 0 4px 14px rgba(27, 45, 117, 0.25);
   -webkit-tap-highlight-color: transparent;
 }
 
 .primaryButton:hover:not(:disabled) {
-  background: linear-gradient(135deg, #004ac2 0%, #006ae8 100%);
+  background: linear-gradient(135deg, #1b2d75 0%, #2a3f94 100%);
   transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(0, 86, 224, 0.32);
+  box-shadow: 0 6px 18px rgba(27, 45, 117, 0.32);
 }
 
 .primaryButton:active:not(:disabled) {
@@ -740,7 +751,7 @@
 .linkButton {
   background: none;
   border: none;
-  color: #0056e0;
+  color: #101d54;
   font-weight: 700;
   font-size: 0.88rem;
   cursor: pointer;
@@ -751,7 +762,7 @@
 }
 
 .linkButton:hover {
-  color: #0040a8;
+  color: #1b2d75;
 }
 
 /* ── Security Tabs & OTP ────────────────────────────────────────── */
@@ -784,7 +795,7 @@
 
 .activeTab {
   background: #ffffff;
-  color: #0056e0;
+  color: #101d54;
   font-weight: 700;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
@@ -796,8 +807,8 @@
 .otpBox {
   padding: 1.5rem 1.25rem;
   border-radius: 18px;
-  background: #f8fbff;
-  border: 1.5px solid #dbeafe;
+  background: #fbf7ee;
+  border: 1.5px solid #f6e6b8;
   display: flex;
   flex-direction: column;
   gap: 1.1rem;
@@ -808,8 +819,8 @@
   width: 48px;
   height: 48px;
   border-radius: 14px;
-  background: #eff6ff;
-  color: #0056e0;
+  background: #fbf6e9;
+  color: #101d54;
   font-size: 1.5rem;
   display: grid;
   place-items: center;
@@ -818,7 +829,7 @@
 
 .otpBox strong {
   font-size: 1.05rem;
-  color: #0f172a;
+  color: #101d54;
 }
 
 .otpBox p {
@@ -829,7 +840,7 @@
 
 .otpBox p span {
   font-weight: 700;
-  color: #0056e0;
+  color: #101d54;
 }
 
 .otpBox input {
@@ -841,16 +852,16 @@
   font-weight: 800;
   text-align: center;
   border-radius: 14px;
-  border: 2px solid #93c5fd;
+  border: 2px solid #cfd6ee;
   background: #ffffff;
-  color: #0f172a;
+  color: #101d54;
   outline: none;
   transition: border-color 0.2s;
 }
 
 .otpBox input:focus {
-  border-color: #0056e0;
-  box-shadow: 0 0 0 4px rgba(0, 86, 224, 0.15);
+  border-color: #101d54;
+  box-shadow: 0 0 0 4px rgba(27, 45, 117, 0.15);
 }
 
 .inlineActions {
@@ -868,9 +879,9 @@
   gap: 0.5rem;
   padding: 0.75rem 1rem;
   border-radius: 12px;
-  background: #eff6ff;
-  border: 1px solid #bfdbfe;
-  color: #1e40af;
+  background: #fbf6e9;
+  border: 1px solid #ecd9a6;
+  color: #101d54;
   font-size: 0.82rem;
   line-height: 1.45;
   margin-top: 1rem;
@@ -902,7 +913,7 @@
 .notifTitle {
   font-size: 0.96rem;
   font-weight: 700;
-  color: #0f172a;
+  color: #101d54;
   display: block;
 }
 
@@ -993,7 +1004,7 @@
   display: grid;
   place-items: center;
   padding: 1rem;
-  background: rgba(6, 27, 94, 0.65);
+  background: rgba(16, 29, 84, 0.65);
   backdrop-filter: blur(6px);
 }
 
@@ -1015,7 +1026,7 @@
 
 .cropHeader h3 {
   margin: 0;
-  color: #0f172a;
+  color: #101d54;
   font-size: 1.15rem;
 }
 
@@ -1041,7 +1052,7 @@
   margin: 0 auto;
   overflow: hidden;
   border-radius: 16px;
-  background: #0f172a;
+  background: #101d54;
   touch-action: none;
   cursor: grab;
 }
@@ -1073,7 +1084,7 @@
   gap: 0.75rem;
   margin: 1.15rem auto;
   max-width: 300px;
-  color: #0056e0;
+  color: #101d54;
 }
 
 .zoomControl input {
@@ -1099,7 +1110,7 @@
 
 .loading i {
   font-size: 2.2rem;
-  color: #0056e0;
+  color: #101d54;
 }
 
 .spinIcon {
@@ -1113,6 +1124,7 @@
 
 @media (max-width: 820px) {
   .settingsPage {
+    min-height: 0;
     padding: 0.85rem 0.85rem 1.5rem;
     gap: 1rem;
   }
@@ -1121,8 +1133,8 @@
     grid-template-columns: 1fr;
     border-radius: 20px;
     overflow: hidden;
-    min-height: auto;
-    box-shadow: 0 8px 30px rgba(0, 35, 100, 0.08);
+    min-height: 0;
+    box-shadow: 0 8px 30px rgba(16, 29, 84, 0.08);
   }
 
   /* Root Menu on Mobile: show sidebar as main dashboard, hide content */
@@ -1163,9 +1175,9 @@
     gap: 0.45rem;
     padding: 0.5rem 0.9rem;
     border-radius: 12px;
-    background: #eff6ff;
-    color: #0056e0;
-    border: 1px solid #bfdbfe;
+    background: #fbf6e9;
+    color: #101d54;
+    border: 1px solid #ecd9a6;
     font-size: 0.88rem;
     font-weight: 700;
     text-decoration: none;
@@ -1174,7 +1186,7 @@
   }
 
   .mobileBackBtn:active {
-    background: #dbeafe;
+    background: #f6e6b8;
     transform: scale(0.97);
   }
 
@@ -1192,7 +1204,7 @@
   }
 
   .mobileCurrentSectionBadge i {
-    color: #0056e0;
+    color: #101d54;
   }
 
   /* Hide redundant content heading on mobile to save vertical screen real estate */
@@ -1394,3 +1406,17 @@
   font-size: 0.75rem;
   color: rgba(255, 255, 255, 0.85);
 }
+
+/* ══ Diamonds IELTS skin ════════════════════════════════════════════════ */
+:global(body.dk-mode-scene) .settingsShell {
+  background: var(--dsk-frost);
+  border-color: var(--dsk-frost-line);
+  box-shadow: var(--dsk-frost-shadow);
+}
+:global(body.dk-mode-scene) .settingsContent { background: transparent; }
+:global(body.dk-mode-scene) .settingsSidebar {
+  background: linear-gradient(165deg, #101d54 0%, #1b2d75 55%, #2a3f94 100%);
+  color: #ffffff;
+}
+.primaryButton { background: var(--dsk-gold-grad); color: var(--dsk-navy); }
+.primaryButton:hover:not(:disabled) { background: var(--dsk-gold-grad); filter: brightness(1.04); }

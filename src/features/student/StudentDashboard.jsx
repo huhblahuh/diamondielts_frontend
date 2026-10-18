@@ -63,7 +63,7 @@ function DeadlineRow({ deadline, onOpen }) {
 
 export default function StudentDashboard() {
     const navigate = useNavigate();
-    const { openSidebar, mySpeakingQuota, isQuotaLoading, openMyQuota } = useOutletContext() || {};
+    const { mySpeakingQuota, isQuotaLoading, openMyQuota } = useOutletContext() || {};
     const [user, setUser] = useState(() => JSON.parse(localStorage.getItem('user') || '{}'));
     const [activity, setActivity] = useState(EMPTY_ACTIVITY);
     const [summary, setSummary] = useState(null);
@@ -142,10 +142,6 @@ export default function StudentDashboard() {
     return (
         <div className={styles.container}>
             <section className={styles.heroSection}>
-                <div className={styles.mobileActions}>
-                    <button type="button" onClick={openSidebar} aria-label="Mở menu"><i className="bi bi-grid" /></button>
-                    <button type="button" onClick={() => navigate('/student/settings/notification')} aria-label="Cài đặt thông báo"><i className="bi bi-bell" /></button>
-                </div>
                 <div className={styles.heroCopy}>
                     <p>{getGreeting()},</p>
                     <h1>{user.fullName || 'Học viên'}!</h1>
@@ -171,7 +167,7 @@ export default function StudentDashboard() {
             <button type="button" className={styles.quotaStrip} onClick={openMyQuota} disabled={isQuotaLoading}>
                 <span className={styles.quotaIcon}><i className="bi bi-mic-fill" /></span>
                 <span className={styles.quotaMain}>
-                    <span className={styles.quotaTitle}><strong>Quota Speaking</strong><b>{isQuotaLoading ? 'Đang tải…' : mySpeakingQuota ? `Còn ${Number(mySpeakingQuota.remaining).toLocaleString('vi-VN')}/${Number(mySpeakingQuota.limit).toLocaleString('vi-VN')} điểm` : 'Chưa thiết lập'}</b></span>
+                    <span className={styles.quotaTitle}><strong>Diamond Speaking</strong><b>{isQuotaLoading ? 'Đang tải…' : mySpeakingQuota ? `Còn ${Number(mySpeakingQuota.remaining).toLocaleString('vi-VN')}/${Number(mySpeakingQuota.limit).toLocaleString('vi-VN')} diamond` : 'Chưa được cấp'}</b></span>
                     <span className={styles.quotaTrack}><i style={{ width: `${quotaPercent}%` }} /></span>
                     <small>{mySpeakingQuota ? formatReset(mySpeakingQuota.resetDate) : 'Chạm để xem chi tiết hạn mức'}</small>
                 </span>

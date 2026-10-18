@@ -35,8 +35,8 @@
 
 /* Variant: Default / Info */
 .bannerDefault {
-    background: linear-gradient(135deg, rgba(238, 246, 255, 0.95), rgba(243, 240, 255, 0.95));
-    border-color: rgba(99, 102, 241, 0.2);
+    background: linear-gradient(135deg, rgba(251, 247, 238, 0.95), rgba(251, 247, 238, 0.95));
+    border-color: rgba(27, 45, 117, 0.2);
 }
 
 /* Variant: Expired */
@@ -71,9 +71,9 @@
 }
 
 .bannerDefault .iconWrapper {
-    background: linear-gradient(135deg, #4f46e5, #6366f1);
+    background: linear-gradient(135deg, #101d54, #1b2d75);
     color: #ffffff;
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+    box-shadow: 0 4px 12px rgba(27, 45, 117, 0.35);
 }
 
 .bannerExpired .iconWrapper {
@@ -122,17 +122,17 @@
     font-size: 0.85rem;
     font-weight: 600;
     color: #ffffff;
-    background: linear-gradient(135deg, #4f46e5, #6366f1);
+    background: linear-gradient(135deg, #101d54, #1b2d75);
     border: none;
     border-radius: 9999px;
     cursor: pointer;
-    box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3);
+    box-shadow: 0 2px 8px rgba(16, 29, 84, 0.3);
     transition: all 0.2s ease;
 }
 
 .btnPrimary:hover:not(:disabled) {
-    background: linear-gradient(135deg, #4338ca, #4f46e5);
-    box-shadow: 0 4px 14px rgba(79, 70, 229, 0.4);
+    background: linear-gradient(135deg, #101d54, #101d54);
+    box-shadow: 0 4px 14px rgba(16, 29, 84, 0.4);
     transform: translateY(-1px);
 }
 

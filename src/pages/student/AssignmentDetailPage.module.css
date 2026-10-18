@@ -1,11 +1,11 @@
-:root {
-  --navy: #0c2d73;
-  --navy-900: #09245f;
-  --navy-50: #f3f7ff;
-  --purple: #7c3aed;
-  --purple-600: #6d28d9;
-  --purple-50: #f6f2ff;
-  --purple-100: #eee6ff;
+.pageWrapper {
+  --navy: #101d54;
+  --navy-900: #101d54;
+  --navy-50: #fbf7ee;
+  --purple: #1b2d75;
+  --purple-600: #101d54;
+  --purple-50: #fbf6e9;
+  --purple-100: #fbf7ee;
   --text: #17233c;
   --muted: #6f7f9a;
   --soft: #98a6bd;
@@ -16,8 +16,8 @@
   --green-50: #ebfbf4;
   --amber: #b7791f;
   --amber-50: #fff8e8;
-  --shadow: 0 18px 45px rgba(22, 47, 87, .08);
-  --shadow-sm: 0 8px 24px rgba(22, 47, 87, .06);
+  --shadow: 0 18px 45px rgba(16, 29, 84, .08);
+  --shadow-sm: 0 8px 24px rgba(16, 29, 84, .06);
   --radius-xl: 24px;
   --radius-lg: 18px;
   --radius-md: 14px;
@@ -27,9 +27,17 @@
   min-height: calc(100vh - 110px);
   color: var(--text);
   background: transparent;
-  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  font-family: 'Be Vietnam Pro', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
   line-height: 1.45;
-  padding: 4px 0 48px;
+  padding: 0 0 48px;
+}
+
+.speakingView {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: calc(100vh - 120px);
+  background: var(--di-bg, #fbf7ee);
 }
 
 .pageWrapper button,
@@ -44,42 +52,6 @@
   margin: 0 auto;
 }
 
-.topHeaderBreadcrumb {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--muted);
-  font-size: 14px;
-  font-weight: 500;
-  font-family: inherit;
-  min-width: 0;
-  overflow: hidden;
-}
-
-.topHeaderBreadcrumb a {
-  color: var(--muted);
-  text-decoration: none;
-  transition: color 0.15s ease;
-  white-space: nowrap;
-}
-
-.topHeaderBreadcrumb a:hover {
-  color: var(--purple);
-}
-
-.topHeaderBreadcrumb strong {
-  color: var(--text);
-  font-weight: 700;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.breadcrumbSeparator {
-  color: var(--soft);
-  user-select: none;
-}
-
 /* ── Unified Hero Banner ── */
 .hero {
   position: relative;
@@ -87,9 +59,9 @@
   min-height: 110px;
   margin-bottom: 1.5rem;
   border-radius: var(--di-radius, 22px);
-  background: linear-gradient(120deg, #061b5e 0%, #0c369e 55%, #1d4ed8 100%);
+  background: linear-gradient(120deg, #101d54 0%, #1b2d75 55%, #101d54 100%);
   color: #ffffff;
-  box-shadow: 0 12px 40px rgba(0, 91, 255, 0.15);
+  box-shadow: 0 12px 40px rgba(16, 29, 84, 0.15);
   border: 1px solid rgba(255, 255, 255, 0.12);
   box-sizing: border-box;
 }
@@ -179,7 +151,7 @@
 }
 
 .eyebrow:hover {
-  background: #e5eeff;
+  background: #fbf7ee;
   transform: translateX(-2px);
 }
 
@@ -331,7 +303,7 @@
   content: "";
   width: 34px;
   height: 34px;
-  background: #092670;
+  background: #101d54;
   border-radius: 50%;
   position: absolute;
   top: 6px;
@@ -465,7 +437,7 @@
 .filterActive {
   color: var(--purple) !important;
   background: var(--purple-50) !important;
-  border-color: #dfd0ff !important;
+  border-color: #fbf7ee !important;
 }
 
 .list {
@@ -479,7 +451,7 @@
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
-  box-shadow: 0 4px 14px rgba(22, 47, 87, .03);
+  box-shadow: 0 4px 14px rgba(16, 29, 84, .03);
   overflow: hidden;
   transition: all 0.2s ease;
   display: flex;
@@ -495,7 +467,7 @@
 }
 
 .taskIsOpen {
-  border-color: #d9ccff !important;
+  border-color: #ecd49a !important;
   box-shadow: 0 8px 24px rgba(94, 67, 167, .08) !important;
   align-self: auto;
 }
@@ -559,8 +531,8 @@
 }
 
 .taskNumberFile {
-  background: #edf4ff;
-  color: #164499;
+  background: #fbf7ee;
+  color: #1b2d75;
 }
 
 .taskIsDone .taskNumber {
@@ -579,7 +551,7 @@
 .taskType {
   font-size: 14px;
   font-weight: 750;
-  color: var(--purple, #8438f5);
+  color: var(--purple, #1b2d75);
   background: none;
   padding: 0;
   white-space: nowrap;
@@ -589,7 +561,7 @@
 .taskTypeFile {
   font-size: 14px;
   font-weight: 750;
-  color: #1769ef;
+  color: #2a3f94;
   background: none;
   padding: 0;
   white-space: nowrap;
@@ -608,8 +580,8 @@
   font-weight: 650;
   font-family: inherit;
   white-space: nowrap;
-  color: var(--purple, #8438f5);
-  background: var(--purple-50, #f6f2ff);
+  color: var(--purple, #1b2d75);
+  background: var(--purple-50, #fbf6e9);
 }
 
 .taskDot {
@@ -630,7 +602,7 @@
 .question {
   font-size: 14px;
   font-weight: 650;
-  color: var(--text, #14213d);
+  color: var(--text, #101d54);
   line-height: 1.4;
   font-family: inherit;
   width: 100%;
@@ -668,7 +640,7 @@
 
 .marqueeDivider {
   display: inline-block;
-  color: var(--purple, #8438f5);
+  color: var(--purple, #1b2d75);
   font-size: 10px;
   opacity: 0.7;
   user-select: none;
@@ -759,8 +731,8 @@
 .taskIsOpen .chev {
   transform: rotate(180deg);
   color: var(--purple);
-  border-color: #d9ccff;
-  background: var(--purple-50, #f6f2ff);
+  border-color: #ecd49a;
+  background: var(--purple-50, #fbf6e9);
 }
 
 /* ACCORDION WRAPPER: Mở rộng và thu gọn cực êm */
@@ -802,7 +774,7 @@
 }
 
 .promptBox {
-  background: #f8faff;
+  background: #fbf7ee;
   border: 1px solid #edf1f7;
   border-radius: 14px;
   padding: 14px 16px;
@@ -870,7 +842,7 @@
 }
 
 .attachmentBtn:hover {
-  background: #f8faff;
+  background: #fbf7ee;
   border-color: #cbd5e1;
   color: var(--purple);
 }
@@ -911,8 +883,8 @@
 }
 
 .historyRow:hover {
-  border-color: #d9ccff;
-  background: #faf8ff;
+  border-color: #ecd49a;
+  background: #fbf7ee;
   transform: translateY(-1px);
 }
 
@@ -937,11 +909,11 @@
   border-radius: 13px;
   padding: 12px 16px;
   color: #fff;
-  background: linear-gradient(135deg, #8b3df0, var(--purple-600));
+  background: linear-gradient(135deg, #2a3f94, var(--purple-600));
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
-  box-shadow: 0 8px 16px rgba(124, 58, 237, .18);
+  box-shadow: 0 8px 16px rgba(42, 63, 148, .18);
   transition: all 0.2s ease;
   display: inline-flex;
   align-items: center;
@@ -952,7 +924,7 @@
 
 .primary:hover {
   transform: translateY(-1px);
-  box-shadow: 0 10px 20px rgba(124, 58, 237, .24);
+  box-shadow: 0 10px 20px rgba(42, 63, 148, .24);
 }
 
 .primary:disabled {
@@ -979,8 +951,8 @@
 }
 
 .secondary:hover {
-  background: #f8faff;
-  border-color: #c7d2fe;
+  background: #fbf7ee;
+  border-color: #ecd49a;
   color: var(--purple);
 }
 
@@ -1063,27 +1035,6 @@
     position: relative;
     overflow-x: hidden;
     padding: 0 0 46px;
-    background: #f8fbff;
-  }
-
-  /* Long, smooth color blend extending down the page */
-  .pageWrapper::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 340px;
-    background: linear-gradient(180deg,
-        #061b5e 0%,
-        #0c369e 100px,
-        rgba(29, 78, 216, 0.75) 170px,
-        rgba(29, 78, 216, 0.35) 240px,
-        rgba(248, 251, 255, 0.1) 300px,
-        #f8fbff 340px
-    );
-    pointer-events: none;
-    z-index: 0;
   }
 
   .page {
@@ -1091,12 +1042,6 @@
     z-index: 1;
     width: 100%;
     padding: 0 0 46px;
-  }
-
-  /* Breadcrumb rút gọn trên mobile */
-  .topHeaderBreadcrumb .separatorLast,
-  .topHeaderBreadcrumb .assignmentName {
-    display: none;
   }
 
   /* Header assignment */
@@ -1239,7 +1184,7 @@
   .taskIsClosing {
     grid-column: 1 / -1;
     align-self: auto;
-    border-color: #d9ccff !important;
+    border-color: #ecd49a !important;
   }
 
   .taskIsOpen {
@@ -1271,7 +1216,7 @@
 
   .taskHeader:active {
     transform: scale(0.98);
-    background-color: rgba(132, 56, 245, 0.04);
+    background-color: rgba(42, 63, 148, 0.04);
   }
 
   /* NỬA TRÊN: Số thứ tự, loại bài tập và nút mở rộng */
@@ -1412,6 +1357,47 @@
   .historyRow {
     padding: 8px 10px;
     font-size: 11.5px;
+  }
+}
+
+/* The shared sky band already provides the transition in plain mode. */
+:global(body.dk-mode-plain):has(.pageWrapper) :global(.dk-band)::after {
+  display: none;
+}
+
+/* Match the assignment list's scene surfaces on the detail route. */
+:global(body.dk-mode-scene) .pageWrapper {
+  --surface: var(--dsk-frost);
+  --line: var(--dsk-frost-line);
+}
+:global(body.dk-mode-scene) .hero {
+  background: var(--dsk-glass);
+  -webkit-backdrop-filter: blur(16px) saturate(1.5);
+  backdrop-filter: blur(16px) saturate(1.5);
+  border-color: var(--dsk-glass-line);
+  box-shadow: var(--dsk-glass-shadow);
+}
+:global(body.dk-mode-scene) .task,
+:global(body.dk-mode-scene) .filter {
+  background: var(--dsk-frost);
+  border-color: var(--dsk-frost-line);
+  box-shadow: var(--dsk-frost-shadow);
+}
+:global(body.dk-mode-scene) .sectionHead {
+  padding: 12px;
+  border: 1px solid var(--dsk-glass-line);
+  border-radius: 18px;
+  background: var(--dsk-glass);
+  -webkit-backdrop-filter: blur(16px) saturate(1.5);
+  backdrop-filter: blur(16px) saturate(1.5);
+}
+:global(body.dk-mode-scene) .sectionTitle h2 {
+  color: #fff;
+}
+
+@media (max-width: 768px) {
+  :global(body.dk-mode-plain) .hero {
+    background: linear-gradient(120deg, #101d54, #1b2d75);
   }
 }
 

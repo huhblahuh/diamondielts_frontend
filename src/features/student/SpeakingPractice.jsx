@@ -136,10 +136,10 @@ export default function SpeakingPractice({
 
         return registerBackHandler({
             canHandleBack: () => Boolean(rightSidebarOpen || leftSidebarOpen || results || onBack),
-            canSwipeBack: () => !isRecording && status !== 'starting' && status !== 'processing',
+            canSwipeBack: () => !isRecording && !isSubmissionQueueing && status !== 'starting' && status !== 'processing',
             handleBack: handlePageBack,
         });
-    }, [handlePageBack, isRecording, leftSidebarOpen, onBack, registerBackHandler, results, rightSidebarOpen, status]);
+    }, [handlePageBack, isRecording, isSubmissionQueueing, leftSidebarOpen, onBack, registerBackHandler, results, rightSidebarOpen, status]);
 
     const detectPartNumber = (type, formattedContent) => {
         const typeLower = (type || '').toLowerCase();
@@ -300,7 +300,7 @@ export default function SpeakingPractice({
                         title: 'Giới hạn số lần làm bài',
                         text: isAssignmentMode
                             ? `Bạn đã đạt tới giới hạn số lần nộp bài cho phép (${checkData.maxAttempts} lần) cho phần này.`
-                            : 'Bạn đã hết lượt luyện Speaking tự do.',
+                            : 'Bạn không còn đủ diamond để luyện Speaking tự do.',
                         confirmButtonColor: '#ef4444'
                     });
                     setStatus('idle');
@@ -391,7 +391,7 @@ export default function SpeakingPractice({
                     confirmButtonText: 'Cấp quyền & Thử lại',
                     showCancelButton: true,
                     cancelButtonText: 'Đóng',
-                    confirmButtonColor: '#4f46e5'
+                    confirmButtonColor: '#101d54'
                 }).then((result) => {
                     if (result.isConfirmed) {
                         navigator.mediaDevices.getUserMedia({ audio: true })
@@ -448,7 +448,10 @@ export default function SpeakingPractice({
             }
             setStatus('idle');
             setIsSubmissionQueueing(false);
-            Swal.fire('Lỗi', 'Không thể xử lý bài nói. Vui lòng thử lại.', 'error');
+            const recordingError = /Ghi âm đã dừng|Không thể tiếp tục ghi âm/.test(err?.message || '')
+                ? err.message
+                : 'Không thể xử lý bài nói. Vui lòng thử lại.';
+            Swal.fire('Lỗi', recordingError, 'error');
         } finally {
             stopInProgressRef.current = false;
         }

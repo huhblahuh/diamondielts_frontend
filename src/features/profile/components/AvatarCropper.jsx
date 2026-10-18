@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import styles from '../StudentProfile.module.css';
 
 const VIEWPORT = 320;
@@ -86,7 +87,7 @@ export default function AvatarCropper({ file, busy, onCancel, onConfirm }) {
         }
     };
 
-    return (
+    return createPortal(
         <div className={styles.cropBackdrop} role="dialog" aria-modal="true" aria-labelledby="avatar-crop-title">
             <section className={styles.cropDialog}>
                 <div className={styles.cropHeader}>
@@ -116,6 +117,7 @@ export default function AvatarCropper({ file, busy, onCancel, onConfirm }) {
                     <button type="button" className={styles.primaryButton} onClick={createCrop} disabled={busy || !dimensions}>{busy ? 'Đang tải lên…' : 'Dùng ảnh này'}</button>
                 </div>
             </section>
-        </div>
+        </div>,
+        document.body
     );
 }
