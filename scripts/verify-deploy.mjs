@@ -32,4 +32,9 @@ for (const icon of manifest.icons ?? []) {
   requireFile(icon.src.replace(/^\//, ''));
 }
 
-console.log('Deploy output verified: compiled JavaScript, manifest, favicon, and icons are present.');
+const redirects = readFileSync(requireFile('_redirects'), 'utf8').trim();
+if (redirects !== '/* /index.html 200') {
+  throw new Error('Netlify SPA redirect is missing or invalid');
+}
+
+console.log('Deploy output verified: compiled JavaScript, public assets, and SPA redirect are present.');
