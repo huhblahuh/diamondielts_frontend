@@ -52,7 +52,7 @@ function OtpBox({ recipient, otp, setOtp, busy, onConfirm, onCancel, onResend })
 }
 
 export default function SecurityPanel({ email, isOpen = true, onToggle }) {
-    const [tab, setTab] = useState('password');
+    const [tab, setTab] = useState('email');
     const [busy, setBusy] = useState(false);
     const [otp, setOtp] = useState('');
     const [request, setRequest] = useState(null);
@@ -141,19 +141,19 @@ export default function SecurityPanel({ email, isOpen = true, onToggle }) {
                     <div className={styles.tabs}>
                         <button
                             type="button"
-                            className={`${styles.tabBtn} ${tab === 'password' ? styles.activeTab : ''}`}
-                            onClick={() => { setTab('password'); resetFlow(); }}
-                        >
-                            <i className="bi bi-key" />
-                            <span>Đổi mật khẩu</span>
-                        </button>
-                        <button
-                            type="button"
                             className={`${styles.tabBtn} ${tab === 'email' ? styles.activeTab : ''}`}
                             onClick={() => { setTab('email'); resetFlow(); }}
                         >
                             <i className="bi bi-envelope" />
                             <span>Đổi email</span>
+                        </button>
+                        <button
+                            type="button"
+                            className={`${styles.tabBtn} ${tab === 'password' ? styles.activeTab : ''}`}
+                            onClick={() => { setTab('password'); resetFlow(); }}
+                        >
+                            <i className="bi bi-key" />
+                            <span>Đổi mật khẩu</span>
                         </button>
                     </div>
 
