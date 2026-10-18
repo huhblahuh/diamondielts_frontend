@@ -76,12 +76,6 @@ body.dk-mode-plain #root { --dsk-band: 64px; }
   body[data-dk-role="staff"] .dk-logo .dk-app { display: none; }
 }
 
-/* Login keeps its brand beside the form; portal and theme share one corner. */
-body[data-dk-role="auth"] .dk-top {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-}
-body[data-dk-role="auth"] .dk-logo { display: none; }
-body[data-dk-role="auth"] .dk-top-l { order: 1; }
-body[data-dk-role="auth"] .dk-top-r { order: 2; }
+/* Login keeps its brand beside the form, so the shared top logo is hidden.
+   Portal button stays top-left and the theme button top-right, same as the other Diamonds sites. */
+body[data-dk-role="auth"] .dk-logo { visibility: hidden; pointer-events: none; }
