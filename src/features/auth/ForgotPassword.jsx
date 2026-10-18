@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import authService from '../../api/services/auth.service';
 import backgroundImg from '../../assets/backgroundLogin.webp';
-import siteLogo from '../../assets/site-logo.webp';
 import styles from './Login.module.css';
 
 const STEPS = {
@@ -147,8 +146,6 @@ export default function ForgotPassword({ embedded = false, onBack }) {
     const content = (
         <>
                 <div className={styles.loginHeader}>
-                    <img src={siteLogo} alt="Diamonds IELTS" className={styles.brandLogo} />
-                    <p className={styles.brandWordmark}>Diamonds IELTS <span>Speaking</span></p>
                     <h1>{step === STEPS.SUCCESS ? 'Đặt lại thành công' : 'Quên mật khẩu'}</h1>
                 </div>
 

@@ -3,7 +3,6 @@ import styles from './Login.module.css';
 import axiosClient from '../../api/axiosClient';
 import Swal from 'sweetalert2';
 import backgroundImg from '../../assets/backgroundLogin.webp';
-import siteLogo from '../../assets/site-logo.webp';
 import userQuotaService from '../../api/services/userQuota.service';
 import ForgotPassword from './ForgotPassword';
 
@@ -97,8 +96,6 @@ export default function Login() {
                 )}
                 <div hidden={showForgotPassword}>
                         <div className={styles.loginHeader}>
-                            <img src={siteLogo} alt="Diamonds IELTS" className={styles.brandLogo} />
-                            <p className={styles.brandWordmark}>Diamonds IELTS <span>Speaking</span></p>
                             <h1>Đăng nhập</h1>
                         </div>
 
