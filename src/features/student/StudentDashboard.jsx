@@ -167,7 +167,7 @@ export default function StudentDashboard() {
             <button type="button" className={styles.quotaStrip} onClick={openMyQuota} disabled={isQuotaLoading}>
                 <span className={styles.quotaIcon}><i className="bi bi-mic-fill" /></span>
                 <span className={styles.quotaMain}>
-                    <span className={styles.quotaTitle}><strong>Diamond Speaking</strong><b>{isQuotaLoading ? 'Đang tải…' : mySpeakingQuota ? `Còn ${Number(mySpeakingQuota.remaining).toLocaleString('vi-VN')}/${Number(mySpeakingQuota.limit).toLocaleString('vi-VN')} diamond` : 'Chưa được cấp'}</b></span>
+                    <span className={styles.quotaTitle}><strong>Kim cương Speaking</strong><b>{isQuotaLoading ? 'Đang tải…' : mySpeakingQuota ? `Còn ${Number(mySpeakingQuota.remaining).toLocaleString('vi-VN')}/${Number(mySpeakingQuota.limit).toLocaleString('vi-VN')} kim cương` : 'Chưa được cấp'}</b></span>
                     <span className={styles.quotaTrack}><i style={{ width: `${quotaPercent}%` }} /></span>
                     <small>{mySpeakingQuota ? formatReset(mySpeakingQuota.resetDate) : 'Chạm để xem chi tiết hạn mức'}</small>
                 </span>

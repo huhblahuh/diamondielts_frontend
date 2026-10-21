@@ -6,6 +6,10 @@
     margin: 0 auto;
 }
 
+@media (max-width: 768px) {
+    .page { padding: 1rem; box-sizing: border-box; }
+}
+
 .hero {
     min-height: 176px;
     padding: 2rem 2.25rem;

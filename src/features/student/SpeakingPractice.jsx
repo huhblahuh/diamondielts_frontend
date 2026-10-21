@@ -300,7 +300,7 @@ export default function SpeakingPractice({
                         title: 'Giới hạn số lần làm bài',
                         text: isAssignmentMode
                             ? `Bạn đã đạt tới giới hạn số lần nộp bài cho phép (${checkData.maxAttempts} lần) cho phần này.`
-                            : 'Bạn không còn đủ diamond để luyện Speaking tự do.',
+                            : 'Bạn không còn đủ kim cương để luyện Speaking tự do.',
                         confirmButtonColor: '#ef4444'
                     });
                     setStatus('idle');

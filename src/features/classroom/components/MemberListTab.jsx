@@ -11,7 +11,7 @@ const getInitials = (fullName = '') => {
         : `${words[0][0]}${words[words.length - 1][0]}`.toUpperCase();
 };
 
-export default function MemberListTab({ members = [], onRemoveUser, onViewDetails, loading, formatDate, styles }) {
+export default function MemberListTab({ members = [], onRemoveUser, onViewDetails, onViewProfile, loading, formatDate, styles }) {
     const [currentPage, setCurrentPage] = useState(1);
     const totalPages = Math.max(1, Math.ceil(members.length / PAGE_SIZE));
     const safePage = Math.min(currentPage, totalPages);
@@ -37,22 +37,28 @@ export default function MemberListTab({ members = [], onRemoveUser, onViewDetail
                         {!loading && paged.map((mem) => (
                             <tr key={mem.userId}>
                                 <td>
-                                    <div className={styles.memberNameCell}>
-                                        <span className={styles.memberAvatar} aria-hidden="true">
-                                            <span>{getInitials(mem.fullName)}</span>
-                                            {mem.avatarUrl && (
-                                                <img
-                                                    src={mem.avatarUrl}
-                                                    alt=""
-                                                    loading="lazy"
-                                                    onError={(event) => { event.currentTarget.style.display = 'none'; }}
-                                                />
-                                            )}
-                                        </span>
-                                        <span className={(mem.role === 'Teacher' || mem.role === 'Admin') ? styles.userNameRed : styles.boldText}>
-                                            {mem.fullName}
-                                        </span>
-                                    </div>
+                                    {mem.role === 'Student' ? (
+                                        <button
+                                            type="button"
+                                            className={styles.memberProfileButton}
+                                            onClick={() => onViewProfile(mem.userId, mem.fullName)}
+                                            aria-label={`Xem hồ sơ học viên ${mem.fullName}`}
+                                        >
+                                            <span className={styles.memberAvatar} aria-hidden="true">
+                                                <span>{getInitials(mem.fullName)}</span>
+                                                {mem.avatarUrl && <img src={mem.avatarUrl} alt="" loading="lazy" onError={(event) => { event.currentTarget.style.display = 'none'; }} />}
+                                            </span>
+                                            <span className={styles.memberProfileName}>{mem.fullName}</span>
+                                        </button>
+                                    ) : (
+                                        <div className={styles.memberNameCell}>
+                                            <span className={styles.memberAvatar} aria-hidden="true">
+                                                <span>{getInitials(mem.fullName)}</span>
+                                                {mem.avatarUrl && <img src={mem.avatarUrl} alt="" loading="lazy" onError={(event) => { event.currentTarget.style.display = 'none'; }} />}
+                                            </span>
+                                            <span className={styles.userNameRed}>{mem.fullName}</span>
+                                        </div>
+                                    )}
                                 </td>
                                 <td className={styles.muted}>{mem.email}</td>
                                 <td>

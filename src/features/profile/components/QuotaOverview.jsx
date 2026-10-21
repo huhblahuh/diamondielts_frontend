@@ -32,13 +32,13 @@ export default function QuotaOverview({ speakingQuota }) {
                         <span className={styles.heroQuotaNumBig}>—</span>
                     </div>
                 </div>
-                <p className={styles.heroQuotaLabel}>Chưa cấp diamond</p>
+                <p className={styles.heroQuotaLabel}>Chưa cấp kim cương</p>
             </div>
         );
     }
 
     return (
-        <div className={styles.heroQuotaMini} aria-label="Diamond luyện Speaking">
+        <div className={styles.heroQuotaMini} aria-label="Kim cương luyện Speaking">
             <div className={styles.heroQuotaRingWrap}>
                 <svg viewBox="0 0 100 100" className={styles.heroQuotaRing}>
                     <circle cx="50" cy="50" r={RADIUS} className={styles.heroQuotaTrack} />
@@ -54,7 +54,7 @@ export default function QuotaOverview({ speakingQuota }) {
                     <span className={styles.heroQuotaNumSlash}>/{limit}</span>
                 </div>
             </div>
-            <p className={styles.heroQuotaLabel}>Diamond còn lại tháng này</p>
+            <p className={styles.heroQuotaLabel}>Kim cương còn lại tháng này</p>
         </div>
     );
 }

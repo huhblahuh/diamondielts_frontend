@@ -27,7 +27,7 @@ const formatDate = (value, withYear = false) => new Intl.DateTimeFormat('vi-VN',
     day: '2-digit', month: '2-digit', ...(withYear ? { year: 'numeric' } : {}),
 }).format(new Date(value.includes?.('T') ? value : `${value}T00:00:00`));
 
-export default function ScoreProgressChart({ points = [], scopeLabel, headerActions, title = 'Biểu đồ điểm trung bình', subtitle = 'Điểm trung bình mỗi ngày', className = '', compact = false }) {
+export default function ScoreProgressChart({ points = [], scopeLabel, headerActions, title = 'Biểu đồ điểm trung bình', subtitle = 'Điểm trung bình mỗi ngày', className = '', compact = false, hideHeading = false }) {
     const [visibleSkills, setVisibleSkills] = useState({});
     const progress = useMemo(() => sampleProgressPoints(points), [points]);
     const hasOverall = progress.some((point) => Number.isFinite(point.overallScore));
@@ -59,10 +59,10 @@ export default function ScoreProgressChart({ points = [], scopeLabel, headerActi
     const options = { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, plugins: { legend: { display: false }, tooltip: { callbacks: { label: (context) => `${context.dataset.label}: ${formatScore(context.raw)}` } } }, scales: { x: { offset: true, grid: { display: false }, border: { display: false }, ticks: { color: '#64748b', autoSkip: false, maxRotation: 0, padding: 12, font: { size: 11 } } }, y: { beginAtZero: true, max: 9, ticks: { stepSize: 1, color: '#64748b' }, grid: { color: '#edf1f6' }, border: { display: false } } } };
 
     return <article className={`${styles.card} ${styles.progressCard} ${compact ? styles.compactProgressCard : ''} ${className}`}>
-        <div className={styles.progressHeader}>
-            <div className={styles.sectionHeading}><h2>{title}</h2><p>{subtitle}</p></div>
+        {(!hideHeading || headerActions || scopeLabel) && <div className={styles.progressHeader}>
+            {!hideHeading && <div className={styles.sectionHeading}><h2>{title}</h2><p>{subtitle}</p></div>}
             {headerActions || (scopeLabel ? <span className={styles.scopePill}>{scopeLabel}</span> : null)}
-        </div>
+        </div>}
         <div className={styles.skillToggles} role="group" aria-label="Bật hoặc tắt các đường tiêu chí">
             <span className={styles.overallLegend}><i />Overall</span>
             {scoreItems.map((item) => <label className={`${styles.skillToggle} ${item.visible ? styles.skillToggleActive : ''}`} style={{ '--toggle-color': item.color }} key={item.key} title={item.available ? `Bật/tắt ${item.label}` : `${item.label}: chưa có điểm`}><input type="checkbox" checked={item.visible} disabled={!item.available} onChange={() => setVisibleSkills((current) => ({ ...current, [item.key]: !item.visible }))} /><span className={styles.legendDot} /><span>{item.short || item.label}</span></label>)}

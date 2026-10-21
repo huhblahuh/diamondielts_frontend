@@ -383,9 +383,9 @@ export default function QuotaDashboardPage() {
                 mode: 'resetUsed',
                 timeFrame: quotaTimeFrame,
                 studentIds: [studentId],
-                reason: 'Reset diamond đã sử dụng từ Admin Dashboard',
+                reason: 'Reset kim cương đã sử dụng từ Admin Dashboard',
             },
-            'Đã reset diamond đã sử dụng',
+            'Đã reset kim cương đã sử dụng',
         );
     };
 
@@ -632,15 +632,15 @@ export default function QuotaDashboardPage() {
             <section className={styles.quotaCard}>
                 <div className={styles.quotaHeader}>
                     <div>
-                        <span className={styles.sectionLabel}>MONTHLY DIAMOND</span>
-                        <h2>Điều phối diamond theo lớp</h2>
+                        <span className={styles.sectionLabel}>KIM CƯƠNG HẰNG THÁNG</span>
+                        <h2>Điều phối kim cương theo lớp</h2>
                         <p>
                             Quota vẫn thuộc từng học viên; lớp chỉ là phạm vi thao tác hàng loạt.
                         </p>
                     </div>
                     <div className={styles.bulkControls}>
                             <div>
-                                <small>Chu kỳ diamond</small>
+                                <small>Chu kỳ kim cương</small>
                                 <strong>Hàng tháng</strong>
                             </div>
                             {filters.classId && (
@@ -721,7 +721,7 @@ export default function QuotaDashboardPage() {
                                             </th>
                                             <th>Học viên</th>
                                             <th>Tiến độ sử dụng</th>
-                                            <th>Diamond còn lại</th>
+                                            <th>Kim cương còn lại</th>
                                             <th>Limit tháng</th>
                                             <th>Thao tác</th>
                                         </tr>
@@ -760,7 +760,7 @@ export default function QuotaDashboardPage() {
                                                 </td>
                                                 <td>
                                                     <span className={`${styles.remainingBadge} ${item.isExhausted ? styles.exhausted : ''}`}>
-                                                        {numberFormatter.format(item.remaining)} diamond
+                                                        {numberFormatter.format(item.remaining)} kim cương
                                                     </span>
                                                 </td>
                                                 <td>
@@ -788,8 +788,8 @@ export default function QuotaDashboardPage() {
                                                         <button
                                                             type="button"
                                                             title={filters.classId
-                                                                ? 'Reset diamond đã dùng'
-                                                                : 'Chọn lớp để reset diamond đã dùng'}
+                                                                ? 'Reset kim cương đã dùng'
+                                                                : 'Chọn lớp để reset kim cương đã dùng'}
                                                             onClick={() => resetStudentUsage(item.userId)}
                                                             disabled={saving || !filters.classId}
                                                         >

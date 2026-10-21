@@ -2,6 +2,7 @@ import axiosClient from '../axiosClient';
 
 const profileService = {
     getProfile: () => axiosClient.get('/profile'),
+    getStudentProfile: (studentId, params) => axiosClient.get(`/students/${studentId}/profile`, { params }),
     updateProfile: (payload) => axiosClient.patch('/profile', payload),
     uploadAvatar: (file) => {
         const formData = new FormData();

@@ -368,7 +368,7 @@
 }
 
 .quotaModal {
-    width: min(560px, 100%);
+    width: min(620px, 100%);
     max-height: min(720px, calc(100vh - 2rem));
     overflow: hidden;
     border: 1px solid rgba(16, 29, 84, 0.12);
@@ -424,6 +424,9 @@
 }
 
 .quotaItem {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+    gap: 0.75rem;
     padding: 1rem;
     border: 1px solid var(--di-border);
     border-radius: 15px;
@@ -432,9 +435,8 @@
 
 .quotaPeriods {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr);
     gap: 0.75rem;
-    margin-top: 0.9rem;
 }
 
 .quotaPeriodCard {
@@ -453,6 +455,61 @@
 
 .quotaPeriodCard .quotaItemTop>span {
     overflow-wrap: anywhere;
+}
+
+.quotaCostCard {
+    min-width: 0;
+    padding: 0.85rem;
+    border: 1px solid var(--di-border);
+    border-radius: 12px;
+    background: #fff;
+}
+
+.quotaCostHeading strong {
+    display: block;
+    color: var(--di-text);
+    font-size: 0.9rem;
+}
+
+.quotaCostHeading small,
+.quotaCostEmpty {
+    color: var(--di-muted);
+    font-size: 0.7rem;
+}
+
+.quotaCostHeading small {
+    display: block;
+    margin-top: 0.2rem;
+}
+
+.quotaCostList {
+    display: grid;
+    gap: 0.55rem;
+    margin-top: 0.85rem;
+}
+
+.quotaCostRow {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--di-border);
+    font-size: 0.78rem;
+}
+
+.quotaCostRow:last-child {
+    padding-bottom: 0;
+    border-bottom: 0;
+}
+
+.quotaCostRow strong {
+    color: var(--di-blue);
+    text-align: right;
+}
+
+.quotaCostEmpty {
+    margin: 0.85rem 0 0;
 }
 
 .quotaPeriodToggle {
@@ -639,6 +696,10 @@
 }
 
 @media (max-width: 768px) {
+    .quotaItem {
+        grid-template-columns: 1fr;
+    }
+
     .quotaPeriods {
         grid-template-columns: 1fr;
     }
@@ -660,11 +721,7 @@
     }
 
     .pageBody {
-        /* extra space so content isn't hidden behind bottom nav */
-        padding-bottom: calc(106px + env(safe-area-inset-bottom, 0px)) !important;
-    }
-
-    .pageBody.studentPageBody {
+        /* Pages manage their own horizontal spacing; reserve room for the shared bottom nav. */
         padding: 0 0 calc(106px + env(safe-area-inset-bottom, 0px)) !important;
     }
 

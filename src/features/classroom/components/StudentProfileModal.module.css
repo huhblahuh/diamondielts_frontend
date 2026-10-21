@@ -1,0 +1,218 @@
+.backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1200;
+    display: grid;
+    place-items: center;
+    padding: 1rem;
+    background: rgba(16, 29, 84, 0.55);
+    backdrop-filter: blur(5px);
+}
+
+.modal {
+    width: min(100%, 1280px);
+    max-height: min(92vh, 900px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-radius: 20px;
+    background: #fff;
+    box-shadow: 0 24px 60px rgba(16, 29, 84, 0.22);
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.1rem 1.5rem;
+    background: linear-gradient(135deg, #101d54, #1b2d75);
+    color: #fff;
+}
+
+.eyebrow {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #f6e6b8;
+}
+
+.header h2 { margin: 0.2rem 0 0; font-size: 1.3rem; }
+
+.closeButton {
+    width: 2rem;
+    height: 2rem;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.16);
+    color: #fff;
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.closeButton:hover { background: rgba(255, 255, 255, 0.28); }
+.body { padding: 1.5rem; overflow-y: auto; }
+.topRow { display: flex; align-items: stretch; gap: 1rem; }
+.monthFilter {
+    display: flex;
+    flex: 0 0 300px;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 1rem 1.2rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    background: #f8fafc;
+}
+.monthFilter > div:first-child { display: grid; gap: 0.2rem; color: #101d54; font-size: 0.85rem; }
+.monthFilter span { color: #64748b; font-size: 0.75rem; }
+.monthControls { display: flex; align-items: center; gap: 0.35rem; }
+.monthControls button, .monthControls input {
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+    background: #fff;
+    color: #101d54;
+    min-height: 2rem;
+}
+.monthControls button { width: 2rem; cursor: pointer; font-size: 1.2rem; }
+.monthControls button:disabled { opacity: 0.4; cursor: not-allowed; }
+.monthControls input { padding: 0.2rem 0.5rem; font: inherit; }
+.message { padding: 3rem 1rem; text-align: center; color: #475569; }
+
+.error {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem;
+    border-radius: 10px;
+    background: #fff1f2;
+    color: #be123c;
+}
+
+.error button {
+    border: 1px solid currentColor;
+    border-radius: 6px;
+    padding: 0.35rem 0.7rem;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+}
+
+.profileCard {
+    display: flex;
+    flex: 1 1 auto;
+    min-width: 0;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    background: #f8fafc;
+}
+
+.avatar {
+    position: relative;
+    flex: 0 0 4rem;
+    width: 4rem;
+    height: 4rem;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    border-radius: 50%;
+    background: #f6e6b8;
+    color: #101d54;
+    font-weight: 800;
+}
+
+.avatar img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.profileInfo { display: grid; gap: 0.2rem; min-width: 0; color: #64748b; font-size: 0.85rem; }
+.profileInfo strong { color: #101d54; font-size: 1.1rem; }
+.profileInfo span { overflow-wrap: anywhere; }
+.overall { display: grid; gap: 0.2rem; margin-left: auto; text-align: right; color: #64748b; font-size: 0.8rem; }
+.overall strong { color: #101d54; font-size: 1.4rem; }
+.overall small { font-size: 0.75rem; }
+
+.sectionTop {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 1rem;
+    margin: 0 0 0.75rem;
+}
+
+.sectionTop h3 { margin: 0; color: #101d54; font-size: 1.05rem; }
+.sectionTop p { margin: 0.25rem 0 0; color: #64748b; font-size: 0.8rem; }
+.insightsGrid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(370px, 0.85fr);
+    gap: 1.25rem;
+    margin-top: 1.5rem;
+}
+.chartArea, .activityArea {
+    min-width: 0;
+    min-height: 430px;
+    padding: 1.25rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    background: #fff;
+}
+.chartArea .chart {
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    background: transparent;
+}
+
+.activitySummary { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; margin-bottom: 1rem; color: #64748b; font-size: 0.8rem; }
+.activitySummary strong { color: #101d54; }
+.weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 36px);
+    gap: 6px;
+    width: max-content;
+    margin: 0 auto 0.45rem;
+    color: #64748b;
+    font-size: 0.72rem;
+    text-align: center;
+}
+.heatmapScroll { overflow-x: auto; padding: 0.25rem 0 0.75rem; }
+.heatmap { display: grid; grid-template-columns: repeat(7, 36px); grid-auto-rows: 36px; gap: 6px; width: max-content; margin: 0 auto; }
+.day, .emptyCell { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 7px; font-size: 0.72rem; font-weight: 700; }
+.day { color: #17422d; }
+.level0 { background: #e2e8f0; }
+.level1 { background: #d4e9ce; }
+.level2 { background: #9ccb9d; }
+.level3 { background: #5da878; }
+.level4 { background: #26714d; color: #fff; }
+.legend { display: flex; justify-content: flex-end; align-items: center; gap: 4px; color: #64748b; font-size: 0.75rem; }
+.legend .day { width: 18px; height: 18px; border-radius: 4px; }
+.legend span:first-child { margin-right: 4px; }
+.legend span:last-child { margin-left: 4px; }
+
+@media (max-width: 980px) {
+    .insightsGrid { grid-template-columns: 1fr; }
+    .activityArea { min-height: 0; }
+}
+
+@media (max-width: 720px) {
+    .topRow { flex-direction: column; }
+    .monthFilter { flex-basis: auto; }
+}
+
+@media (max-width: 600px) {
+    .body { padding: 1rem; }
+    .profileCard { flex-wrap: wrap; }
+    .overall { width: 100%; margin-left: 0; text-align: left; }
+    .sectionTop { align-items: start; flex-direction: column; }
+    .weekdays, .heatmap { grid-template-columns: repeat(7, 28px); gap: 4px; }
+    .heatmap { grid-auto-rows: 28px; }
+    .day, .emptyCell { width: 28px; height: 28px; font-size: 0.65rem; }
+    .legend .day { width: 18px; height: 18px; }
+}

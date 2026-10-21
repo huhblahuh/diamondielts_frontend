@@ -13,6 +13,7 @@ import AddMemberModal from './components/AddMemberModal';
 import FolderConfigModal from './components/FolderConfigModal';
 import ClassroomFormModal from './components/ClassroomFormModal';
 import StudentDetailsModal from './components/StudentDetailsModal';
+import StudentProfileModal from './components/StudentProfileModal';
 
 export default function ClassroomManagement() {
     const navigate = useNavigate();
@@ -42,6 +43,7 @@ export default function ClassroomManagement() {
     const [showStudentModal, setShowStudentModal] = useState(false);
     const [selectedStudentId, setSelectedStudentId] = useState(null);
     const [selectedStudentName, setSelectedStudentName] = useState('');
+    const [profileStudent, setProfileStudent] = useState(null);
 
     // Auto-select class if returning from AssignmentReviewPage
     useEffect(() => {
@@ -371,6 +373,7 @@ export default function ClassroomManagement() {
                             members={detailedClass?.members || []}
                             onRemoveUser={handleRemoveUserFromClass}
                             onViewDetails={handleOpenStudentDetails}
+                            onViewProfile={(studentId, fullName) => setProfileStudent({ studentId, fullName })}
                             loading={loading}
                             formatDate={formatDate}
                             styles={styles}
@@ -426,6 +429,10 @@ export default function ClassroomManagement() {
                 studentId={selectedStudentId}
                 studentName={selectedStudentName}
                 onViewSubmission={handleViewSubmission}
+            />
+            <StudentProfileModal
+                student={profileStudent}
+                onClose={() => setProfileStudent(null)}
             />
         </div>
     );

@@ -1,6 +1,8 @@
 import axios from 'axios';
 
-const API_URL = 'https://api.diamondielts.com/api';
+const API_URL = import.meta.env.DEV
+    ? '/api'
+    : 'https://api.diamondielts.com/api';
 
 const axiosClient = axios.create({
     baseURL: API_URL,

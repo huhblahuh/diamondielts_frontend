@@ -15,6 +15,11 @@ import {
 const QUOTA_PERIODS = [
     { value: 'Monthly', label: 'Theo tháng' },
 ];
+const QUOTA_COST_PARTS = [
+    { key: 'part1', label: 'Part 1' },
+    { key: 'part2', label: 'Part 2' },
+    { key: 'part3', label: 'Part 3' },
+];
 
 function formatResetRemaining(resetDate, now = Date.now()) {
     const milliseconds = new Date(resetDate).getTime() - now;
@@ -35,7 +40,6 @@ export default function Layout() {
     const location = useLocation();
     const [user, setUser] = useState(() => authService.getCurrentUser() || {});
     const role = user.role || 'Student';
-    const isStudentMobileView = role === 'Student';
     const practiceSearchParams = new URLSearchParams(location.search);
     const isSpeakingStudioView = role === 'Student' && (
         location.pathname.startsWith('/student/speaking/') ||
@@ -504,6 +508,9 @@ export default function Layout() {
                 .find((item) => item.timeFrame === period.value),
         }))
         .filter((item) => Boolean(item.quota));
+    const quotaCosts = QUOTA_COST_PARTS
+        .map((part) => ({ ...part, cost: Number(mySpeakingQuota?.costPerPart?.[part.key]) }))
+        .filter((part) => Number.isFinite(part.cost));
 
     return (
         <div className={styles.wrapper}>
@@ -635,7 +642,7 @@ export default function Layout() {
                         <h2>{(role === 'Teacher' || role === 'Admin') ? 'Bảng Điều Khiển Giáo Viên' : 'Cổng Học Viên / Student Portal'}</h2>
                     )}
                 </header>
-                <div className={`${styles.pageBody} ${isStudentMobileView ? styles.studentPageBody : ''} ${isSpeakingStudioView ? styles.speakingStudioPageBody : ''}`}>
+                <div className={`${styles.pageBody} ${isSpeakingStudioView ? styles.speakingStudioPageBody : ''}`}>
                     <Suspense fallback={<PageSkeleton />}>
                         <Outlet context={{
                             setCustomHeader,
@@ -668,9 +675,9 @@ export default function Layout() {
                     >
                         <div className={styles.quotaModalHeader}>
                             <div>
-                                <span>DIAMOND SPEAKING</span>
-                                <h2 id="my-quota-title">Diamond của tôi</h2>
-                                <p>Diamond dùng cho các bài luyện Speaking tự do và được cấp lại mỗi tháng.</p>
+                                <span>KIM CƯƠNG SPEAKING</span>
+                                <h2 id="my-quota-title">Kim cương của tôi</h2>
+                                <p>Kim cương dùng cho các bài luyện Speaking tự do và được cấp lại mỗi tháng.</p>
                             </div>
                             <button
                                 type="button"
@@ -695,7 +702,7 @@ export default function Layout() {
                             ) : !mySpeakingQuota || availableQuotaPeriods.length === 0 ? (
                                 <div className={styles.quotaState}>
                                     <i className="bi bi-inbox" />
-                                    Tài khoản chưa được cấp diamond.
+                                    Tài khoản chưa được cấp kim cương.
                                 </div>
                             ) : (
                                 <article className={styles.quotaItem}>
@@ -714,10 +721,10 @@ export default function Layout() {
                                                     <div className={styles.quotaItemTop}>
                                                         <div>
                                                             <strong>{period.label}</strong>
-                                                            <small>{Number(quota.used).toLocaleString('vi-VN')} diamond đã dùng</small>
+                                                            <small>{Number(quota.used).toLocaleString('vi-VN')} kim cương đã dùng</small>
                                                         </div>
                                                         <span>
-                                                            {Number(quota.remaining).toLocaleString('vi-VN')}/{Number(quota.limit).toLocaleString('vi-VN')} diamond
+                                                            {Number(quota.remaining).toLocaleString('vi-VN')}/{Number(quota.limit).toLocaleString('vi-VN')} kim cương
                                                         </span>
                                                     </div>
                                                     <div className={styles.quotaProgress}>
@@ -732,6 +739,22 @@ export default function Layout() {
                                             );
                                         })}
                                     </div>
+                                    <section className={styles.quotaCostCard} aria-label="Chi phí luyện Speaking">
+                                        <div className={styles.quotaCostHeading}>
+                                            <strong>Chi phí mỗi lượt luyện</strong>
+                                            <small>Tính theo từng Part</small>
+                                        </div>
+                                        {quotaCosts.length > 0 ? (
+                                            <div className={styles.quotaCostList}>
+                                                {quotaCosts.map(({ key, label, cost }) => (
+                                                    <div className={styles.quotaCostRow} key={key}>
+                                                        <span>{label}</span>
+                                                        <strong>{cost.toLocaleString('vi-VN')} kim cương</strong>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : <p className={styles.quotaCostEmpty}>Chưa có thông tin chi phí.</p>}
+                                    </section>
                                 </article>
                             )}
                         </div>

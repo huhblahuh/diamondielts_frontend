@@ -2,6 +2,9 @@
   min-height: 100%;
   color: #101d54;
 }
+@media (max-width: 768px) {
+  .analyticsPage { padding: 1rem; box-sizing: border-box; }
+}
 .analyticsHeader {
   margin-bottom: 14px;
 }
