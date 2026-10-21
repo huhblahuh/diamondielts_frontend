@@ -265,6 +265,26 @@
     color: #101d54;
 }
 
+.profileButton {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.profileButton:hover .fullNameText,
+.profileButton:focus-visible .fullNameText {
+    text-decoration: underline;
+}
+
+.profileButton:focus-visible {
+    outline: 2px solid #2a3f94;
+    outline-offset: 3px;
+    border-radius: 4px;
+}
+
 .roleBadge {
     display: inline-flex;
     padding: 0.25rem 0.75rem;
