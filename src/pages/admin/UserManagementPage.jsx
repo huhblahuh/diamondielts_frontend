@@ -3,7 +3,6 @@ import styles from './UserManagementPage.module.css';
 import axiosClient from '../../api/axiosClient';
 import Swal from 'sweetalert2';
 import Pagination from '../../components/Pagination';
-import StudentProfileModal from '../../features/classroom/components/StudentProfileModal';
 
 const PAGE_SIZE = 10;
 
@@ -18,7 +17,6 @@ export default function UserManagementPage() {
     const [excelFile, setExcelFile] = useState(null);
     const [excelPreview, setExcelPreview] = useState(null);
     const [excelLoading, setExcelLoading] = useState(false);
-    const [profileStudent, setProfileStudent] = useState(null);
 
     // Modal states
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -388,26 +386,12 @@ export default function UserManagementPage() {
                                     <tr key={user.userId}>
                                         <td className={styles.idCell}>#{user.userId}</td>
                                         <td>
-                                            {user.role === 'Student' ? (
-                                                <button
-                                                    type="button"
-                                                    className={`${styles.userProfileCol} ${styles.profileButton}`}
-                                                    onClick={() => setProfileStudent({ studentId: user.userId, fullName: user.fullName })}
-                                                    aria-label={`Xem hồ sơ học viên ${user.fullName}`}
-                                                >
-                                                    <span className={`${styles.avatar} ${getRoleBadgeClass(user.role)}`}>
-                                                        {user.fullName?.charAt(0).toUpperCase() || 'U'}
-                                                    </span>
-                                                    <span className={styles.fullNameText}>{user.fullName}</span>
-                                                </button>
-                                            ) : (
-                                                <div className={styles.userProfileCol}>
-                                                    <span className={`${styles.avatar} ${getRoleBadgeClass(user.role)}`}>
-                                                        {user.fullName?.charAt(0).toUpperCase() || 'U'}
-                                                    </span>
-                                                    <span className={styles.fullNameText}>{user.fullName}</span>
+                                            <div className={styles.userProfileCol}>
+                                                <div className={`${styles.avatar} ${getRoleBadgeClass(user.role)}`}>
+                                                    {user.fullName?.charAt(0).toUpperCase() || 'U'}
                                                 </div>
-                                            )}
+                                                <span className={styles.fullNameText}>{user.fullName}</span>
+                                            </div>
                                         </td>
                                         <td><strong>{user.username}</strong></td>
                                         <td>{user.email}</td>
@@ -686,7 +670,6 @@ export default function UserManagementPage() {
                     </div>
                 </div>
             )}
-            <StudentProfileModal student={profileStudent} onClose={() => setProfileStudent(null)} />
         </div>
     );
 }

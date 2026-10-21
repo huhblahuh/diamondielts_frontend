@@ -11,6 +11,8 @@ const getInitials = (fullName = '') => {
         : `${words[0][0]}${words[words.length - 1][0]}`.toUpperCase();
 };
 
+const isStudentMember = (role) => !['teacher', 'admin'].includes(String(role || '').trim().toLowerCase());
+
 export default function MemberListTab({ members = [], onRemoveUser, onViewDetails, onViewProfile, loading, formatDate, styles }) {
     const [currentPage, setCurrentPage] = useState(1);
     const totalPages = Math.max(1, Math.ceil(members.length / PAGE_SIZE));
@@ -37,7 +39,7 @@ export default function MemberListTab({ members = [], onRemoveUser, onViewDetail
                         {!loading && paged.map((mem) => (
                             <tr key={mem.userId}>
                                 <td>
-                                    {mem.role === 'Student' ? (
+                                    {isStudentMember(mem.role) ? (
                                         <button
                                             type="button"
                                             className={styles.memberProfileButton}
@@ -62,7 +64,7 @@ export default function MemberListTab({ members = [], onRemoveUser, onViewDetail
                                 </td>
                                 <td className={styles.muted}>{mem.email}</td>
                                 <td>
-                                    {(mem.role === 'Teacher' || mem.role === 'Admin') ? (
+                                    {!isStudentMember(mem.role) ? (
                                         <span className={styles.userRoleBadge}>{mem.role}</span>
                                     ) : (
                                         <span>Học viên {mem.joinDate ? `(${formatDate(mem.joinDate)})` : ''}</span>
@@ -70,7 +72,7 @@ export default function MemberListTab({ members = [], onRemoveUser, onViewDetail
                                 </td>
                                 <td>
                                     <div style={{display:'flex', gap:'0.5rem'}}>
-                                        {mem.role !== 'Teacher' && mem.role !== 'Admin' ? (
+                                        {isStudentMember(mem.role) ? (
                                             <button 
                                                 className={styles.btnAction}
                                                 onClick={() => onViewDetails(mem.userId, mem.fullName)}
