@@ -213,6 +213,14 @@ export default function AssignmentTaskCard({
                                                         key={h.submissionId}
                                                         className={styles.historyRow}
                                                         onClick={() => isSpeaking && onViewSubmission(item.itemId, h.submissionId)}
+                                                        onKeyDown={isSpeaking ? (event) => {
+                                                            if (event.key === 'Enter' || event.key === ' ') {
+                                                                event.preventDefault();
+                                                                onViewSubmission(item.itemId, h.submissionId);
+                                                            }
+                                                        } : undefined}
+                                                        role={isSpeaking ? 'button' : undefined}
+                                                        tabIndex={isSpeaking ? 0 : undefined}
                                                         title={isSpeaking ? 'Bấm để xem chi tiết bài làm này' : undefined}
                                                     >
                                                         <div>

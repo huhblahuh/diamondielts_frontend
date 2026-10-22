@@ -6,6 +6,11 @@ import siteLogo from '../../assets/site-logo.webp';
 import PageSkeleton from '../common/PageSkeleton';
 import userQuotaService from '../../api/services/userQuota.service';
 import authService from '../../api/services/auth.service';
+import Swal from 'sweetalert2';
+import {
+    getMissingBrowserPermissions,
+    requestMissingBrowserPermissions,
+} from '../../utils/browserPermissions';
 import {
     getPushStatus,
     isPushSupported,
@@ -15,6 +20,7 @@ import {
 const QUOTA_PERIODS = [
     { value: 'Monthly', label: 'Theo tháng' },
 ];
+let permissionPromptOpen = false;
 const QUOTA_COST_PARTS = [
     { key: 'part1', label: 'Part 1' },
     { key: 'part2', label: 'Part 2' },
@@ -112,6 +118,48 @@ export default function Layout() {
         return () => {
             isActive = false;
         };
+    }, [role]);
+
+    useEffect(() => {
+        let active = true;
+        const promptForPermissions = async () => {
+            const missing = await getMissingBrowserPermissions(role);
+            if (!active || permissionPromptOpen || (!missing.microphone && !missing.notifications)) return;
+
+            permissionPromptOpen = true;
+            try {
+                const names = [
+                    missing.microphone && 'micro',
+                    missing.notifications && 'thông báo',
+                ].filter(Boolean).join(' và ');
+                const response = await Swal.fire({
+                    icon: 'info',
+                    title: 'Cho phép truy cập ' + names,
+                    text: 'Nhấn Cấp quyền để trình duyệt lưu lựa chọn của bạn.',
+                    confirmButtonText: 'Cấp quyền',
+                    showCancelButton: true,
+                    cancelButtonText: 'Để sau',
+                    preConfirm: () => requestMissingBrowserPermissions(missing),
+                });
+                if (response.isConfirmed && active) {
+                    if (missing.notifications && role === 'Student') {
+                        setPushStatus(await getPushStatus());
+                    }
+                    if (!response.value.microphoneGranted || !response.value.notifications.success) {
+                        await Swal.fire({
+                            icon: 'warning',
+                            title: 'Chưa cấp đủ quyền',
+                            text: 'Hãy kiểm tra quyền micro và thông báo trong cài đặt của trình duyệt rồi thử lại.',
+                        });
+                    }
+                }
+            } finally {
+                permissionPromptOpen = false;
+            }
+        };
+
+        void promptForPermissions();
+        return () => { active = false; };
     }, [role]);
 
     const handleLogout = () => {

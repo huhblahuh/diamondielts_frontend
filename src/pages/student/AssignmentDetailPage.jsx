@@ -6,10 +6,10 @@ import styles from './AssignmentDetailPage.module.css';
 import Swal from 'sweetalert2';
 import { showToastError } from '../../utils/toast';
 import Skeleton from '../../components/common/Skeleton';
-import SpeakingPractice from '../../features/student/SpeakingPractice';
 import { parseAssignmentDueDate } from '../../utils/assignmentDate';
 import AssignmentDetailHero from './AssignmentDetailHero';
 import AssignmentTaskCard from './AssignmentTaskCard';
+import AssignmentSpeakingModal from './AssignmentSpeakingModal';
 import { filterAssignmentItems, getAssignmentFilterOptions } from './assignmentDetailUtils';
 import useAssignmentFileSubmissions from './useAssignmentFileSubmissions';
 
@@ -259,23 +259,6 @@ export default function AssignmentDetailPage() {
 
     if (!assignment) return null;
 
-    // --- SPEAKING STUDIO VIEW MODE ---
-    if (activeSpeakingItemId) {
-        return (
-            <div className={styles.speakingView}>
-                <SpeakingPractice
-                    isAssignmentMode={true}
-                    assignmentId={assignmentId}
-                    assignmentItemId={activeSpeakingItemId}
-                    assignment={assignment}
-                    assignmentItemDetail={itemDetails[activeSpeakingItemId]}
-                    initialSubmissionId={initialSubmissionId}
-                    onBack={closeSpeakingView}
-                />
-            </div>
-        );
-    }
-
     const isOverdue = assignment.dueDate && parseAssignmentDueDate(assignment.dueDate) < new Date();
     const isBlockedByDeadline = isOverdue && !assignment.allowLateSubmission;
     const totalItems = assignment.items?.length || 0;
@@ -382,6 +365,16 @@ export default function AssignmentDetailPage() {
                     </div>
                 </section>
             </div>
+            {activeSpeakingItemId && (
+                <AssignmentSpeakingModal
+                    assignmentId={assignmentId}
+                    itemId={activeSpeakingItemId}
+                    assignment={assignment}
+                    itemDetail={itemDetails[activeSpeakingItemId]}
+                    initialSubmissionId={initialSubmissionId}
+                    onClose={closeSpeakingView}
+                />
+            )}
         </div>
     );
 }

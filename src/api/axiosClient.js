@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const API_URL = import.meta.env.DEV
     ? '/api'
-    : 'https://api.diamondielts.com/api';
+    : 'https://api.diamonds-speaking.space/api';
 
 const axiosClient = axios.create({
     baseURL: API_URL,

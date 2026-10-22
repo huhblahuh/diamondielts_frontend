@@ -15,7 +15,8 @@ export default function SpeakingPractice({
     assignment = null,
     assignmentItemDetail = null,
     initialSubmissionId = null,
-    onBack = null
+    onBack = null,
+    embedded = false
 }) {
     const { exerciseId: routeExerciseId } = useParams();
     const [searchParams] = useSearchParams();
@@ -62,7 +63,7 @@ export default function SpeakingPractice({
     const resultWasVisibleRef = useRef(false);
     const resultMarkerWasActiveRef = useRef(false);
 
-    const resultMarkerActive = location.state?.speakingResultOpen === true;
+    const resultMarkerActive = !embedded && location.state?.speakingResultOpen === true;
     const requestedSubmissionId = initialSubmissionId
         || (resultMarkerActive ? location.state?.speakingSubmissionId : null);
 
@@ -81,7 +82,7 @@ export default function SpeakingPractice({
     useEffect(() => {
         const resultIsVisible = Boolean(results);
 
-        if (resultIsVisible && !resultWasVisibleRef.current && !resultMarkerActive) {
+        if (resultIsVisible && !resultWasVisibleRef.current && !resultMarkerActive && !embedded) {
             navigate(`${location.pathname}${location.search}${location.hash}`, {
                 state: {
                     ...(location.state || {}),
@@ -95,6 +96,11 @@ export default function SpeakingPractice({
     }, [location.hash, location.pathname, location.search, location.state, navigate, resultMarkerActive, results]);
 
     const closeResultView = useCallback(() => {
+        if (embedded) {
+            setResults(null);
+            setSubmissionId(null);
+            return;
+        }
         if (resultMarkerActive && Number(window.history.state?.idx) > 0) {
             navigate(-1);
             return;
@@ -113,7 +119,7 @@ export default function SpeakingPractice({
                 state: nextState,
             });
         }
-    }, [location.hash, location.pathname, location.search, location.state, navigate, resultMarkerActive]);
+    }, [embedded, location.hash, location.pathname, location.search, location.state, navigate, resultMarkerActive]);
 
     const handlePageBack = useCallback(() => {
         if (rightSidebarOpen) {
@@ -602,7 +608,7 @@ export default function SpeakingPractice({
     const speakingContent = normalizeSpeakingContent(exercise.content);
 
     return (
-        <div className={`${styles.studioContainer} ${results ? styles.resultsActive : ''}`}>
+        <div className={`${styles.studioContainer} ${results ? styles.resultsActive : ''} ${embedded ? styles.embedded : ''}`}>
             {/* CỘT 1: HISTORY SIDEBAR (Trái) */}
             <aside className={`${styles.questionSidebar} ${leftSidebarOpen ? styles.isOpen : ''}`}>
                 <div className={styles.sidebarContent}>

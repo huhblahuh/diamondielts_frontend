@@ -763,6 +763,23 @@
 @media (max-width: 768px) {
     :global(body.dk-mode-plain) .studioContainer { min-height: 100%; }
 }
+
+.studioContainer.embedded,
+:global(body.dk-mode-plain) .studioContainer.embedded {
+    height: 100%;
+    min-height: 0;
+}
+
+.embedded .questionSidebar,
+.embedded .leftBackdrop {
+    position: absolute;
+}
+
+@media (min-width: 1024px) {
+    .embedded .questionSidebar {
+        position: relative;
+    }
+}
 /* nút micro: vàng như nút chính của hệ thống, lúc đang ghi âm vẫn đỏ */
 .recordBtn:not(:disabled) { background: var(--dsk-gold-grad); color: var(--dsk-navy); box-shadow: inset 0 1px 0 rgba(255,255,255,.6), 0 12px 28px rgba(160,110,20,.35); }
 .recordBtn.isRecordingBtn { color: #fff; }
