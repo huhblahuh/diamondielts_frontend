@@ -3,6 +3,8 @@ import { createPortal } from 'react-dom';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import dashboardService from '../../api/services/dashboard.service';
 import HeroArtwork from '../../components/common/HeroArtwork';
+import Button from '../../components/ui/Button';
+import Card from '../../components/ui/Card';
 import styles from './StudentDashboard.module.css';
 
 const EMPTY_ACTIVITY = { fromDate: '', toDate: '', monthCount: 2, currentStreak: 0, longestStreak: 0, totalActiveDays: 0, totalSubmissions: 0, days: [] };
@@ -175,14 +177,14 @@ export default function StudentDashboard() {
             </button>
 
             <div className={styles.primaryGrid}>
-                <section className={styles.practiceCard}>
+                <Card as="section" className={styles.practiceCard}>
                     <div className={styles.practiceContent}>
                         <span className={styles.eyebrow}>IELTS Speaking</span><h2>Luyện tập</h2>
                         <p>Chọn chủ đề phù hợp và luyện nói theo tốc độ của bạn.</p>
-                        <button type="button" onClick={() => navigate('/student/practice')}>Bắt đầu luyện tập <i className="bi bi-arrow-right" /></button>
+                        <Button size="lg" onClick={() => navigate('/student/practice')}>Bắt đầu luyện tập <i className="bi bi-arrow-right" /></Button>
                     </div>
                     <div className={styles.practiceVisual} aria-hidden="true"><i className="bi bi-chat-quote-fill" /><span><i className="bi bi-mic-fill" /></span></div>
-                </section>
+                </Card>
 
                 <section className={styles.deadlineCard} aria-busy={summaryLoading}>
                     <header><div><span className={styles.eyebrow}>{summaryLoading ? 'Đang tải deadline' : `${deadlines.length} bài cần hoàn thành`}</span><h2>Deadline sắp tới</h2></div>{deadlines.length > 1 && <button type="button" onClick={() => setDeadlineSheetOpen(true)}>Xem tất cả</button>}</header>

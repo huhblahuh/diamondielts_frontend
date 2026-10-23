@@ -4,7 +4,7 @@ import axiosClient from '../../api/axiosClient';
 import Swal from 'sweetalert2';
 import AttemptDetailView from '../../features/student/AttemptDetailView';
 import s from '../../features/classroom/components/SubmissionReviewModal.module.css';
-import Skeleton from '../../components/common/Skeleton';
+import PageSkeleton from '../../components/common/PageSkeleton';
 import { parseAssignmentDueDate } from '../../utils/assignmentDate';
 
 // ─────────────────────────────────────────────
@@ -538,7 +538,7 @@ export default function AssignmentReviewPage() {
     };
 
     if (loading) {
-        return <Skeleton type="assignment-detail" />;
+        return <PageSkeleton variant="review" />;
     }
 
     if (!data) return null;

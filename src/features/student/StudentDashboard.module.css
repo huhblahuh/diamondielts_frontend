@@ -51,16 +51,16 @@
     min-width: 0;
     display: flex;
     align-items: center;
-    gap: 1rem;
-    padding: 1.15rem 1.35rem;
+    gap: .75rem;
+    padding: .9rem 1rem;
     border: 1px solid rgba(251, 247, 238, .88);
-    border-radius: 22px;
+    border-radius: 18px;
     background: rgba(255, 255, 255, .96);
     box-shadow: 0 10px 30px rgba(27, 45, 117, .1);
 }
 
-.statIcon { width: 58px; height: 58px; flex: 0 0 58px; display: grid; place-items: center; border-radius: 18px; font-size: 1.7rem; }
-.statCard strong { display: block; font-size: 1.7rem; line-height: 1.05; }
+.statIcon { width: 48px; height: 48px; flex: 0 0 48px; display: grid; place-items: center; border-radius: 14px; font-size: 1.4rem; }
+.statCard strong { display: block; font-size: 1.45rem; line-height: 1.05; }
 .statCard strong small { font-size: .9rem; }
 .statCard p { margin: .35rem 0 0; color: #52698d; font-size: .86rem; }
 .fireCard .statIcon { color: #ff5a19; background: #fff3e9; }
@@ -101,7 +101,7 @@
 .practiceContent h2, .deadlineCard h2, .rhythmCard h2, .quickCard h2 { margin: .3rem 0; color: var(--home-navy); }
 .practiceContent h2 { font-size: 2rem; }
 .practiceContent p { max-width: 500px; margin: .5rem 0 1.35rem; color: #49688f; line-height: 1.55; }
-.practiceContent button { padding: .78rem 1.25rem; border: 0; border-radius: 999px; color: #fff; background: linear-gradient(135deg, #2a3f94, #2a3f94); font-size: .9rem; font-weight: 750; cursor: pointer; box-shadow: 0 8px 22px rgba(42, 63, 148, .24); }
+.practiceContent button { min-height: var(--button-lg); padding: 0 var(--space-6); border: 0; border-radius: var(--ui-radius-md); color: #fff; background: linear-gradient(135deg, #2a3f94, #2a3f94); font-size: var(--font-md); font-weight: 750; cursor: pointer; box-shadow: 0 8px 22px rgba(42, 63, 148, .24); }
 .practiceContent button i { margin-left: .6rem; }
 .practiceVisual { position: absolute; right: 5%; bottom: 0; width: 34%; height: 90%; display: grid; place-items: center; color: rgba(42, 63, 148, .22); font-size: 8rem; transform: rotate(-8deg); }
 .practiceVisual span { position: absolute; right: 2%; bottom: 13%; width: 68px; height: 68px; display: grid; place-items: center; border: 5px solid rgba(255, 255, 255, .9); border-radius: 50%; color: #fff; background: #2a3f94; font-size: 1.7rem; box-shadow: 0 12px 25px rgba(27, 45, 117, .25); }
@@ -213,9 +213,9 @@
     .heroCopy span { max-width: 230px; margin-top: .35rem; font-size: .78rem; line-height: 1.35; }
     .heroArtwork { right: -22px; bottom: .35rem; width: 145px; height: 86px; opacity: .9; }
     .statsGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .45rem; margin: -24px .65rem .6rem; }
-    .statCard { min-height: 103px; flex-direction: column; justify-content: center; gap: .3rem; padding: .55rem .3rem; border-color: rgba(255, 255, 255, .75); border-radius: 17px; background: rgba(255, 255, 255, .76); backdrop-filter: blur(20px) saturate(145%); -webkit-backdrop-filter: blur(20px) saturate(145%); box-shadow: 0 8px 24px rgba(27, 45, 117, .09); text-align: center; }
-    .statIcon { width: 38px; height: 38px; flex-basis: 38px; border-radius: 12px; font-size: 1.08rem; }
-    .statCard strong { font-size: 1.05rem; }
+    .statCard { min-height: 90px; flex-direction: column; justify-content: center; gap: .2rem; padding: .4rem .25rem; border-color: rgba(255, 255, 255, .75); border-radius: 14px; background: rgba(255, 255, 255, .76); backdrop-filter: blur(20px) saturate(145%); -webkit-backdrop-filter: blur(20px) saturate(145%); box-shadow: 0 8px 24px rgba(27, 45, 117, .09); text-align: center; }
+    .statIcon { width: 32px; height: 32px; flex-basis: 32px; border-radius: 10px; font-size: .95rem; }
+    .statCard strong { font-size: .95rem; }
     .statCard strong small { display: inline; margin: 0; font-size: .59rem; }
     .statCard p { margin-top: .22rem; font-size: .58rem; line-height: 1.2; }
     .quotaStrip { width: calc(100% - 1.3rem); gap: .65rem; margin: 0 .65rem .6rem; padding: .68rem .78rem; border-color: rgba(255, 255, 255, .72); border-radius: 15px; background: rgba(255, 255, 255, .76); backdrop-filter: blur(20px) saturate(145%); -webkit-backdrop-filter: blur(20px) saturate(145%); }
@@ -271,7 +271,7 @@
 
 @media (max-width: 420px) {
     .heroCopy { max-width: 78%; }
-    .statCard { min-height: 98px; }
+    .statCard { min-height: 88px; }
     .quotaTitle { align-items: flex-start; flex-direction: column; gap: .15rem; }
     .practiceContent { width: 74%; }
     .practiceVisual { opacity: .68; }
@@ -329,3 +329,18 @@
 :global(body.dk-mode-scene) .progressPageHeader,
 :global(body.dk-mode-scene) .skeletonChart { background: var(--dsk-frost); border-color: var(--dsk-frost-line); box-shadow: var(--dsk-frost-shadow); }
 @media (max-width: 768px) { :global(body.dk-mode-scene) .progressPage { background: transparent; } }
+
+/* Readable mobile type and consistent touch targets across the dashboard. */
+@media (max-width: 768px) {
+    .heroCopy p, .heroCopy span, .statCard p, .statCard strong small,
+    .quotaTitle, .quotaMain small, .eyebrow, .practiceContent p,
+    .deadlineCopy small, .emptyDeadline, .dayCard, .quickItem small,
+    .progressPageHeader p, .dateRange label { font-size: var(--font-xs); }
+    .practiceContent h2, .deadlineCard h2, .rhythmCard h2,
+    .quickCard h2 { font-size: var(--font-section-title); }
+    .deadlineCopy strong, .quickItem strong { font-size: var(--font-sm); }
+    .practiceContent button { min-height: var(--button-md); padding: 0 var(--space-3); font-size: var(--font-sm); }
+    .presets button, .applyButton { min-height: var(--button-md); font-size: var(--font-sm); }
+    .progressPageHeader > button { min-width: var(--button-md); min-height: var(--button-md); flex-basis: var(--button-md); }
+    .dateRange input { min-height: var(--input-height); }
+}

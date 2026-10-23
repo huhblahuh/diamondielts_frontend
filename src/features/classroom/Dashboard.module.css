@@ -794,3 +794,13 @@
     animation: none;
   }
 }
+
+/* Shared readable labels and form targets for the staff dashboard. */
+.dateField span, .dateField input, .attemptCount, .doughnutCenter span,
+.legendList, .studentFilter label, .studentFilter select,
+.scopeStatus, .emptyState { font-size: var(--font-xs); }
+.studentFilter select { min-height: var(--input-height); }
+@media (max-width: 768px) {
+  .compactProgressCard .skillToggle { min-height: var(--button-md); font-size: var(--font-xs); }
+  .compactProgressCard .overallLegend { font-size: var(--font-xs); }
+}

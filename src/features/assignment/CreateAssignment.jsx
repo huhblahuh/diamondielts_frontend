@@ -8,7 +8,7 @@ import AssignmentForm from './components/AssignmentForm';
 import AssignmentBuilder from './components/AssignmentBuilder';
 import ExerciseBankModal from './components/ExerciseBankModal';
 import styles from './CreateAssignment.module.css';
-import Skeleton from '../../components/common/Skeleton';
+import PageSkeleton from '../../components/common/PageSkeleton';
 import { normalizeSpeakingContent } from '../../utils/speakingContent';
 import { toAssignmentDateTimeLocal } from '../../utils/assignmentDate';
 
@@ -24,7 +24,7 @@ export default function CreateAssignment() {
     const [classId, setClassId] = useState(location.state?.prefilledClassId?.toString() || '1');
     const [classes, setClasses] = useState([]);
     const [items, setItems] = useState([]);
-    const [exercises, setExercises] = useState([]);
+    const [exercises, setExercises] = useState(null);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [showBank, setShowBank] = useState(false);
@@ -33,18 +33,19 @@ export default function CreateAssignment() {
         const initData = async () => {
             try {
                 setLoading(true);
-                const exData = await exerciseService.getAll();
-                setExercises(exData || []);
-
-                const classData = await classroomService.getTeacherClasses();
+                const [classData, assignData, exData] = await Promise.all([
+                    classroomService.getTeacherClasses(),
+                    isEdit ? assignmentService.getById(assignmentId) : Promise.resolve(null),
+                    isEdit ? exerciseService.getAll() : Promise.resolve(null),
+                ]);
                 setClasses(classData || []);
+                if (exData) setExercises(exData);
 
                 if (!isEdit && !location.state?.prefilledClassId && classData && classData.length > 0) {
                     setClassId(classData[0].classId.toString());
                 }
 
                 if (isEdit) {
-                    const assignData = await assignmentService.getById(assignmentId);
                     if (assignData) {
                         setTitle(assignData.title || '');
                         setDescription(assignData.description || '');
@@ -92,6 +93,20 @@ export default function CreateAssignment() {
         initData();
     }, [assignmentId, isEdit]);
 
+    const openExerciseBank = async () => {
+        if (exercises === null) {
+            try {
+                const data = await exerciseService.getAll();
+                setExercises(data || []);
+            } catch (error) {
+                console.error('Failed to load exercise bank:', error);
+                Swal.fire('Lỗi', 'Không thể tải ngân hàng bài tập.', 'error');
+                return;
+            }
+        }
+        setShowBank(true);
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!title.trim() || !dueDate) {
@@ -134,11 +149,7 @@ export default function CreateAssignment() {
     };
 
     if (loading) {
-        return (
-            <div className={styles.container}>
-                <Skeleton type="form" />
-            </div>
-        );
+        return <PageSkeleton variant="builder" />;
     }
 
     return (
@@ -164,7 +175,7 @@ export default function CreateAssignment() {
                 <AssignmentBuilder 
                     items={items} 
                     setItems={setItems}
-                    onOpenBank={() => setShowBank(true)}
+                    onOpenBank={openExerciseBank}
                 />
 
                 <div style={{display:'flex', justifyContent:'flex-end', gap:'1rem'}}>
@@ -177,7 +188,7 @@ export default function CreateAssignment() {
 
             {showBank && (
                 <ExerciseBankModal 
-                    exercises={exercises} 
+                    exercises={exercises || []}
                     onClose={() => setShowBank(false)}
                     onSelect={(selectedExs) => {
                         const newItems = selectedExs.map((ex, index) => ({

@@ -1,221 +1,240 @@
-/* ── PageSkeleton — in-layout loading shimmer ─────────────────────────────── */
-
-/* Shimmer keyframe */
-@keyframes shimmer {
-    0%   { background-position: -600px 0; }
-    100% { background-position: 600px 0; }
-}
-
-.shimmer {
-    background: linear-gradient(
-        90deg,
-        #eef2f9 0px,
-        #dde6f5 120px,
-        #eef2f9 240px
-    );
-    background-size: 600px 100%;
-    animation: shimmer 1.6s ease-in-out infinite;
-    border-radius: 10px;
-}
-
-/* ── Page wrapper ─────────────────────────────────────────────────────────── */
 .page {
+    box-sizing: border-box;
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
-    padding: 0.25rem 0;
-    animation: fadeIn 0.25s ease;
+    gap: 1.25rem;
+    width: 100%;
+    margin: 0 auto;
+    pointer-events: none;
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(6px); }
-    to   { opacity: 1; transform: translateY(0); }
+.shape {
+    display: block;
+    flex: none;
+    border-radius: 9px;
+    background: linear-gradient(90deg, #e7edf5 0%, #d3dfed 50%, #e7edf5 100%);
+    background-size: 200% 100%;
+    animation: shimmer 1.6s ease-in-out infinite;
 }
 
-/* ── Page header ──────────────────────────────────────────────────────────── */
-.pageHeader {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
+@keyframes shimmer { to { background-position: -200% 0; } }
 
-.pageTitle {
-    height: 32px;
-    width: 260px;
-    border-radius: 8px;
-}
-
-.pageBadge {
-    height: 28px;
-    width: 80px;
-    border-radius: 20px;
-}
-
-/* ── Stats row ────────────────────────────────────────────────────────────── */
-.statsRow {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 1rem;
-}
-
-@media (max-width: 900px) {
-    .statsRow { grid-template-columns: repeat(2, 1fr); }
-}
-
-@media (max-width: 540px) {
-    .statsRow { grid-template-columns: 1fr; }
-}
-
-.statCard {
-    background: #ffffff;
-    border-radius: 18px;
-    padding: 1.25rem 1.5rem;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    border: 1px solid #fbf7ee;
-    box-shadow: 0 4px 18px rgba(16, 29, 84, 0.06);
-}
-
-.statIcon {
-    width: 48px;
-    height: 48px;
-    border-radius: 14px;
-    flex-shrink: 0;
-}
-
-.statBody {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-.statValue {
-    height: 22px;
-    width: 70%;
-    border-radius: 6px;
-}
-
-.statLabel {
-    height: 14px;
-    width: 55%;
-    border-radius: 6px;
-}
-
-/* ── Content grid ─────────────────────────────────────────────────────────── */
-.contentGrid {
-    display: grid;
-    grid-template-columns: 1fr 340px;
-    gap: 1.5rem;
-    align-items: start;
-}
-
-@media (max-width: 1100px) {
-    .contentGrid { grid-template-columns: 1fr; }
-    .sideBlock { display: none; }
-}
-
-/* ── Main block ───────────────────────────────────────────────────────────── */
-.mainBlock {
-    background: #ffffff;
-    border-radius: 20px;
+.card {
+    box-sizing: border-box;
+    min-width: 0;
     padding: 1.5rem;
-    border: 1px solid #fbf7ee;
-    box-shadow: 0 4px 18px rgba(16, 29, 84, 0.06);
+    border: 1px solid #e5eaf2;
+    border-radius: 18px;
+    background: #fff;
+    box-shadow: 0 4px 18px #101d540d;
     display: flex;
     flex-direction: column;
     gap: 1.25rem;
 }
 
-.blockTitle {
-    height: 22px;
-    width: 180px;
-    border-radius: 6px;
-}
+.heading, .toolbar, .row, .stat { display: flex; align-items: center; gap: 1rem; }
+.heading { justify-content: space-between; min-height: 3rem; }
+.lines { display: flex; flex: 1; min-width: 0; flex-direction: column; gap: .65rem; }
+.line { width: 70%; height: 16px; }
+.shortLine { width: 42%; height: 13px; }
+.wideLine { width: 100%; height: 20px; }
+.pill { width: 110px; height: 32px; border-radius: 18px; }
+.button { width: 125px; height: 40px; border-radius: 12px; }
+.icon { width: 50px; height: 50px; border-radius: 14px; }
+.avatar { width: 46px; height: 46px; border-radius: 50%; }
+.avatarLarge { width: 74px; height: 74px; border-radius: 50%; }
 
-/* ── Card list ────────────────────────────────────────────────────────────── */
-.cardList {
-    display: flex;
-    flex-direction: column;
-    gap: 0.85rem;
-}
-
-.listCard {
+.hero {
+    box-sizing: border-box;
+    min-height: 110px;
+    padding: 1.25rem 2rem;
+    border-radius: 22px;
+    background: linear-gradient(120deg, #101d54, #1b2d75);
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 1rem;
-    padding: 1rem 1.1rem;
-    background: #fbf7ee;
-    border-radius: 14px;
-    border: 1px solid #fbf7ee;
+    overflow: hidden;
+}
+.heroCopy { display: flex; flex: 1; flex-direction: column; gap: .7rem; }
+.heroEyebrow { width: 95px; height: 13px; }
+.heroTitle { width: min(60%, 320px); height: 30px; }
+.heroSubtitle { width: min(75%, 440px); height: 15px; }
+.heroArt { width: 180px; height: 85px; border-radius: 20px; opacity: .55; }
+
+.toolbar { box-sizing: border-box; justify-content: space-between; flex-wrap: wrap; }
+.search { width: min(100%, 330px); height: 42px; }
+.toolbarActions { display: flex; gap: .7rem; align-items: center; flex-wrap: wrap; }
+.stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
+.statsFour { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.statsTwo { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.stat { min-height: 105px; }
+.twoColumns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; }
+.largeBlock { width: 100%; height: 170px; border-radius: 16px; }
+.chart { width: 100%; height: 245px; border-radius: 16px; }
+.rows { display: flex; flex-direction: column; }
+.row { min-height: 74px; border-top: 1px solid #f1f2f5; }
+.row .lines { max-width: 70%; }
+.row .button { width: 85px; height: 32px; }
+.cardGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; }
+.cardGrid .card { min-height: 195px; }
+.table { gap: 0; overflow: hidden; }
+.tableHead, .tableRow { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 1rem; align-items: center; min-height: 56px; }
+.tableHead { border-bottom: 1px solid #e6e9f0; }
+.tableRow { border-bottom: 1px solid #f0f2f6; }
+.tableRow:last-child { border-bottom: 0; }
+.table .line { width: 80%; height: 15px; }
+.formGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; }
+.formGrid > div { display: flex; flex-direction: column; gap: .6rem; }
+.input { width: 100%; height: 45px; }
+
+/* Student dashboard mirrors the actual 1240px shell and card geometry. */
+.studentDashboard, .progress { max-width: 1240px; gap: 0; padding-bottom: 2rem; }
+.studentDashboard > .hero, .progress > .hero { min-height: 220px; padding: 2.25rem 2.5rem; border-radius: 28px; }
+.studentDashboard .heroArt, .progress .heroArt { width: 330px; height: 190px; }
+.studentDashboard > .stats, .progress > .stats { position: relative; z-index: 1; margin: -28px 1.5rem 1rem; }
+.studentDashboard .stat, .progress .stat { min-height: 96px; border-radius: 22px; }
+.studentDashboard .stat .icon, .progress .stat .icon { width: 58px; height: 58px; }
+.quotaStrip { min-height: 76px; margin: 0 1.5rem 1rem; padding: .9rem 1.1rem; flex-direction: row; align-items: center; border-radius: 18px; }
+.quotaStrip .icon { width: 42px; height: 42px; }
+.homePrimary { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(320px, .85fr); gap: 1rem; margin: 0 1.5rem 1rem; }
+.homePrimary > .card { min-height: 250px; border-radius: 24px; }
+.homePractice { background: #fbf7ee; }
+.homePractice .lines { max-width: 62%; flex: none; }
+.homeRhythm, .homeQuick { margin: 0 1.5rem 1rem; padding: 1.25rem 1.4rem; border-radius: 24px; }
+.weekGrid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: .65rem; }
+.day { width: 100%; height: 90px; border-radius: 16px; }
+.quickGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .8rem; }
+.quickItem { width: 100%; height: 135px; border-radius: 18px; }
+.progressDialog { width: min(100%, 650px); margin: -500px auto 0; position: relative; z-index: 2; box-shadow: 0 18px 60px #101d5426; }
+.progressDialog .chart { height: 180px; }
+
+/* Short banners and content shells used by the student pages. */
+.practice { max-width: 1380px; gap: 0; padding-top: 4px; }
+.practice > .hero { margin-bottom: 1.5rem; }
+.topicRows { display: flex; flex-direction: column; gap: 24px; }
+.topicRow { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+.topicCard { min-height: 124px; padding: 22px 24px 18px; border-radius: 20px; }
+.classrooms { max-width: 1240px; gap: 0; padding-bottom: 2.5rem; }
+.classrooms > .hero { margin-bottom: 1.5rem; }
+.classroomContent { padding: 1.75rem 2rem; border-radius: 22px; }
+.classroomContent > .toolbar { padding: 0; border: 0; box-shadow: none; }
+.history { max-width: 1320px; gap: 0; }
+.history > .hero { margin-bottom: 1.5rem; }
+.historyContent { padding: 1.75rem 2rem; border-radius: 24px; }
+.historyContent > .toolbar { padding: 0; border: 0; box-shadow: none; }
+.historyContent > .table { padding: 0; border: 0; box-shadow: none; }
+.assignmentDetail { max-width: 1180px; }
+.assignmentDetail > .hero { margin-bottom: .25rem; }
+
+/* Admin and teacher page widths and columns. */
+.teacherDashboard { gap: 18px; }
+.teacherDashboard > .toolbar { min-height: 140px; }
+.teacherDashboard > .twoColumns { grid-template-columns: minmax(0, 1.22fr) minmax(330px, .88fr); gap: 18px; }
+.teacherDashboard > .twoColumns .card { min-height: 252px; }
+.teacherDashboard > .card .chart { height: 340px; }
+.charts > .twoColumns { grid-template-columns: minmax(0, 1.22fr) minmax(330px, .88fr); gap: 18px; }
+.charts > .twoColumns .card { min-height: 252px; }
+.quota { max-width: 1500px; }
+.quota > .hero { min-height: 176px; padding: 2rem 2.25rem; }
+.quotaFilters { padding: 1rem; }
+.quotaFilters .formGrid { grid-template-columns: minmax(190px, 1.4fr) repeat(3, minmax(140px, .8fr)); gap: .8rem; }
+.quotaFilters .input { height: 42px; }
+.quota .chart { height: 290px; }
+.users, .teacherClassrooms { max-width: 1400px; gap: 1.5rem; }
+.users > .toolbar { min-height: 88px; }
+.users > .table { padding: 0; border-radius: 12px; }
+.teacherClassrooms > .heading { margin-bottom: .75rem; }
+.exercises { padding: 1rem; }
+.exercises .cardGrid .card, .topicGrid .cardGrid .card { min-height: 205px; padding: 1.75rem; border-radius: 16px; }
+.builder { max-width: 1200px; gap: 2rem; }
+.builderGrid { display: grid; grid-template-columns: 350px minmax(0, 1fr); gap: 1.5rem; }
+.builderGrid > .card { align-self: start; border-radius: 12px; }
+
+/* Account settings and recording studio have their own full-height shells. */
+.settings { max-width: 1200px; min-height: 580px; }
+.settingsShell { display: grid; grid-template-columns: 290px minmax(0, 1fr); min-height: 580px; gap: 0; overflow: hidden; border: 1px solid #101d5414; border-radius: 24px; background: #fff; box-shadow: 0 16px 48px #101d5412; }
+.settingsSidebar, .settingsContent { box-sizing: border-box; display: flex; flex-direction: column; gap: 1.25rem; padding: 1.75rem 1.4rem; }
+.settingsSidebar { background: linear-gradient(165deg, #101d54, #2a3f94); }
+.settingsContent { padding: 2rem; }
+.settingsSidebar .row { border-color: #ffffff33; }
+.studioShell { display: grid; grid-template-columns: 290px minmax(0, 1fr); width: 100%; min-height: calc(100vh - 80px); background: #fff; }
+.studioSidebar { display: flex; flex-direction: column; gap: 1rem; padding: 1.5rem; border-right: 1px solid #fbf7ee; }
+.studio { display: flex; flex-direction: column; align-items: center; gap: 1.5rem; min-height: 100%; }
+.studio .heading { box-sizing: border-box; width: 100%; padding: 1rem 1.5rem; border-bottom: 1px solid #fbf7ee; }
+.studio .largeBlock { width: min(calc(100% - 3rem), 800px); height: 220px; }
+.studio .wideLine { width: min(calc(100% - 3rem), 800px); }
+.recordButton { height: 82px; width: 82px; border-radius: 50%; }
+
+@media (max-width: 1024px) {
+    .homePrimary { grid-template-columns: 1fr; }
+    .studioShell { grid-template-columns: 1fr; }
+    .studioSidebar { display: none; }
 }
 
-.cardAvatar {
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
-    flex-shrink: 0;
+@media (max-width: 1180px) {
+    .quota > .twoColumns { grid-template-columns: 1fr; }
+    .quota .quotaFilters .formGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
-.cardContent {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 0.45rem;
+@media (max-width: 900px) {
+    .builderGrid { grid-template-columns: 1fr; }
+    .quotaFilters .formGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
-.cardTitle {
-    height: 16px;
-    width: 65%;
-    border-radius: 5px;
+@media (max-width: 820px) {
+    .settings { min-height: 0; padding: .85rem; }
+    .settingsShell { grid-template-columns: 1fr; min-height: 0; border-radius: 20px; }
+    .settingsRoot .settingsContent { display: none; }
+    .settings:not(.settingsRoot) .settingsSidebar { display: none; }
 }
 
-.cardSub {
-    height: 13px;
-    width: 45%;
-    border-radius: 5px;
+@media (max-width: 768px) {
+    .studentDashboard > .hero, .progress > .hero { min-height: 158px; padding: .55rem .85rem .65rem; border-radius: 0; }
+    .studentDashboard .heroArt, .progress .heroArt { width: 145px; height: 86px; }
+    .studentDashboard > .stats, .progress > .stats { gap: .45rem; margin: -24px .65rem .6rem; }
+    .studentDashboard .stat, .progress .stat { min-height: 103px; padding: .55rem .3rem; flex-direction: column; gap: .3rem; border-radius: 17px; }
+    .studentDashboard .stat .icon, .progress .stat .icon { width: 38px; height: 38px; }
+    .studentDashboard .stat .lines, .progress .stat .lines { width: 100%; align-items: center; }
+    .studentDashboard .stat .line, .progress .stat .line { width: 70%; height: 12px; }
+    .studentDashboard .stat .shortLine, .progress .stat .shortLine { width: 55%; height: 9px; }
+    .quotaStrip { min-height: 66px; margin: 0 .65rem .6rem; }
+    .homePrimary { gap: .6rem; margin: 0 .65rem .6rem; }
+    .homePrimary > .card { min-height: 178px; border-radius: 17px; }
+    .homeRhythm, .homeQuick { margin: 0 .65rem .6rem; border-radius: 17px; }
+    .weekGrid { gap: .3rem; }
+    .day { height: 70px; }
+    .quickItem { height: 110px; }
+    .practice > .hero { min-height: 130px; padding: 1.35rem 1.25rem .85rem; border-radius: 0; }
+    .practice .topicRows { padding: 0 1rem; gap: 14px; }
+    .practice .topicRow { grid-template-columns: 1fr; gap: 12px; }
+    .practice .topicCard { min-height: 124px; border-radius: 15px; }
+    .classrooms > .hero, .history > .hero { min-height: 110px; margin-bottom: .85rem; padding: 1.35rem 1.25rem 1.1rem; border-radius: 0; }
+    .classroomContent, .historyContent { padding: 0 1.25rem 2.5rem; border: 0; border-radius: 0; box-shadow: none; background: transparent; }
+    .settings { padding: .5rem; }
+    .quotaFilters .formGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .twoColumns, .teacherDashboard > .twoColumns, .charts > .twoColumns { grid-template-columns: 1fr; }
 }
 
-.cardAction {
-    width: 72px;
-    height: 32px;
-    border-radius: 10px;
-    flex-shrink: 0;
+@media (max-width: 720px) {
+    .quota .quotaFilters .formGrid { grid-template-columns: 1fr; }
+    .quota > .hero { min-height: 0; padding: 1.5rem; }
 }
 
-/* ── Side block ───────────────────────────────────────────────────────────── */
-.sideBlock {
-    background: #ffffff;
-    border-radius: 20px;
-    padding: 1.5rem;
-    border: 1px solid #fbf7ee;
-    box-shadow: 0 4px 18px rgba(16, 29, 84, 0.06);
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
+@media (max-width: 640px) {
+    .page { gap: 1rem; }
+    .card { padding: 1rem; }
+    .heroArt { width: 85px; height: 70px; }
+    .toolbarActions { width: 100%; }
+    .toolbarActions .pill { width: 72px; }
+    .formGrid { grid-template-columns: 1fr; }
+    .cardGrid { grid-template-columns: 1fr; gap: 1rem; }
+    .tableHead, .tableRow { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .tableHead .shape:nth-child(n+4), .tableRow .shape:nth-child(n+4) { display: none; }
+    .studentDashboard, .progress, .practice, .classrooms, .history { gap: 0; }
+    .studentDashboard > .stats, .progress > .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .quickGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .heroTitle { height: 24px; }
 }
 
-.bigRect {
-    height: 160px;
-    width: 100%;
-    border-radius: 14px;
-}
-
-.tagRow {
-    display: flex;
-    gap: 0.6rem;
-    flex-wrap: wrap;
-}
-
-.tag {
-    height: 28px;
-    width: 80px;
-    border-radius: 20px;
-}
-
-.medRect {
-    height: 90px;
-    width: 100%;
-    border-radius: 14px;
-}
+@media (prefers-reduced-motion: reduce) { .shape { animation: none; } }

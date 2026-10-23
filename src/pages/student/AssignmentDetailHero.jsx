@@ -1,5 +1,6 @@
 import React from 'react';
 import styles from './AssignmentDetailPage.module.css';
+import Button from '../../components/ui/Button';
 import { formatDueDate, getRemainingDaysText } from './assignmentDetailUtils';
 
 export default function AssignmentDetailHero({ assignment, isOverdue, completedItemsCount, totalItems, progressPercent, onBack }) {
@@ -26,7 +27,8 @@ export default function AssignmentDetailHero({ assignment, isOverdue, completedI
                     </div>
                 </div>
 
-                <button
+                <Button
+                    variant="secondary"
                     type="button"
                     className={styles.backButton}
                     onClick={onBack}
@@ -35,7 +37,7 @@ export default function AssignmentDetailHero({ assignment, isOverdue, completedI
                         <path d="M19 12H5M12 19l-7-7 7-7" />
                     </svg>
                     Quay lại bài tập
-                </button>
+                </Button>
             </div>
 
             <div className={styles.heroBottom}>

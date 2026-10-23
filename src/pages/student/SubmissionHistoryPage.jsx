@@ -5,6 +5,7 @@ import styles from './SubmissionHistoryPage.module.css';
 import AttemptDetailView from '../../features/student/AttemptDetailView';
 import Pagination from '../../components/Pagination';
 import HeroArtwork from '../../components/common/HeroArtwork';
+import PageSkeleton from '../../components/common/PageSkeleton';
 import { useSearchParams } from 'react-router-dom';
 
 const PAGE_SIZE = 10;
@@ -268,7 +269,7 @@ export default function SubmissionHistoryPage() {
 
     // Detail view if opened
     if (detailId && detailType && (loadingDetail || loadedDetailId !== detailId)) {
-        return <div className={styles.container}><div className={styles.loadingState}><div className={styles.loadingSpinner}></div><p>Đang tải chi tiết bài làm...</p></div></div>;
+        return <PageSkeleton variant="assignmentDetail" />;
     }
 
     if (detailId && detailType && selectedSubmission) {
@@ -474,10 +475,7 @@ export default function SubmissionHistoryPage() {
 
                 {/* Content Area: Table (Desktop) / Cards (Mobile) */}
                 {loading ? (
-                    <div className={styles.loadingState}>
-                        <div className={styles.loadingSpinner}></div>
-                        <p>Đang tải lịch sử bài làm...</p>
-                    </div>
+                    <PageSkeleton variant="table" />
                 ) : displaySubmissions.length === 0 ? (
                     <div className={styles.emptyState}>
                         <div className={styles.emptyIconCircle}>

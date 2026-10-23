@@ -114,8 +114,8 @@ const SpotTaskCreator = React.forwardRef(({ show, onClose, onAddTask, onDirtyCha
     return (
         <div className={styles.inlineCreator}>
             <div style={{ fontWeight: 700, fontSize: '0.85rem', color: '#1e293b', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span><i className="fa-solid fa-microphone"></i> THIẾT KẾ BÀI TẬP TẠI CHỖ</span>
-                <button type="button" onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', fontSize: '1.15rem' }}><i className="fa-solid fa-xmark"></i></button>
+                <span><i className="bi bi-mic-fill"></i> THIẾT KẾ BÀI TẬP TẠI CHỖ</span>
+                <button type="button" onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', fontSize: '1.15rem' }}><i className="bi bi-x-lg"></i></button>
             </div>
 
             <div className={styles.folderRow}>

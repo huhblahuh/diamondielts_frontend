@@ -7,6 +7,7 @@ import { showToastError } from '../../utils/toast';
 import PersonalInfoCard from './components/PersonalInfoCard';
 import SecurityPanel from './components/SecurityPanel';
 import NotificationSettingsCard from './components/NotificationSettingsCard';
+import PageSkeleton from '../../components/common/PageSkeleton';
 import styles from './StudentProfile.module.css';
 
 export default function StudentProfile() {
@@ -90,12 +91,7 @@ export default function StudentProfile() {
     };
 
     if (loading) {
-        return (
-            <div className={styles.loading}>
-                <i className={`bi bi-arrow-repeat ${styles.spinIcon}`} />
-                <span>Đang tải thông tin tài khoản…</span>
-            </div>
-        );
+        return <PageSkeleton variant="settings" />;
     }
     if (!profile) {
         return (

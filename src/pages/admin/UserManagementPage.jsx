@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import styles from './UserManagementPage.module.css';
 import axiosClient from '../../api/axiosClient';
 import Swal from 'sweetalert2';
@@ -11,6 +11,7 @@ export default function UserManagementPage() {
     const [classes, setClasses] = useState([]);
     const [loading, setLoading] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
+    const [settledSearch, setSettledSearch] = useState('');
     const [roleFilter, setRoleFilter] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [isExcelModalOpen, setIsExcelModalOpen] = useState(false);
@@ -32,6 +33,11 @@ export default function UserManagementPage() {
     });
 
     const [formErrors, setFormErrors] = useState({});
+
+    useEffect(() => {
+        const timer = setTimeout(() => setSettledSearch(searchQuery.trim().toLowerCase()), 180);
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
 
     // Fetch users
     const fetchUsers = async () => {
@@ -280,16 +286,13 @@ export default function UserManagementPage() {
     };
 
     // Filter users
-    const filteredUsers = users.filter(user => {
-        const matchesSearch =
-            user.fullName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            user.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            user.username?.toLowerCase().includes(searchQuery.toLowerCase());
-
-        const matchesRole = roleFilter === '' || user.role === roleFilter;
-
-        return matchesSearch && matchesRole;
-    });
+    const filteredUsers = useMemo(() => users.filter(user => {
+        const matchesSearch = !settledSearch
+            || user.fullName?.toLowerCase().includes(settledSearch)
+            || user.email?.toLowerCase().includes(settledSearch)
+            || user.username?.toLowerCase().includes(settledSearch);
+        return matchesSearch && (roleFilter === '' || user.role === roleFilter);
+    }), [users, settledSearch, roleFilter]);
 
     const totalPages = Math.max(1, Math.ceil(filteredUsers.length / PAGE_SIZE));
     const safePage = Math.min(currentPage, totalPages);

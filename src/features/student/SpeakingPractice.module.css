@@ -783,3 +783,11 @@
 /* nút micro: vàng như nút chính của hệ thống, lúc đang ghi âm vẫn đỏ */
 .recordBtn:not(:disabled) { background: var(--dsk-gold-grad); color: var(--dsk-navy); box-shadow: inset 0 1px 0 rgba(255,255,255,.6), 0 12px 28px rgba(160,110,20,.35); }
 .recordBtn.isRecordingBtn { color: #fff; }
+
+/* Speaking labels and history controls share the app's readable type scale. */
+.attName, .partBadge, .timerLabels { font-size: var(--font-sm); }
+.attDate, .bandBadge, .statusBadge { font-size: var(--font-xs); }
+@media (max-width: 768px) {
+    .partBadge, .historyBtn { font-size: var(--font-xs); }
+    .historyBtn { min-height: var(--button-md); }
+}

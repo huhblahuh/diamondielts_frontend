@@ -1,17 +1,44 @@
 const SAMPLE_RATE = 16_000;
 const SONIOX_CONNECT_TIMEOUT_MS = 12_000;
-const SONIOX_FINISH_TIMEOUT_MS = 20_000;
-const SONIOX_DRAIN_TIMEOUT_MS = 5_000;
+const SONIOX_FINISH_TIMEOUT_MS = 60_000;
+const SONIOX_FINISH_STALL_TIMEOUT_MS = 20_000;
+const SONIOX_DRAIN_STALL_TIMEOUT_MS = 10_000;
+const SONIOX_DRAIN_MAX_WAIT_MS = 30_000;
 const SONIOX_TRAILING_SILENCE_MS = 200;
+const PCM_PACKET_SAMPLES = SAMPLE_RATE / 10;
+const WEBM_RECORDER_TIMESLICE_MS = 100;
 
 const delay = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds));
 
-function withTimeout(promise, milliseconds, message) {
+function pipelineError(code, message, details = {}) {
+    const error = new Error(message);
+    error.name = 'SpeakingPipelineError';
+    error.code = code;
+    error.details = details;
+    return error;
+}
+
+export function formatSpeakingPipelineError(error) {
+    if (error?.name !== 'SpeakingPipelineError') {
+        return 'Không thể xử lý bài nói. Vui lòng thử ghi âm lại. Nếu lỗi lặp lại, hãy gửi ảnh thông báo lỗi để được hỗ trợ.';
+    }
+
+    const serviceDetails = error.code === 'STT_SERVICE_ERROR'
+        ? [
+            error.details?.serviceCode != null ? `Soniox: ${error.details.serviceCode}` : null,
+            error.details?.serviceType ? `Loại: ${error.details.serviceType}` : null,
+            error.details?.requestId ? `Request ID: ${error.details.requestId}` : null,
+        ].filter(Boolean)
+        : [];
+    return `${error.message} (Mã lỗi: ${[error.code, ...serviceDetails].join('; ')})`;
+}
+
+function withTimeout(promise, milliseconds, timeoutError) {
     let timer;
     return Promise.race([
         promise,
         new Promise((_, reject) => {
-            timer = setTimeout(() => reject(new Error(message)), milliseconds);
+            timer = setTimeout(() => reject(timeoutError), milliseconds);
         })
     ]).finally(() => clearTimeout(timer));
 }
@@ -154,6 +181,12 @@ export class SpeakingAssessmentPipeline {
         this.question = (question || '').replace(/\s+/g, ' ').trim().slice(0, 4_000);
         this.partNumber = partNumber;
         this.onTranscript = onTranscript;
+        // Allow comparing both capture paths on the same deployment.
+        const forcePcm = new URLSearchParams(globalThis.location?.search ?? '')
+            .get('speakingStt') === 'pcm';
+        this.useWebmStreaming = Boolean(
+            !forcePcm && globalThis.MediaRecorder?.isTypeSupported?.('audio/webm;codecs=opus')
+        );
 
         this.mediaStream = null;
         this.mediaRecorder = null;
@@ -169,6 +202,10 @@ export class SpeakingAssessmentPipeline {
         this.stopping = false;
         this.disposed = false;
         this.sampleCount = 0;
+        this.recordingStartedAt = null;
+        this.recordingStoppedAt = null;
+        this.pendingPcm = new Int16Array(PCM_PACKET_SAMPLES);
+        this.pendingPcmSamples = 0;
 
         this.finalTokens = [];
         this.interimTokens = [];
@@ -178,11 +215,21 @@ export class SpeakingAssessmentPipeline {
         this.finishedPromise = new Promise(resolve => {
             this.resolveFinished = resolve;
         });
+
+        this.stats = {
+            recorderChunks: 0,
+            webmChunksSent: 0,
+            maxProcessedAudioMs: 0,
+            maxFinalizedAudioMs: 0,
+        };
     }
 
     async start() {
         if (!globalThis.isSecureContext) {
-            throw new Error('Ghi âm yêu cầu HTTPS hoặc localhost.');
+            throw pipelineError(
+                'MIC_INSECURE_CONTEXT',
+                'Trình duyệt chặn micro trên địa chỉ HTTP qua mạng LAN. Hãy mở http://localhost:5173 trên chính máy này, hoặc dùng một địa chỉ HTTPS khi thử trên thiết bị khác.'
+            );
         }
 
         try {
@@ -194,9 +241,8 @@ export class SpeakingAssessmentPipeline {
                     autoGainControl: true
                 }
             });
-
             await this.connectSoniox();
-            await this.startAudioCapture();
+            if (!this.useWebmStreaming) await this.startAudioCapture();
             this.startMediaRecorder();
             this.capturing = true;
         } catch (error) {
@@ -217,9 +263,11 @@ export class SpeakingAssessmentPipeline {
                 socket.send(JSON.stringify({
                     api_key: soniox.temporaryApiKey,
                     model: soniox.model || 'stt-rt-v5',
-                    audio_format: 'pcm_s16le',
-                    sample_rate: SAMPLE_RATE,
-                    num_channels: 1,
+                    audio_format: this.useWebmStreaming ? 'auto' : 'pcm_s16le',
+                    ...(!this.useWebmStreaming ? {
+                        sample_rate: SAMPLE_RATE,
+                        num_channels: 1,
+                    } : {}),
                     language_hints: ['en'],
                     language_hints_strict: false,
                     enable_language_identification: true,
@@ -242,28 +290,46 @@ export class SpeakingAssessmentPipeline {
                 }));
                 resolve();
             };
-            socket.onerror = () => reject(new Error('Không thể kết nối dịch vụ ghi âm.'));
-        }), SONIOX_CONNECT_TIMEOUT_MS, 'Không thể kết nối dịch vụ ghi âm.');
+            socket.onerror = () => {
+                reject(pipelineError(
+                    'STT_CONNECT_FAILED',
+                    'Không kết nối được dịch vụ nhận dạng giọng nói. Hãy kiểm tra mạng rồi thử lại.'
+                ));
+            };
+        }), SONIOX_CONNECT_TIMEOUT_MS, pipelineError(
+            'STT_CONNECT_TIMEOUT',
+            'Kết nối dịch vụ nhận dạng giọng nói quá 12 giây. Hãy kiểm tra mạng rồi thử lại.'
+        ));
 
         socket.onmessage = event => {
             try {
                 this.handleSonioxMessage(JSON.parse(event.data));
             } catch {
-                this.fatalError = new Error('Không thể xử lý dữ liệu ghi âm.');
+                this.fatalError = pipelineError(
+                    'STT_INVALID_RESPONSE',
+                    'Dịch vụ nhận dạng trả về dữ liệu không hợp lệ. Vui lòng ghi âm lại.'
+                );
                 this.resolveFinished();
             }
         };
 
         socket.onerror = () => {
             if (!this.disposed && !this.finishReceived) {
-                this.fatalError = new Error('Dịch vụ ghi âm gặp sự cố.');
+                this.fatalError = pipelineError(
+                    'STT_SOCKET_ERROR',
+                    'Kết nối tới dịch vụ nhận dạng gặp lỗi khi đang ghi âm. Hãy kiểm tra mạng rồi ghi âm lại.'
+                );
                 this.resolveFinished();
             }
         };
 
-        socket.onclose = () => {
+        socket.onclose = event => {
             if (!this.disposed && !this.finishReceived && !this.fatalError) {
-                this.fatalError = new Error('Dịch vụ ghi âm bị gián đoạn.');
+                this.fatalError = pipelineError(
+                    'STT_SOCKET_CLOSED',
+                    'Kết nối nhận dạng giọng nói bị ngắt trước khi hoàn tất. Hãy kiểm tra mạng rồi ghi âm lại.',
+                    { closeCode: event.code }
+                );
                 this.resolveFinished();
             }
         };
@@ -285,7 +351,6 @@ export class SpeakingAssessmentPipeline {
         await this.audioContext.audioWorklet.addModule(
             new URL('./pcmCaptureWorklet.js', import.meta.url)
         );
-
         this.resampler = new StreamingLinearResampler(
             this.audioContext.sampleRate,
             SAMPLE_RATE
@@ -307,40 +372,112 @@ export class SpeakingAssessmentPipeline {
 
             this.sampleCount += pcm.length;
             if (this.socket?.readyState === WebSocket.OPEN) {
-                this.socket.send(
-                    pcm.buffer.slice(pcm.byteOffset, pcm.byteOffset + pcm.byteLength)
-                );
+                try {
+                    this.queuePcm(pcm);
+                } catch (cause) {
+                    this.fatalError = pipelineError(
+                        'STT_AUDIO_SEND_FAILED',
+                        'Không gửi được âm thanh tới dịch vụ nhận dạng. Vui lòng kiểm tra mạng rồi ghi âm lại.'
+                    );
+                    this.fatalError.cause = cause;
+                    this.resolveFinished();
+                }
             }
         };
     }
 
+    queuePcm(pcm) {
+        let offset = 0;
+        while (offset < pcm.length) {
+            const count = Math.min(PCM_PACKET_SAMPLES - this.pendingPcmSamples, pcm.length - offset);
+            this.pendingPcm.set(pcm.subarray(offset, offset + count), this.pendingPcmSamples);
+            this.pendingPcmSamples += count;
+            offset += count;
+            if (this.pendingPcmSamples === PCM_PACKET_SAMPLES) this.flushPendingPcm();
+        }
+    }
+
+    flushPendingPcm() {
+        if (this.pendingPcmSamples === 0) return;
+        const samples = this.pendingPcmSamples;
+        const packet = this.pendingPcm.slice(0, samples);
+        this.socket.send(packet.buffer);
+        this.pendingPcmSamples = 0;
+    }
+
     startMediaRecorder() {
         this.mediaChunks = [];
-        const options = mediaRecorderOptions();
+        const options = this.useWebmStreaming
+            ? { mimeType: 'audio/webm;codecs=opus' }
+            : mediaRecorderOptions();
         this.mediaRecorder = options
             ? new MediaRecorder(this.mediaStream, options)
             : new MediaRecorder(this.mediaStream);
         this.mediaRecorder.ondataavailable = event => {
-            if (event.data?.size) this.mediaChunks.push(event.data);
+            if (event.data?.size) {
+                this.mediaChunks.push(event.data);
+                this.stats.recorderChunks += 1;
+                if (this.useWebmStreaming) {
+                    if (this.socket?.readyState === WebSocket.OPEN) {
+                        try {
+                            this.socket.send(event.data);
+                            this.stats.webmChunksSent += 1;
+                        } catch (cause) {
+                            this.fatalError ||= pipelineError(
+                                'STT_AUDIO_SEND_FAILED',
+                                'Không gửi được âm thanh WebM tới dịch vụ nhận dạng. Vui lòng ghi âm lại.'
+                            );
+                            this.fatalError.cause = cause;
+                            this.resolveFinished();
+                        }
+                    } else {
+                        this.fatalError ||= pipelineError(
+                            'STT_SOCKET_CLOSED',
+                            'Kết nối nhận dạng đã ngắt khi đang gửi âm thanh WebM. Vui lòng ghi âm lại.'
+                        );
+                        this.resolveFinished();
+                    }
+                }
+            }
         };
         this.mediaRecorder.addEventListener('stop', () => {
             if (!this.stopping) {
-                this.fatalError = new Error(
-                    'Ghi âm đã dừng trước khi bạn kết thúc. Vui lòng ghi âm lại.'
+                this.fatalError = pipelineError(
+                    'RECORDER_STOPPED_EARLY',
+                    'Ghi âm đã dừng trước khi bạn kết thúc. Vui lòng kiểm tra micro rồi ghi âm lại.'
                 );
                 this.resolveFinished();
             }
         }, { once: true });
         this.mediaRecorder.addEventListener('error', () => {
-            this.fatalError = new Error('Không thể tiếp tục ghi âm. Vui lòng ghi âm lại.');
+            this.fatalError = pipelineError(
+                'RECORDER_ERROR',
+                'Trình duyệt không thể tiếp tục ghi âm. Vui lòng kiểm tra micro rồi ghi âm lại.'
+            );
             this.resolveFinished();
         }, { once: true });
-        this.mediaRecorder.start(250);
+        this.mediaRecorder.start(this.useWebmStreaming ? WEBM_RECORDER_TIMESLICE_MS : 250);
+        this.recordingStartedAt = performance.now();
+        this.recordingStoppedAt = null;
     }
 
     handleSonioxMessage(message) {
+        if (Number.isFinite(message.total_audio_proc_ms)) {
+            this.stats.maxProcessedAudioMs = Math.max(this.stats.maxProcessedAudioMs, message.total_audio_proc_ms);
+        }
+        if (Number.isFinite(message.final_audio_proc_ms)) {
+            this.stats.maxFinalizedAudioMs = Math.max(this.stats.maxFinalizedAudioMs, message.final_audio_proc_ms);
+        }
         if (message.error_code || message.error_message) {
-            this.fatalError = new Error('Dịch vụ xử lý âm thanh gặp sự cố.');
+            this.fatalError = pipelineError(
+                'STT_SERVICE_ERROR',
+                'Dịch vụ nhận dạng giọng nói báo lỗi. Vui lòng ghi âm lại; nếu lỗi lặp lại, hãy liên hệ hỗ trợ.',
+                {
+                    serviceCode: message.error_code || null,
+                    serviceType: message.error_type || null,
+                    requestId: message.request_id || null,
+                }
+            );
             this.resolveFinished();
             return;
         }
@@ -372,40 +509,101 @@ export class SpeakingAssessmentPipeline {
     async stopMediaRecorder() {
         if (!this.mediaRecorder) return null;
         if (this.mediaRecorder.state === 'inactive') {
+            this.recordingStoppedAt ??= performance.now();
             return new Blob(this.mediaChunks, {
                 type: this.mediaRecorder.mimeType || 'audio/webm'
             });
         }
 
-        await new Promise((resolve, reject) => {
+        await withTimeout(new Promise((resolve, reject) => {
             this.mediaRecorder.onstop = resolve;
             this.mediaRecorder.onerror = () => reject(
-                new Error('Không thể hoàn tất ghi âm.')
+                pipelineError('RECORDER_FINALIZE_ERROR', 'Trình duyệt không thể tạo file ghi âm. Vui lòng ghi âm lại.')
             );
+            this.recordingStoppedAt = performance.now();
             this.mediaRecorder.stop();
-        });
+        }), 10_000, pipelineError(
+            'RECORDER_FINALIZE_TIMEOUT',
+            'Trình duyệt không tạo xong file ghi âm sau 10 giây. Vui lòng ghi âm lại.'
+        ));
 
-        return new Blob(this.mediaChunks, {
+        const blob = new Blob(this.mediaChunks, {
             type: this.mediaRecorder.mimeType || 'audio/webm'
         });
+        return blob;
     }
 
     sendTrailingSilence() {
         if (this.socket?.readyState !== WebSocket.OPEN) return;
         const sampleCount = Math.ceil(SONIOX_TRAILING_SILENCE_MS * SAMPLE_RATE / 1000);
-        this.socket.send(new Int16Array(sampleCount).buffer);
+        try {
+            this.socket.send(new Int16Array(sampleCount).buffer);
+        } catch (cause) {
+            const error = pipelineError(
+                'STT_SEND_FAILED',
+                'Không gửi được phần cuối bài nói tới dịch vụ nhận dạng. Hãy kiểm tra mạng rồi ghi âm lại.'
+            );
+            error.cause = cause;
+            throw error;
+        }
     }
 
     async waitForSocketDrain() {
-        const deadline = Date.now() + SONIOX_DRAIN_TIMEOUT_MS;
+        const startedAt = Date.now();
+        let lastProgressAt = startedAt;
+        let lastBufferedBytes = this.socket?.bufferedAmount ?? 0;
         while (
             this.socket?.readyState === WebSocket.OPEN
             && this.socket.bufferedAmount > 0
         ) {
-            if (Date.now() >= deadline) {
-                throw new Error('Không thể hoàn tất xử lý bài nói.');
+            const now = Date.now();
+            const bufferedBytes = this.socket.bufferedAmount;
+            if (bufferedBytes < lastBufferedBytes) lastProgressAt = now;
+            lastBufferedBytes = bufferedBytes;
+            if (now - lastProgressAt >= SONIOX_DRAIN_STALL_TIMEOUT_MS
+                || now - startedAt >= SONIOX_DRAIN_MAX_WAIT_MS) {
+                throw pipelineError(
+                    'STT_UPLOAD_STALLED',
+                    'Âm thanh vẫn còn trong hàng đợi gửi tới dịch vụ nhận dạng. Hãy kiểm tra mạng rồi ghi âm lại.',
+                    { bufferedBytes, drainWaitMs: now - startedAt, msSinceProgress: now - lastProgressAt }
+                );
             }
             await delay(20);
+        }
+    }
+
+    async waitForSonioxFinish() {
+        const startedAt = performance.now();
+        let lastProgressAt = startedAt;
+        let processedAudioMs = this.stats.maxProcessedAudioMs;
+        let finalizedAudioMs = this.stats.maxFinalizedAudioMs;
+        let finalTokenCount = this.finalTokens.length;
+
+        while (!this.finishReceived && !this.fatalError) {
+            await Promise.race([this.finishedPromise, delay(250)]);
+            const now = performance.now();
+            if (this.stats.maxProcessedAudioMs > processedAudioMs
+                || this.stats.maxFinalizedAudioMs > finalizedAudioMs
+                || this.finalTokens.length > finalTokenCount) {
+                lastProgressAt = now;
+                processedAudioMs = this.stats.maxProcessedAudioMs;
+                finalizedAudioMs = this.stats.maxFinalizedAudioMs;
+                finalTokenCount = this.finalTokens.length;
+            }
+            if (this.finishReceived || this.fatalError) break;
+            if (now - startedAt >= SONIOX_FINISH_TIMEOUT_MS
+                || now - lastProgressAt >= SONIOX_FINISH_STALL_TIMEOUT_MS) {
+                throw pipelineError(
+                    'STT_FINALIZE_TIMEOUT',
+                    'Dịch vụ nhận dạng chưa xử lý xong bài nói trong thời gian cho phép. Vui lòng thử lại; nếu lỗi lặp lại, hãy liên hệ hỗ trợ.',
+                    {
+                        finishWaitMs: Math.round(now - startedAt),
+                        msSinceProgress: Math.round(now - lastProgressAt),
+                        processedAudioMs,
+                        finalizedAudioMs,
+                    }
+                );
+            }
         }
     }
 
@@ -418,40 +616,81 @@ export class SpeakingAssessmentPipeline {
         const mediaBlobPromise = this.stopMediaRecorder();
 
         try {
+            // MediaRecorder emits its last dataavailable event before stop. Wait for
+            // that event before closing the WebM stream so the final audio is sent.
+            const webmBlob = this.useWebmStreaming ? await mediaBlobPromise : null;
+            if (this.fatalError) throw this.fatalError;
+            if (this.useWebmStreaming && (!webmBlob?.size
+                || this.stats.webmChunksSent !== this.stats.recorderChunks)) {
+                throw pipelineError(
+                    'STT_AUDIO_INCOMPLETE',
+                    'File ghi âm WebM chưa được gửi đầy đủ tới dịch vụ nhận dạng. Vui lòng ghi âm lại.',
+                    { recorderChunks: this.stats.recorderChunks, chunksSent: this.stats.webmChunksSent }
+                );
+            }
             if (this.socket?.readyState !== WebSocket.OPEN) {
-                throw this.fatalError || new Error('Dịch vụ ghi âm bị gián đoạn.');
+                throw this.fatalError || pipelineError(
+                    'STT_SOCKET_CLOSED',
+                    'Kết nối nhận dạng giọng nói đã bị ngắt. Hãy kiểm tra mạng rồi ghi âm lại.'
+                );
             }
 
-            this.sendTrailingSilence();
+            if (!this.useWebmStreaming) {
+                try {
+                    this.flushPendingPcm();
+                } catch (cause) {
+                    const error = pipelineError(
+                        'STT_SEND_FAILED',
+                        'Không gửi được phần âm thanh cuối tới dịch vụ nhận dạng. Hãy kiểm tra mạng rồi ghi âm lại.'
+                    );
+                    error.cause = cause;
+                    throw error;
+                }
+                this.sendTrailingSilence();
+            }
             await this.waitForSocketDrain();
             if (this.socket.readyState !== WebSocket.OPEN) {
-                throw this.fatalError || new Error('Dịch vụ ghi âm bị gián đoạn.');
+                throw this.fatalError || pipelineError(
+                    'STT_SOCKET_CLOSED',
+                    'Kết nối nhận dạng giọng nói đã bị ngắt. Hãy kiểm tra mạng rồi ghi âm lại.'
+                );
             }
-            this.socket.send('');
+            try {
+                this.socket.send('');
+            } catch (cause) {
+                const error = pipelineError(
+                    'STT_FINISH_SEND_FAILED',
+                    'Không gửi được tín hiệu kết thúc bài nói. Hãy kiểm tra mạng rồi ghi âm lại.'
+                );
+                error.cause = cause;
+                throw error;
+            }
 
-            await withTimeout(
-                this.finishedPromise,
-                SONIOX_FINISH_TIMEOUT_MS,
-                'Không thể hoàn tất xử lý bài nói.'
-            );
+            await this.waitForSonioxFinish();
             if (this.fatalError) throw this.fatalError;
             if (!this.finishReceived) {
-                throw new Error('Không thể hoàn tất xử lý bài nói.');
+                throw pipelineError(
+                    'STT_NOT_FINALIZED',
+                    'Dịch vụ nhận dạng chưa xác nhận hoàn tất bài nói. Vui lòng ghi âm lại.'
+                );
             }
-
             const transcript = tokenText(this.finalTokens);
-            if (!transcript) {
-                throw new Error('Không nhận được nội dung bài nói.');
-            }
-
             const words = sonioxTokensToWords(this.finalTokens);
-            if (words.length === 0) {
-                throw new Error('Soniox did not return valid word timestamps.');
+            // Let the UI handle an empty transcript as a zero-word recording,
+            // so it can guide the student through checking the microphone.
+            if (transcript && words.length === 0) {
+                throw pipelineError(
+                    'STT_INVALID_TIMESTAMPS',
+                    'Dịch vụ nhận dạng thiếu mốc thời gian của lời nói. Vui lòng ghi âm lại.'
+                );
             }
 
+            const audioBlob = webmBlob || await mediaBlobPromise;
             return {
-                audioBlob: await mediaBlobPromise,
-                durationSeconds: this.sampleCount / SAMPLE_RATE,
+                audioBlob,
+                durationSeconds: this.useWebmStreaming
+                    ? Math.max(0, (this.recordingStoppedAt - this.recordingStartedAt) / 1000)
+                    : this.sampleCount / SAMPLE_RATE,
                 transcript,
                 tokens: words,
                 sonioxFinalized: true,

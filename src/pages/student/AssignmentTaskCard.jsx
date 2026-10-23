@@ -20,7 +20,7 @@ export default function AssignmentTaskCard({
     const content = normalizeSpeakingContent(itemDetail?.content || item.content);
     const questionText = content.question || item.description || item.title || (isSpeaking ? `Speaking Exercise ${index + 1}` : 'Nộp bài tự luận');
     const cueList = content.suggestions || [];
-    const attemptCount = itemHistory.length > 0 ? itemHistory.length : (item.hasSubmission ? 1 : 0);
+    const attemptCount = itemHistory.length;
     const maxAttemptsText = item.maxAttempts || '∞';
     const scoredAttempt = itemHistory.find(attempt => attempt.overallScore != null);
     const bandScore = scoredAttempt ? Number(scoredAttempt.overallScore).toFixed(1) : null;
@@ -71,7 +71,9 @@ export default function AssignmentTaskCard({
 
                 <div className={styles.taskMetrics}>
                     <span className={styles.attemptPill}>
-                        {attemptCount}/{maxAttemptsText} lần nộp
+                        {itemDetail
+                            ? `${attemptCount}/${maxAttemptsText} lần nộp`
+                            : item.hasSubmission ? 'Đã nộp' : `0/${maxAttemptsText} lần nộp`}
                     </span>
                     {bandScore && (
                         <span className={styles.bandPill}>Band {bandScore}</span>
@@ -86,6 +88,7 @@ export default function AssignmentTaskCard({
                 className={`${styles.taskPanelWrapper} ${isOpen ? styles.taskPanelOpen : ''}`}
                 aria-hidden={!isOpen}
             >
+                {(isOpen || isClosing) && (
                 <div className={styles.taskPanelInner}>
                     <div className={styles.taskPanel}>
                     {detailLoading && !itemDetail ? (
@@ -288,8 +291,9 @@ export default function AssignmentTaskCard({
                         </div>
                     )}
                 </div>
+                </div>
+                )}
             </div>
-        </div>
         </article>
     );
 }

@@ -9,6 +9,7 @@ import ScoreOverviewCard from '../dashboard/components/ScoreOverviewCard';
 import ScoreProgressChart from '../dashboard/components/ScoreProgressChart';
 import { formatScore, SCORE_ITEMS } from '../dashboard/scoreDashboard';
 import styles from './Dashboard.module.css';
+import PageSkeleton from '../../components/common/PageSkeleton';
 
 ChartJS.register(
     ArcElement, CategoryScale, Legend,
@@ -36,7 +37,7 @@ function formatDate(value, withYear = false) {
 }
 
 function LoadingState() {
-    return <div className={styles.loadingState} role="status"><span className={styles.spinner} />Đang tổng hợp dữ liệu phân tích…</div>;
+    return <PageSkeleton variant="charts" />;
 }
 
 export default function Dashboard() {

@@ -7,7 +7,7 @@ import CommonAttachmentUploader from '../../components/CommonAttachmentUploader'
 import Swal from 'sweetalert2';
 import { showToastError } from '../../utils/toast';
 import AttemptDetailView from './AttemptDetailView';
-import { SpeakingAssessmentPipeline } from './speakingAssessmentPipeline';
+import { SpeakingAssessmentPipeline, formatSpeakingPipelineError } from './speakingAssessmentPipeline';
 import SpeakingQuestionCard from '../../components/SpeakingQuestionCard';
 import { getSpeakingPrompt, normalizeSpeakingContent } from '../../utils/speakingContent';
 import { parseAssignmentDueDate } from '../../utils/assignmentDate';
@@ -418,7 +418,7 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
                     icon: 'warning',
                     title: 'Không nhận diện được giọng nói',
                     text: 'Vui lòng kiểm tra lại micro hoặc thiết bị thu âm của bạn. Hãy đảm bảo bạn đã cho phép trình duyệt truy cập micro và nói rõ ràng.',
-                    confirmButtonText: 'Cấp quyền & Thử lại',
+                    confirmButtonText: 'Kiểm tra micro',
                     showCancelButton: true,
                     cancelButtonText: 'Đóng',
                     confirmButtonColor: '#101d54'
@@ -427,7 +427,7 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
                         navigator.mediaDevices.getUserMedia({ audio: true })
                             .then(stream => {
                                 stream.getTracks().forEach(track => track.stop());
-                                Swal.fire('Micro đã hoạt động', 'Bạn có thể bắt đầu ghi âm lại.', 'success');
+                                Swal.fire('Đã truy cập được micro', 'Nếu vẫn không nhận diện được giọng nói, hãy kiểm tra thiết bị đầu vào và âm lượng micro rồi ghi âm lại.', 'info');
                             })
                             .catch(err => {
                                 console.error(err);
@@ -476,10 +476,7 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
             console.error(err);
             assessmentPipelineRef.current = null;
             setSpeakingStatus(prev => ({ ...prev, [itemId]: 'idle' }));
-            const recordingError = /Ghi âm đã dừng|Không thể tiếp tục ghi âm/.test(err?.message || '')
-                ? err.message
-                : 'Không thể xử lý bài nói. Vui lòng thử lại.';
-            showToastError(recordingError);
+            showToastError(formatSpeakingPipelineError(err));
         }
     };
 

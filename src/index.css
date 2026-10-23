@@ -1,6 +1,6 @@
 /* ── Diamond IELTS Design System ─────────────────────────────────────────── */
-@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap');
-
+@keyframes icon-spin { to { transform: rotate(360deg); } }
+.iconSpin { display: inline-block; animation: icon-spin 1s linear infinite; }
 :root {
     /* Brand Colors */
     --di-navy:   #101d54;

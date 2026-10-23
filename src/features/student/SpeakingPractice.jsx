@@ -4,9 +4,10 @@ import axiosClient from '../../api/axiosClient';
 import styles from './SpeakingPractice.module.css';
 import Swal from 'sweetalert2';
 import AttemptDetailView from './AttemptDetailView';
-import { SpeakingAssessmentPipeline } from './speakingAssessmentPipeline';
+import { SpeakingAssessmentPipeline, formatSpeakingPipelineError } from './speakingAssessmentPipeline';
 import { getSpeakingPrompt, normalizeSpeakingContent } from '../../utils/speakingContent';
 import { parseAssignmentDueDate } from '../../utils/assignmentDate';
+import PageSkeleton from '../../components/common/PageSkeleton';
 
 export default function SpeakingPractice({
     isAssignmentMode = false,
@@ -57,6 +58,8 @@ export default function SpeakingPractice({
     // Soniox realtime transcript and local WebM capture.
     const assessmentPipelineRef = useRef(null);
     const timerRef = useRef(null);
+    const pollTimeoutRef = useRef(null);
+    const pollGenerationRef = useRef(0);
     const recordingStartedAtRef = useRef(null);
     const startInProgressRef = useRef(false);
     const stopInProgressRef = useRef(false);
@@ -276,6 +279,8 @@ export default function SpeakingPractice({
 
     useEffect(() => {
         return () => {
+            pollGenerationRef.current += 1;
+            if (pollTimeoutRef.current) clearTimeout(pollTimeoutRef.current);
             assessmentPipelineRef.current?.dispose();
             if (timerRef.current) clearInterval(timerRef.current);
             timerRef.current = null;
@@ -352,10 +357,10 @@ export default function SpeakingPractice({
             }, 250);
 
         } catch (err) {
-            console.error(err);
+            console.error('Speaking recording could not start:', err);
             assessmentPipelineRef.current = null;
             setStatus('idle');
-            Swal.fire('Lỗi', 'Không thể bắt đầu ghi âm. Vui lòng thử lại.', 'error');
+            Swal.fire('Không thể bắt đầu ghi âm', formatSpeakingPipelineError(err), 'error');
         } finally {
             startInProgressRef.current = false;
         }
@@ -394,7 +399,7 @@ export default function SpeakingPractice({
                     icon: 'warning',
                     title: 'Không nhận diện được giọng nói',
                     text: 'Vui lòng kiểm tra lại micro hoặc thiết bị thu âm của bạn. Hãy đảm bảo bạn đã cho phép trình duyệt truy cập micro và nói rõ ràng.',
-                    confirmButtonText: 'Cấp quyền & Thử lại',
+                    confirmButtonText: 'Kiểm tra micro',
                     showCancelButton: true,
                     cancelButtonText: 'Đóng',
                     confirmButtonColor: '#101d54'
@@ -403,7 +408,7 @@ export default function SpeakingPractice({
                         navigator.mediaDevices.getUserMedia({ audio: true })
                             .then(stream => {
                                 stream.getTracks().forEach(track => track.stop());
-                                Swal.fire('Micro đã hoạt động', 'Bạn có thể bắt đầu ghi âm lại.', 'success');
+                                Swal.fire('Đã truy cập được micro', 'Nếu vẫn không nhận diện được giọng nói, hãy kiểm tra thiết bị đầu vào và âm lượng micro rồi ghi âm lại.', 'info');
                             })
                             .catch(err => {
                                 console.error(err);
@@ -448,16 +453,13 @@ export default function SpeakingPractice({
                 outcome.sessionId
             );
         } catch (err) {
-            console.error(err);
+            console.error('Speaking recording could not finish:', err);
             if (assessmentPipelineRef.current === pipeline) {
                 assessmentPipelineRef.current = null;
             }
             setStatus('idle');
             setIsSubmissionQueueing(false);
-            const recordingError = /Ghi âm đã dừng|Không thể tiếp tục ghi âm/.test(err?.message || '')
-                ? err.message
-                : 'Không thể xử lý bài nói. Vui lòng thử lại.';
-            Swal.fire('Lỗi', recordingError, 'error');
+            Swal.fire('Chưa thể nộp bài nói', formatSpeakingPipelineError(err), 'error');
         } finally {
             stopInProgressRef.current = false;
         }
@@ -533,10 +535,14 @@ export default function SpeakingPractice({
         }
     };
 
-    const pollResults = async (subId) => {
+    const pollResults = (subId) => {
+        pollGenerationRef.current += 1;
+        const generation = pollGenerationRef.current;
+        if (pollTimeoutRef.current) clearTimeout(pollTimeoutRef.current);
         const check = async () => {
             try {
                 const data = await axiosClient.get(`/student/submissions/${subId}`);
+                if (generation !== pollGenerationRef.current) return true;
                 if (data.feedback?.pronunciationReport) {
                     setResults(current => ({
                         ...(current || {}),
@@ -559,15 +565,21 @@ export default function SpeakingPractice({
                 }
                 return false;
             } catch (err) {
+                if (generation !== pollGenerationRef.current) return true;
                 console.error(err);
+                setStatus('idle');
+                Swal.fire('Lỗi', 'Không thể tải kết quả chấm bài. Vui lòng thử lại.', 'error');
                 return true;
             }
         };
 
-        const interval = setInterval(async () => {
+        const poll = async () => {
             const done = await check();
-            if (done) clearInterval(interval);
-        }, 3000);
+            if (!done && generation === pollGenerationRef.current) {
+                pollTimeoutRef.current = setTimeout(poll, 3000);
+            }
+        };
+        pollTimeoutRef.current = setTimeout(poll, 3000);
     };
 
     const formatTime = (s) => {
@@ -601,7 +613,7 @@ export default function SpeakingPractice({
         });
     };
 
-    if (!exercise) return <div className={styles.loading}>Đang tải phòng thu...</div>;
+    if (!exercise) return <PageSkeleton variant="speaking" />;
 
     const isOverdue = assignment?.dueDate ? parseAssignmentDueDate(assignment.dueDate) < new Date() : false;
     const isBlockedByDeadline = isAssignmentMode && isOverdue && !assignment?.allowLateSubmission;

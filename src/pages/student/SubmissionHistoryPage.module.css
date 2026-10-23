@@ -537,11 +537,12 @@
    Pagination Bar
    ───────────────────────────────────────────────────────────── */
 .paginationBar {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     align-items: center;
     padding-top: 1.25rem;
-    flex-wrap: wrap;
+    margin-top: 1rem;
+    border-top: 1px solid #e2e8f0;
     gap: 1rem;
 }
 
@@ -550,6 +551,14 @@
     font-size: 0.85rem;
     color: #64748b;
     font-weight: 500;
+}
+
+.paginationCount {
+    justify-self: start;
+}
+
+.paginationPageInfo {
+    justify-self: end;
 }
 
 .paginationCount strong,
@@ -561,6 +570,7 @@
 .paginationControls {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 0.4rem;
 }
 
@@ -736,6 +746,17 @@
 /* ─────────────────────────────────────────────────────────────
    Responsive Design
    ───────────────────────────────────────────────────────────── */
+@media (min-width: 769px) and (max-width: 1200px) {
+    .paginationBar {
+        grid-template-columns: minmax(0, 1fr) auto;
+    }
+
+    .paginationControls {
+        grid-column: 1 / -1;
+        grid-row: 1;
+    }
+}
+
 @media (max-width: 1024px) {
     .container {
         padding: 0;
@@ -1487,11 +1508,16 @@
   box-shadow: var(--dsk-glass-shadow);
 }
 :global(body.dk-mode-scene) .mainCard,
-:global(body.dk-mode-scene) .mobileCard,
-:global(body.dk-mode-scene) .paginationBar {
+:global(body.dk-mode-scene) .mobileCard {
   background: var(--dsk-frost);
   border-color: var(--dsk-frost-line);
   box-shadow: var(--dsk-frost-shadow);
+}
+:global(body.dk-mode-scene) .paginationBar {
+  background: transparent;
+  border: 0;
+  border-top: 1px solid var(--dsk-frost-line);
+  box-shadow: none;
 }
 :global(body.dk-mode-scene) .detailWrapper {
   background: transparent;

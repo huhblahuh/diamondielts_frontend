@@ -19,6 +19,7 @@ import Swal from 'sweetalert2';
 import quotaDashboardService from '../../api/services/quotaDashboard.service';
 import DailyCostReport from '../../features/admin/daily-cost-report/DailyCostReport';
 import styles from './QuotaDashboardPage.module.css';
+import PageSkeleton from '../../components/common/PageSkeleton';
 
 ChartJS.register(
     CategoryScale,
@@ -580,7 +581,7 @@ export default function QuotaDashboardPage() {
             </section>
 
             {loadingOverview ? (
-                <div className={styles.loadingState}>Đang tổng hợp dữ liệu…</div>
+                <PageSkeleton variant="charts" />
             ) : (
                 <section className={styles.chartRow}>
                     <article className={styles.chartCard}>
@@ -703,7 +704,7 @@ export default function QuotaDashboardPage() {
 
                         <div className={styles.tableWrap}>
                             {loadingQuotas ? (
-                                <div className={styles.loadingState}>Đang tải danh sách quota…</div>
+                                <PageSkeleton variant="table" />
                             ) : (
                                 <table>
                                     <thead>

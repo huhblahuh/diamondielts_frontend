@@ -2,6 +2,7 @@ import React from 'react';
 import Swal from 'sweetalert2';
 import topicService from '../../../api/services/topic.service';
 import styles from '../ExerciseManagement.module.css';
+import PageSkeleton from '../../../components/common/PageSkeleton';
 
 export default function TopicGrid({ topics, loading, onSelectTopic, onDeleteTopic, onRefreshTopics }) {
     const handleAddTopic = async () => {
@@ -52,7 +53,7 @@ export default function TopicGrid({ topics, loading, onSelectTopic, onDeleteTopi
             </div>
 
             {loading ? (
-                <div className="text-center p-5 text-muted">Đang đồng bộ dữ liệu chủ đề...</div>
+                <PageSkeleton variant="topicGrid" />
             ) : (
                 <div className={styles.grid}>
                     <div className={`${styles.card} ${styles.cardCreate}`} onClick={handleAddTopic}>

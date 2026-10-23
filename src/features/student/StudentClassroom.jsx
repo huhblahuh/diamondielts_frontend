@@ -5,6 +5,7 @@ import styles from './StudentClassroom.module.css';
 import Swal from 'sweetalert2';
 import Pagination from '../../components/Pagination';
 import HeroArtwork from '../../components/common/HeroArtwork';
+import PageSkeleton from '../../components/common/PageSkeleton';
 import { parseAssignmentDueDate } from '../../utils/assignmentDate';
 
 export default function StudentClassroom() {
@@ -179,14 +180,7 @@ export default function StudentClassroom() {
     }, [totalPages]);
 
     if (loadingClasses) {
-        return (
-            <div className={styles.container}>
-                <div className={styles.loadingClasses}>
-                    <div className={styles.loadingSpinner}></div>
-                    <p>Đang tải thông tin lớp học...</p>
-                </div>
-            </div>
-        );
+        return <PageSkeleton variant="classrooms" />;
     }
 
     if (classes.length === 0) {

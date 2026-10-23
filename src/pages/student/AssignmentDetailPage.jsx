@@ -5,7 +5,7 @@ import assignmentService from '../../api/services/assignment.service';
 import styles from './AssignmentDetailPage.module.css';
 import Swal from 'sweetalert2';
 import { showToastError } from '../../utils/toast';
-import Skeleton from '../../components/common/Skeleton';
+import PageSkeleton from '../../components/common/PageSkeleton';
 import { parseAssignmentDueDate } from '../../utils/assignmentDate';
 import AssignmentDetailHero from './AssignmentDetailHero';
 import AssignmentTaskCard from './AssignmentTaskCard';
@@ -147,22 +147,6 @@ export default function AssignmentDetailPage() {
             setExpandedItemId(null);
             setClosingItemId(null);
 
-            // Preload details for items in background to show attempts & bands immediately
-            if (data?.items?.length > 0) {
-                Promise.allSettled(
-                    data.items.map(async (item) => {
-                        try {
-                            const detail = await assignmentService.getStudentAssignmentItemDetail(assignmentId, item.itemId);
-                            if (detail) {
-                                setItemDetails(prev => ({ ...prev, [item.itemId]: detail }));
-                                setHistories(prev => ({ ...prev, [item.itemId]: detail.history || [] }));
-                            }
-                        } catch {
-                            // Ignored: detail will load on click if prefetch fails
-                        }
-                    })
-                );
-            }
         } catch (err) {
             console.error('Failed to fetch assignment detail:', err);
             showToastError('Không thể tải chi tiết bài tập. Vui lòng thử lại sau.');
@@ -254,7 +238,7 @@ export default function AssignmentDetailPage() {
     } = useAssignmentFileSubmissions({ histories, refreshItem: fetchItemDetail });
 
     if (loading) {
-        return <Skeleton type="assignment-detail" />;
+        return <PageSkeleton variant="assignmentDetail" />;
     }
 
     if (!assignment) return null;

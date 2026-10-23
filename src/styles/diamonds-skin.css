@@ -78,3 +78,9 @@ body.dk-mode-plain #root { --dsk-band: 64px; }
 
 /* Login uses the shared top bar of the kit like the other Diamonds sites:
    portal button top-left, "Diamonds IELTS | Speaking" logo centered, theme button top-right. */
+/* Keep the decorative landscape static so it does not occupy the compositor
+   while students work in the app. Interactive controls still use transitions. */
+body.dk .dk-scene *,
+body.dk .dk-band * {
+    animation: none !important;
+}

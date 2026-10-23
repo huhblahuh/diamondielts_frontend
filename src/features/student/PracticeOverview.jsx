@@ -6,6 +6,8 @@ import Swal from 'sweetalert2';
 import { normalizeSpeakingContent } from '../../utils/speakingContent';
 import SpeakingPractice from './SpeakingPractice';
 import HeroArtwork from '../../components/common/HeroArtwork';
+import Button from '../../components/ui/Button';
+import Input from '../../components/ui/Input';
 
 const PART_OPTIONS = ['Part 1', 'Part 2', 'Part 3'];
 
@@ -58,12 +60,13 @@ function QuestionList({ exercises, startIndex = 0, searchTerm, onExerciseClick, 
                                 {highlightMatch(rawQuestionText, searchTerm)}
                             </p>
                             <div className={styles.questionSub}>
-                                <i className="fa-solid fa-microphone"></i>
+                                <i className="bi bi-mic-fill"></i>
                                 Speaking · Câu {qIndex + 1}
                             </div>
                         </div>
 
-                        <button
+                        <Button
+                            size="sm"
                             className={styles.startBtn}
                             type="button"
                             onClick={(e) => {
@@ -72,7 +75,7 @@ function QuestionList({ exercises, startIndex = 0, searchTerm, onExerciseClick, 
                             }}
                         >
                             Luyện tập
-                        </button>
+                        </Button>
                     </li>
                 );
             })}
@@ -430,7 +433,7 @@ export default function PracticeOverview() {
                     <section className={`${styles.hero} ${filterOpen ? styles.heroFilterOpen : ''}`}>
                         <div className={styles.heroMain}>
                             <div className={styles.heroIcon}>
-                                <i className="fa-regular fa-rectangle-list"></i>
+                                <i className="bi bi-card-list"></i>
                             </div>
 
                             <div className={styles.heroContent}>
@@ -444,12 +447,13 @@ export default function PracticeOverview() {
                         <div className={styles.searchControls} ref={filterRef}>
                             <div className={styles.heroSearch}>
                                 {isSearching ? (
-                                    <i className={`fa-solid fa-spinner fa-spin ${styles.searchIcon}`}></i>
+                                    <i className={`bi bi-arrow-repeat iconSpin ${styles.searchIcon}`}></i>
                                 ) : (
-                                    <i className={`fa-solid fa-magnifying-glass ${styles.searchIcon}`}></i>
+                                    <i className={`bi bi-search ${styles.searchIcon}`}></i>
                                 )}
-                                <input
+                                <Input
                                     type="text"
+                                    appearance="bare"
                                     className={styles.searchInput}
                                     placeholder="Tìm kiếm chủ đề, câu hỏi..."
                                     value={searchTerm}
@@ -463,7 +467,7 @@ export default function PracticeOverview() {
                                         title="Xóa tìm kiếm"
                                         aria-label="Xóa tìm kiếm"
                                     >
-                                        <i className="fa-solid fa-xmark"></i>
+                                        <i className="bi bi-x-lg"></i>
                                     </button>
                                 )}
                             </div>
@@ -476,7 +480,7 @@ export default function PracticeOverview() {
                                 aria-label="Lọc theo Part"
                                 title="Lọc theo Part"
                             >
-                                <i className="fa-solid fa-sliders"></i>
+                                <i className="bi bi-sliders"></i>
                                 {hasActiveFilter && <span className={styles.filterDot} />}
                             </button>
                             {filterOpen && (
@@ -507,7 +511,7 @@ export default function PracticeOverview() {
                     <section className={styles.topicRows}>
                         {loadingTopics || filterLoading ? (
                             <div className={styles.loadingArea}>
-                                <i className="fa-solid fa-spinner fa-spin" style={{ marginRight: 8 }}></i>
+                                <i className="bi bi-arrow-repeat iconSpin" style={{ marginRight: 8 }}></i>
                                 {filterLoading ? 'Đang lọc bài tập...' : 'Đang tải danh sách chủ đề & câu hỏi...'}
                             </div>
                         ) : filterError ? (
@@ -517,7 +521,7 @@ export default function PracticeOverview() {
                         ) : filteredTopics.length === 0 ? (
                             <div className={styles.emptySearch}>
                                 <div className={styles.emptySearchIcon}>
-                                    <i className="fa-solid fa-magnifying-glass"></i>
+                                    <i className="bi bi-search"></i>
                                 </div>
                                 <p>
                                     Không có bài tập phù hợp với từ khóa hoặc bộ lọc đã chọn.
@@ -597,9 +601,9 @@ export default function PracticeOverview() {
                                                                 aria-label={isOpen ? 'Thu gọn' : 'Mở rộng'}
                                                             >
                                                                 {isLoadingThisTopic ? (
-                                                                    <i className="fa-solid fa-spinner fa-spin"></i>
+                                                                    <i className="bi bi-arrow-repeat iconSpin"></i>
                                                                 ) : (
-                                                                    <i className="fa-solid fa-chevron-down"></i>
+                                                                    <i className="bi bi-chevron-down"></i>
                                                                 )}
                                                             </span>
                                                         </div>
@@ -607,13 +611,13 @@ export default function PracticeOverview() {
                                                         <div className={styles.topicToggleBottom}>
                                                             <div className={styles.topicMeta}>
                                                                 <span className={styles.skillBadge}>
-                                                                    <i className="fa-solid fa-microphone"></i>
+                                                                    <i className="bi bi-mic-fill"></i>
                                                                     Speaking
                                                                 </span>
 
                                                                 {cleanTerm && matchingQuestions.length > 0 && (
                                                                     <span className={styles.matchBadge} title="Số câu hỏi khớp từ khóa">
-                                                                        <i className="fa-solid fa-magnifying-glass"></i>
+                                                                        <i className="bi bi-search"></i>
                                                                         {matchingQuestions.length} câu hỏi khớp
                                                                     </span>
                                                                 )}
@@ -635,7 +639,7 @@ export default function PracticeOverview() {
                                                                         title="Trang trước"
                                                                         aria-label="Trang trước"
                                                                     >
-                                                                        <i className="fa-solid fa-chevron-left"></i>
+                                                                        <i className="bi bi-chevron-left"></i>
                                                                     </button>
                                                                     <span className={styles.topicPageText}>
                                                                         {currentPage} / {totalPages}
@@ -654,7 +658,7 @@ export default function PracticeOverview() {
                                                                         title="Trang sau"
                                                                         aria-label="Trang sau"
                                                                     >
-                                                                        <i className="fa-solid fa-chevron-right"></i>
+                                                                        <i className="bi bi-chevron-right"></i>
                                                                     </button>
                                                                 </div>
                                                             )}
@@ -681,7 +685,7 @@ export default function PracticeOverview() {
 
                                                                 {isLoadingThisTopic ? (
                                                                     <div className={styles.loadingArea}>
-                                                                        <i className="fa-solid fa-spinner fa-spin" style={{ marginRight: 8 }}></i>
+                                                                        <i className="bi bi-arrow-repeat iconSpin" style={{ marginRight: 8 }}></i>
                                                                         Đang tải câu hỏi...
                                                                     </div>
                                                                 ) : displayedExercises.length === 0 ? (
