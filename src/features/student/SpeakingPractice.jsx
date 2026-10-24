@@ -4,7 +4,7 @@ import axiosClient from '../../api/axiosClient';
 import styles from './SpeakingPractice.module.css';
 import Swal from 'sweetalert2';
 import AttemptDetailView from './AttemptDetailView';
-import { SpeakingAssessmentPipeline, formatSpeakingPipelineError } from './speakingAssessmentPipeline';
+import { SonioxSdkSpeakingPipeline, formatSpeakingPipelineError } from './soniox/SonioxSdkSpeakingPipeline';
 import { getSpeakingPrompt, normalizeSpeakingContent } from '../../utils/speakingContent';
 import { parseAssignmentDueDate } from '../../utils/assignmentDate';
 import PageSkeleton from '../../components/common/PageSkeleton';
@@ -334,7 +334,7 @@ export default function SpeakingPractice({
                 return;
             }
 
-            const pipeline = new SpeakingAssessmentPipeline({
+            const pipeline = new SonioxSdkSpeakingPipeline({
                 credentials: tokenData,
                 question: getSpeakingPrompt(exercise?.content),
                 partNumber: partNum
