@@ -7,7 +7,7 @@ import CommonAttachmentUploader from '../../components/CommonAttachmentUploader'
 import Swal from 'sweetalert2';
 import { showToastError } from '../../utils/toast';
 import AttemptDetailView from './AttemptDetailView';
-import { SpeakingAssessmentPipeline, formatSpeakingPipelineError } from './speakingAssessmentPipeline';
+import { SonioxSdkSpeakingPipeline, formatSpeakingPipelineError } from './soniox/SonioxSdkSpeakingPipeline';
 import SpeakingQuestionCard from '../../components/SpeakingQuestionCard';
 import { getSpeakingPrompt, normalizeSpeakingContent } from '../../utils/speakingContent';
 import { parseAssignmentDueDate } from '../../utils/assignmentDate';
@@ -45,6 +45,7 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
 
     // Soniox realtime transcript plus local WebM capture.
     const assessmentPipelineRef = React.useRef(null);
+    const stopInProgressRef = React.useRef(false);
     const timerRef = React.useRef(null);
 
     useEffect(() => {
@@ -343,6 +344,7 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
     };
 
     const startSpeakingRecording = async (itemId, itemType, content) => {
+        if (assessmentPipelineRef.current || stopInProgressRef.current) return;
         try {
             // Kiểm tra giới hạn số lần nộp bài trước khi bắt đầu ghi âm
             try {
@@ -365,7 +367,7 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
             // Gọi api lấy speech token động bảo mật từ backend
             let tokenData;
             try {
-                tokenData = await axiosClient.get('/student/PracticeSpeaking/token');
+                tokenData = await axiosClient.get(`/student/PracticeSpeaking/token?speakingTask=${detectPartNumber(itemType)}`);
             } catch (err) {
                 console.error("Failed to fetch Speech Token:", err);
                 showToastError('Không thể lấy token xác thực micro từ máy chủ. Vui lòng thử lại!');
@@ -374,7 +376,7 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
                 return;
             }
 
-            const pipeline = new SpeakingAssessmentPipeline({
+            const pipeline = new SonioxSdkSpeakingPipeline({
                 credentials: tokenData,
                 question: getSpeakingPrompt(content),
                 partNumber: detectPartNumber(itemType)
@@ -395,7 +397,8 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
     };
 
     const stopSpeakingRecording = async (itemId, itemType, content) => {
-        if (!assessmentPipelineRef.current) return;
+        if (!assessmentPipelineRef.current || stopInProgressRef.current) return;
+        stopInProgressRef.current = true;
 
         setSpeakingStatus(prev => ({ ...prev, [itemId]: 'processing' }));
         setIsRecording(false);
@@ -477,6 +480,8 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
             assessmentPipelineRef.current = null;
             setSpeakingStatus(prev => ({ ...prev, [itemId]: 'idle' }));
             showToastError(formatSpeakingPipelineError(err));
+        } finally {
+            stopInProgressRef.current = false;
         }
     };
 
