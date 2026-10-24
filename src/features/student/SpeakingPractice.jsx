@@ -5,6 +5,7 @@ import styles from './SpeakingPractice.module.css';
 import Swal from 'sweetalert2';
 import AttemptDetailView from './AttemptDetailView';
 import { SonioxSdkSpeakingPipeline, formatSpeakingPipelineError } from './soniox/SonioxSdkSpeakingPipeline';
+import { createAttempt, logSpeaking, finishAttempt, speakingErrorCode } from './speaking-monitor';
 import { getSpeakingPrompt, normalizeSpeakingContent } from '../../utils/speakingContent';
 import { parseAssignmentDueDate } from '../../utils/assignmentDate';
 import PageSkeleton from '../../components/common/PageSkeleton';
@@ -57,6 +58,7 @@ export default function SpeakingPractice({
 
     // Soniox realtime transcript and local WebM capture.
     const assessmentPipelineRef = useRef(null);
+    const speakingAttemptRef = useRef(null);
     const timerRef = useRef(null);
     const pollTimeoutRef = useRef(null);
     const pollGenerationRef = useRef(0);
@@ -322,12 +324,18 @@ export default function SpeakingPractice({
                 console.error("Failed to check attempt limit:", err);
             }
 
+            const attempt = createAttempt('legacy');
+            speakingAttemptRef.current = attempt;
+            void logSpeaking(attempt, 'STARTED');
+
             // Gọi api lấy speech token động bảo mật từ backend theo Part (Task)
             let tokenData;
             try {
                 tokenData = await axiosClient.get(`/student/PracticeSpeaking/token?speakingTask=${partNum}`);
             } catch (err) {
                 console.error("Failed to fetch Speech Token:", err);
+                finishAttempt(speakingAttemptRef.current, 'FAILED', speakingErrorCode(err, 'SUBMISSION_FAILED'));
+                speakingAttemptRef.current = null;
                 Swal.fire('Lỗi', 'Không thể bắt đầu ghi âm. Vui lòng thử lại sau.', 'error');
                 setStatus('idle');
                 setIsRecording(false);
@@ -358,6 +366,8 @@ export default function SpeakingPractice({
 
         } catch (err) {
             console.error('Speaking recording could not start:', err);
+            finishAttempt(speakingAttemptRef.current, 'FAILED', speakingErrorCode(err, 'MIC_RECORDING_FAILED'));
+            speakingAttemptRef.current = null;
             assessmentPipelineRef.current = null;
             setStatus('idle');
             Swal.fire('Không thể bắt đầu ghi âm', formatSpeakingPipelineError(err), 'error');
@@ -392,6 +402,8 @@ export default function SpeakingPractice({
 
             // 1. Kiểm tra từ = 0 (lỗi mic)
             if (wordCount === 0) {
+                finishAttempt(speakingAttemptRef.current, 'FAILED', 'SONIOX_NO_TRANSCRIPT');
+                speakingAttemptRef.current = null;
                 setStatus('idle');
                 setIsSubmissionQueueing(false);
 
@@ -422,6 +434,8 @@ export default function SpeakingPractice({
             // 2. Kiểm tra độ dài bài nói dựa trên Part
             const minWords = partNum === 2 ? 20 : 10;
             if (wordCount < minWords) {
+                finishAttempt(speakingAttemptRef.current, 'FAILED', 'UNKNOWN');
+                speakingAttemptRef.current = null;
                 setStatus('idle');
                 setIsSubmissionQueueing(false);
                 Swal.fire({
@@ -454,6 +468,8 @@ export default function SpeakingPractice({
             );
         } catch (err) {
             console.error('Speaking recording could not finish:', err);
+            finishAttempt(speakingAttemptRef.current, 'FAILED', speakingErrorCode(err, 'MIC_RECORDING_FAILED'));
+            speakingAttemptRef.current = null;
             if (assessmentPipelineRef.current === pipeline) {
                 assessmentPipelineRef.current = null;
             }
@@ -504,11 +520,15 @@ export default function SpeakingPractice({
             setIsSubmissionQueueing(false);
             setStatus('processing');
             setSubmissionId(resp.submissionId);
-            pollResults(resp.submissionId);
+            const attempt = speakingAttemptRef.current;
+            speakingAttemptRef.current = null;
+            pollResults(resp.submissionId, attempt);
             loadHistory(isAssignmentMode ? currentItemId : practiceExerciseId);
             return true;
         } catch (err) {
             console.error(err);
+            finishAttempt(speakingAttemptRef.current, 'FAILED', speakingErrorCode(err, 'SUBMISSION_FAILED'));
+            speakingAttemptRef.current = null;
             if (err.code === 'OFF_TOPIC') {
                 Swal.fire({
                     icon: 'warning',
@@ -535,7 +555,7 @@ export default function SpeakingPractice({
         }
     };
 
-    const pollResults = (subId) => {
+    const pollResults = (subId, attempt) => {
         pollGenerationRef.current += 1;
         const generation = pollGenerationRef.current;
         if (pollTimeoutRef.current) clearTimeout(pollTimeoutRef.current);
@@ -553,9 +573,11 @@ export default function SpeakingPractice({
                 if (data.status === 'Completed') {
                     setResults(data.feedback);
                     setStatus('completed');
+                    finishAttempt(attempt, 'SUCCESS');
                     loadHistory(isAssignmentMode ? currentItemId : practiceExerciseId); // Cập nhật lại lịch sử khi đã chấm xong
                     return true;
                 } else if (data.status === 'Failed') {
+                    finishAttempt(attempt, 'FAILED', speakingErrorCode(data, 'UNKNOWN'));
                     Swal.fire('Không thể xử lý', 'Bài nói chưa được xử lý. Vui lòng thử lại.', 'error');
                     setStatus('idle');
                     return true;
@@ -566,10 +588,8 @@ export default function SpeakingPractice({
                 return false;
             } catch (err) {
                 if (generation !== pollGenerationRef.current) return true;
-                console.error(err);
-                setStatus('idle');
-                Swal.fire('Lỗi', 'Không thể tải kết quả chấm bài. Vui lòng thử lại.', 'error');
-                return true;
+                console.error('Speaking result polling failed; retrying:', err);
+                return false;
             }
         };
 
@@ -775,7 +795,7 @@ export default function SpeakingPractice({
                                                 <button
                                                     className={`${styles.recordBtn} ${isRecording ? styles.isRecordingBtn : ''}`}
                                                     onClick={isRecording ? stopRecording : startRecording}
-                                                    disabled={status === 'starting' || isSubmissionQueueing}
+                                                    disabled={status === 'starting' || status === 'processing' || isSubmissionQueueing}
                                                     title={isSubmissionQueueing ? 'Đang gửi bài lên hệ thống' : isRecording ? 'Dừng ghi âm & nộp bài' : 'Nhấn để bắt đầu nói'}
                                                 >
                                                     {isSubmissionQueueing ? (
