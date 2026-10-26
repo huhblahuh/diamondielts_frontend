@@ -5,6 +5,8 @@ export class SharedWebmAudioSource {
     constructor() {
         this.chunks = [];
         this.chunksSent = 0;
+        this.maxQueuedChunks = 0;
+        this.bytes = 0;
         this.pending = Promise.resolve();
         this.startedAt = null;
         this.stoppedAt = null;
@@ -24,6 +26,8 @@ export class SharedWebmAudioSource {
             this.recorder.ondataavailable = event => {
                 if (!event.data?.size) return;
                 this.chunks.push(event.data);
+                this.bytes += event.data.size;
+                this.maxQueuedChunks = Math.max(this.maxQueuedChunks, this.chunks.length - this.chunksSent);
                 // Blob conversion is asynchronous. Chain it to preserve recorder order.
                 this.pending = this.pending.then(async () => {
                     const buffer = await event.data.arrayBuffer();

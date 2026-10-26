@@ -6,6 +6,28 @@ import backgroundImg from '../../assets/backgroundLogin.webp';
 import userQuotaService from '../../api/services/userQuota.service';
 import ForgotPassword from './ForgotPassword';
 
+function getLoginErrorMessage(status) {
+    if (status === 401) {
+        return 'Email, tên tài khoản hoặc mật khẩu không chính xác.';
+    }
+    if (status === 400) {
+        return 'Thông tin đăng nhập không hợp lệ. Vui lòng kiểm tra và thử lại.';
+    }
+    if (status === 403) {
+        return 'Tài khoản của bạn không có quyền đăng nhập.';
+    }
+    if (status === 429) {
+        return 'Bạn đã thử đăng nhập quá nhiều lần. Vui lòng thử lại sau.';
+    }
+    if (status >= 500) {
+        return 'Máy chủ đang gặp sự cố. Vui lòng thử lại sau.';
+    }
+    if (status == null) {
+        return 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra mạng và thử lại.';
+    }
+    return 'Không thể đăng nhập. Vui lòng thử lại sau.';
+}
+
 export default function Login() {
     const [formData, setFormData] = useState({
         email: '',
@@ -78,7 +100,7 @@ export default function Login() {
             Swal.fire({
                 icon: 'error',
                 title: 'Lỗi đăng nhập',
-                text: 'Không thể đăng nhập. Vui lòng kiểm tra thông tin và thử lại.'
+                text: getLoginErrorMessage(error.status)
             });
         } finally {
             setLoading(false);

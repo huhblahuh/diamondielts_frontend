@@ -7,10 +7,10 @@ import CommonAttachmentUploader from '../../components/CommonAttachmentUploader'
 import Swal from 'sweetalert2';
 import { showToastError } from '../../utils/toast';
 import AttemptDetailView from './AttemptDetailView';
-import { SonioxSdkSpeakingPipeline, formatSpeakingPipelineError } from './soniox/SonioxSdkSpeakingPipeline';
-import { createAttempt, logSpeaking, finishAttempt, speakingErrorCode } from './speaking-monitor';
+import { formatSpeakingPipelineError } from './speakingAssessmentPipeline';
+import { createSpeakingPipeline } from './speakingPipelineFactory';
 import SpeakingQuestionCard from '../../components/SpeakingQuestionCard';
-import { getSpeakingPrompt, normalizeSpeakingContent } from '../../utils/speakingContent';
+import { normalizeSpeakingContent } from '../../utils/speakingContent';
 import { parseAssignmentDueDate } from '../../utils/assignmentDate';
 
 // Soniox credentials are issued by the backend for each recording session.
@@ -46,8 +46,6 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
 
     // Soniox realtime transcript plus local WebM capture.
     const assessmentPipelineRef = React.useRef(null);
-    const speakingAttemptRef = React.useRef(null);
-    const startInProgressRef = React.useRef(false);
     const stopInProgressRef = React.useRef(false);
     const timerRef = React.useRef(null);
 
@@ -347,8 +345,7 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
     };
 
     const startSpeakingRecording = async (itemId, itemType, content) => {
-        if (assessmentPipelineRef.current || startInProgressRef.current || stopInProgressRef.current) return;
-        startInProgressRef.current = true;
+        if (assessmentPipelineRef.current || stopInProgressRef.current) return;
         try {
             // Kiểm tra giới hạn số lần nộp bài trước khi bắt đầu ghi âm
             try {
@@ -368,29 +365,7 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
                 console.error("Failed to check attempt limit:", err);
             }
 
-            const attempt = createAttempt('legacy');
-            speakingAttemptRef.current = attempt;
-            void logSpeaking(attempt, 'STARTED');
-
-            // Gọi api lấy speech token động bảo mật từ backend
-            let tokenData;
-            try {
-                tokenData = await axiosClient.get(`/student/PracticeSpeaking/token?speakingTask=${detectPartNumber(itemType)}`);
-            } catch (err) {
-                console.error("Failed to fetch Speech Token:", err);
-                finishAttempt(speakingAttemptRef.current, 'FAILED', speakingErrorCode(err, 'SUBMISSION_FAILED'));
-                speakingAttemptRef.current = null;
-                showToastError('Không thể lấy token xác thực micro từ máy chủ. Vui lòng thử lại!');
-                setSpeakingStatus(prev => ({ ...prev, [itemId]: 'idle' }));
-                setIsRecording(false);
-                return;
-            }
-
-            const pipeline = new SonioxSdkSpeakingPipeline({
-                credentials: tokenData,
-                question: getSpeakingPrompt(content),
-                partNumber: detectPartNumber(itemType)
-            });
+            const pipeline = createSpeakingPipeline();
             assessmentPipelineRef.current = pipeline;
             await pipeline.start();
 
@@ -401,12 +376,8 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
 
         } catch (err) {
             console.error(err);
-            finishAttempt(speakingAttemptRef.current, 'FAILED', speakingErrorCode(err, 'MIC_RECORDING_FAILED'));
-            speakingAttemptRef.current = null;
             assessmentPipelineRef.current = null;
             showToastError('Không thể bắt đầu ghi âm. Vui lòng thử lại.');
-        } finally {
-            startInProgressRef.current = false;
         }
     };
 
@@ -423,14 +394,7 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
             assessmentPipelineRef.current = null;
             const duration = outcome.durationSeconds;
 
-            // Trích xuất transcript từ chunks và đếm số từ
-            const transcript = outcome.transcript;
-            const wordCount = transcript ? transcript.split(/\s+/).filter(Boolean).length : 0;
-
-            // 1. Kiểm tra từ = 0 (lỗi mic)
-            if (wordCount === 0) {
-                finishAttempt(speakingAttemptRef.current, 'FAILED', 'SONIOX_NO_TRANSCRIPT');
-                speakingAttemptRef.current = null;
+            if (!outcome.audioBlob?.size) {
                 setSpeakingStatus(prev => ({ ...prev, [itemId]: 'idle' }));
 
                 Swal.fire({
@@ -457,46 +421,9 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
                 return;
             }
 
-            // 2. Kiểm tra độ dài bài nói dựa trên Part
-            const partNum = detectPartNumber(itemType);
-            const minWords = partNum === 2 ? 20 : 10;
-            if (wordCount < minWords) {
-                finishAttempt(speakingAttemptRef.current, 'FAILED', 'UNKNOWN');
-                speakingAttemptRef.current = null;
-                setSpeakingStatus(prev => ({ ...prev, [itemId]: 'idle' }));
-                Swal.fire({
-                    toast: true,
-                    position: 'top-end',
-                    icon: 'warning',
-                    title: 'Hãy nói dài hơn để có điểm số chính xác',
-                    showConfirmButton: false,
-                    timer: 4500,
-                    timerProgressBar: true,
-                    background: '#fffbeb',
-                    iconColor: '#d97706',
-                    didOpen: (toast) => {
-                        toast.style.border = '1.5px solid #fde68a';
-                        toast.style.boxShadow = '0 10px 15px -3px rgba(180, 83, 9, 0.15)';
-                        toast.style.color = '#b45309';
-                        toast.style.fontSize = '0.9rem';
-                        toast.style.fontWeight = '600';
-                    }
-                });
-                return;
-            }
-
-            await submitSpeakingToBackend(
-                itemId,
-                duration,
-                outcome.audioBlob,
-                outcome.transcript,
-                outcome.tokens,
-                outcome.sessionId
-            );
+            await submitSpeakingToBackend(itemId, duration, outcome.audioBlob);
         } catch (err) {
             console.error(err);
-            finishAttempt(speakingAttemptRef.current, 'FAILED', speakingErrorCode(err, 'MIC_RECORDING_FAILED'));
-            speakingAttemptRef.current = null;
             assessmentPipelineRef.current = null;
             setSpeakingStatus(prev => ({ ...prev, [itemId]: 'idle' }));
             showToastError(formatSpeakingPipelineError(err));
@@ -508,10 +435,7 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
     const submitSpeakingToBackend = async (
         itemId,
         duration,
-        audioBlob = null,
-        sonioxTranscript = '',
-        sonioxTokens = [],
-        sessionId = ''
+        audioBlob = null
     ) => {
         try {
             const formData = new FormData();
@@ -521,10 +445,6 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
                 "audioDurationMilliseconds",
                 String(Math.round(duration * 1000)),
             );
-            formData.append("sonioxTranscript", sonioxTranscript);
-            formData.append("sonioxTokensJson", JSON.stringify(sonioxTokens));
-            formData.append("sonioxFinalized", "true");
-            formData.append("speechSessionId", sessionId || "");
 
             if (audioBlob) {
                 formData.append("file", audioBlob, `speaking_${Date.now()}.webm`);
@@ -534,15 +454,11 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
 
-            const attempt = speakingAttemptRef.current;
-            speakingAttemptRef.current = null;
-            pollSpeakingResults(itemId, resp.submissionId, attempt);
+            pollSpeakingResults(itemId, resp.submissionId);
             await fetchItemHistory(itemId);
             return true;
         } catch (err) {
             console.error(err);
-            finishAttempt(speakingAttemptRef.current, 'FAILED', speakingErrorCode(err, 'SUBMISSION_FAILED'));
-            speakingAttemptRef.current = null;
             if (err.code === 'OFF_TOPIC') {
                 showToastError(err.message);
             } else {
@@ -555,26 +471,24 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
         }
     };
 
-    const pollSpeakingResults = async (itemId, subId, attempt) => {
+    const pollSpeakingResults = async (itemId, subId) => {
         const check = async () => {
             try {
                 const data = await axiosClient.get(`/student/submissions/${subId}`);
                 if (data.status === 'Completed') {
-                    finishAttempt(attempt, 'SUCCESS');
                     setSpeakingResults(prev => ({ ...prev, [itemId]: data.feedback }));
                     setSpeakingStatus(prev => ({ ...prev, [itemId]: 'completed' }));
                     await fetchItemHistory(itemId);
                     return true;
                 } else if (data.status === 'Failed') {
-                    finishAttempt(attempt, 'FAILED', speakingErrorCode(data, 'UNKNOWN'));
                     showToastError('Bài nói chưa được xử lý. Vui lòng thử lại.');
                     setSpeakingStatus(prev => ({ ...prev, [itemId]: 'idle' }));
                     return true;
                 }
                 return false;
             } catch (err) {
-                console.error('Speaking result polling failed; retrying:', err);
-                return false;
+                console.error(err);
+                return true;
             }
         };
 

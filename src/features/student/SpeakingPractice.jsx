@@ -4,11 +4,13 @@ import axiosClient from '../../api/axiosClient';
 import styles from './SpeakingPractice.module.css';
 import Swal from 'sweetalert2';
 import AttemptDetailView from './AttemptDetailView';
-import { SonioxSdkSpeakingPipeline, formatSpeakingPipelineError } from './soniox/SonioxSdkSpeakingPipeline';
-import { createAttempt, logSpeaking, finishAttempt, speakingErrorCode } from './speaking-monitor';
-import { getSpeakingPrompt, normalizeSpeakingContent } from '../../utils/speakingContent';
+import { formatSpeakingPipelineError } from './speakingAssessmentPipeline';
+import { createSpeakingPipeline } from './speakingPipelineFactory';
+import { normalizeSpeakingContent } from '../../utils/speakingContent';
 import { parseAssignmentDueDate } from '../../utils/assignmentDate';
 import PageSkeleton from '../../components/common/PageSkeleton';
+import SpeakingDebugPanel from './SpeakingDebugPanel';
+import { logSpeakingDiagnostic } from './speakingDiagnostics';
 
 export default function SpeakingPractice({
     isAssignmentMode = false,
@@ -56,12 +58,12 @@ export default function SpeakingPractice({
     const [rightSidebarOpen, setRightSidebarOpen] = useState(false);
     const [selectedPartFilter, setSelectedPartFilter] = useState('All');
 
-    // Soniox realtime transcript and local WebM capture.
+    // WebM capture; transcription runs on the backend after upload.
     const assessmentPipelineRef = useRef(null);
-    const speakingAttemptRef = useRef(null);
     const timerRef = useRef(null);
     const pollTimeoutRef = useRef(null);
     const pollGenerationRef = useRef(0);
+    const lastPolledStatusRef = useRef(null);
     const recordingStartedAtRef = useRef(null);
     const startInProgressRef = useRef(false);
     const stopInProgressRef = useRef(false);
@@ -281,6 +283,9 @@ export default function SpeakingPractice({
 
     useEffect(() => {
         return () => {
+            logSpeakingDiagnostic('speaking_view_unmounted', {
+                hadPipeline: Boolean(assessmentPipelineRef.current),
+            });
             pollGenerationRef.current += 1;
             if (pollTimeoutRef.current) clearTimeout(pollTimeoutRef.current);
             assessmentPipelineRef.current?.dispose();
@@ -299,6 +304,7 @@ export default function SpeakingPractice({
 
         startInProgressRef.current = true;
         setStatus('starting');
+        logSpeakingDiagnostic('recording_requested', { part: partNum, assignmentMode: isAssignmentMode });
 
         try {
             // Kiểm tra giới hạn số lượt làm bài trước khi ghi âm
@@ -307,6 +313,7 @@ export default function SpeakingPractice({
                     ? `/student/PracticeSpeaking/check-attempts/${currentItemId}`
                     : `/student/PracticeSpeaking/check-exercise-attempts/${practiceExerciseId}`;
                 const checkData = await axiosClient.get(checkUrl);
+                logSpeakingDiagnostic('attempt_check_complete', { limitReached: Boolean(checkData.isLimitReached) });
                 if (checkData.isLimitReached) {
                     Swal.fire({
                         icon: 'warning',
@@ -321,34 +328,14 @@ export default function SpeakingPractice({
                     return;
                 }
             } catch (err) {
+                logSpeakingDiagnostic('attempt_check_failed', { code: err?.code ?? null, status: err?.status ?? null });
                 console.error("Failed to check attempt limit:", err);
             }
 
-            const attempt = createAttempt('legacy');
-            speakingAttemptRef.current = attempt;
-            void logSpeaking(attempt, 'STARTED');
-
-            // Gọi api lấy speech token động bảo mật từ backend theo Part (Task)
-            let tokenData;
-            try {
-                tokenData = await axiosClient.get(`/student/PracticeSpeaking/token?speakingTask=${partNum}`);
-            } catch (err) {
-                console.error("Failed to fetch Speech Token:", err);
-                finishAttempt(speakingAttemptRef.current, 'FAILED', speakingErrorCode(err, 'SUBMISSION_FAILED'));
-                speakingAttemptRef.current = null;
-                Swal.fire('Lỗi', 'Không thể bắt đầu ghi âm. Vui lòng thử lại sau.', 'error');
-                setStatus('idle');
-                setIsRecording(false);
-                return;
-            }
-
-            const pipeline = new SonioxSdkSpeakingPipeline({
-                credentials: tokenData,
-                question: getSpeakingPrompt(exercise?.content),
-                partNumber: partNum
-            });
+            const pipeline = createSpeakingPipeline();
             assessmentPipelineRef.current = pipeline;
             await pipeline.start();
+            logSpeakingDiagnostic('recording_started', pipeline.diagnosticState());
 
             setIsRecording(true);
             setStatus('recording');
@@ -365,9 +352,8 @@ export default function SpeakingPractice({
             }, 250);
 
         } catch (err) {
+            logSpeakingDiagnostic('recording_start_failed', { code: err?.code || err?.name || 'UNKNOWN' });
             console.error('Speaking recording could not start:', err);
-            finishAttempt(speakingAttemptRef.current, 'FAILED', speakingErrorCode(err, 'MIC_RECORDING_FAILED'));
-            speakingAttemptRef.current = null;
             assessmentPipelineRef.current = null;
             setStatus('idle');
             Swal.fire('Không thể bắt đầu ghi âm', formatSpeakingPipelineError(err), 'error');
@@ -381,6 +367,7 @@ export default function SpeakingPractice({
 
         stopInProgressRef.current = true;
         const pipeline = assessmentPipelineRef.current;
+        logSpeakingDiagnostic('recording_stop_requested', pipeline.diagnosticState());
 
         setStatus('processing');
         setIsSubmissionQueueing(true);
@@ -391,19 +378,17 @@ export default function SpeakingPractice({
 
         try {
             const outcome = await pipeline.stop();
+            logSpeakingDiagnostic('recording_finalized', {
+                durationMs: Math.round(outcome.durationSeconds * 1000),
+                fileBytes: outcome.audioBlob?.size ?? 0,
+                fileMimeType: outcome.audioBlob?.type ?? null,
+            });
             if (assessmentPipelineRef.current === pipeline) {
                 assessmentPipelineRef.current = null;
             }
             const duration = outcome.durationSeconds;
 
-            // Trích xuất transcript từ chunks và đếm số từ
-            const transcript = outcome.transcript;
-            const wordCount = transcript ? transcript.split(/\s+/).filter(Boolean).length : 0;
-
-            // 1. Kiểm tra từ = 0 (lỗi mic)
-            if (wordCount === 0) {
-                finishAttempt(speakingAttemptRef.current, 'FAILED', 'SONIOX_NO_TRANSCRIPT');
-                speakingAttemptRef.current = null;
+            if (!outcome.audioBlob?.size) {
                 setStatus('idle');
                 setIsSubmissionQueueing(false);
 
@@ -431,45 +416,13 @@ export default function SpeakingPractice({
                 return;
             }
 
-            // 2. Kiểm tra độ dài bài nói dựa trên Part
-            const minWords = partNum === 2 ? 20 : 10;
-            if (wordCount < minWords) {
-                finishAttempt(speakingAttemptRef.current, 'FAILED', 'UNKNOWN');
-                speakingAttemptRef.current = null;
-                setStatus('idle');
-                setIsSubmissionQueueing(false);
-                Swal.fire({
-                    toast: true,
-                    position: 'top-end',
-                    icon: 'warning',
-                    title: 'Hãy nói dài hơn để có điểm số chính xác',
-                    showConfirmButton: false,
-                    timer: 4500,
-                    timerProgressBar: true,
-                    background: '#fffbeb',
-                    iconColor: '#d97706',
-                    didOpen: (toast) => {
-                        toast.style.border = '1.5px solid #fde68a';
-                        toast.style.boxShadow = '0 10px 15px -3px rgba(180, 83, 9, 0.15)';
-                        toast.style.color = '#b45309';
-                        toast.style.fontSize = '0.9rem';
-                        toast.style.fontWeight = '600';
-                    }
-                });
-                return;
-            }
-
-            await submitToBackend(
-                duration,
-                outcome.audioBlob,
-                outcome.transcript,
-                outcome.tokens,
-                outcome.sessionId
-            );
+            await submitToBackend(duration, outcome.audioBlob);
         } catch (err) {
+            logSpeakingDiagnostic('recording_stop_failed', {
+                code: err?.code || err?.name || 'UNKNOWN',
+                ...pipeline.diagnosticState(),
+            });
             console.error('Speaking recording could not finish:', err);
-            finishAttempt(speakingAttemptRef.current, 'FAILED', speakingErrorCode(err, 'MIC_RECORDING_FAILED'));
-            speakingAttemptRef.current = null;
             if (assessmentPipelineRef.current === pipeline) {
                 assessmentPipelineRef.current = null;
             }
@@ -483,12 +436,15 @@ export default function SpeakingPractice({
 
     const submitToBackend = async (
         duration,
-        audioBlob = null,
-        sonioxTranscript = '',
-        sonioxTokens = [],
-        sessionId = ''
+        audioBlob = null
     ) => {
+        const uploadStartedAt = performance.now();
         try {
+            logSpeakingDiagnostic('submission_upload_started', {
+                durationMs: Math.round(duration * 1000),
+                fileBytes: audioBlob?.size ?? 0,
+                fileMimeType: audioBlob?.type ?? null,
+            });
             const formData = new FormData();
 
             // Append các thông tin cơ bản
@@ -501,10 +457,6 @@ export default function SpeakingPractice({
                 "audioDurationMilliseconds",
                 String(Math.round(duration * 1000)),
             );
-            formData.append("sonioxTranscript", sonioxTranscript);
-            formData.append("sonioxTokensJson", JSON.stringify(sonioxTokens));
-            formData.append("sonioxFinalized", "true");
-            formData.append("speechSessionId", sessionId || "");
 
             // Append file vật lý nếu có
             if (audioBlob) {
@@ -514,21 +466,26 @@ export default function SpeakingPractice({
             const resp = await axiosClient.post('/student/submissions/speaking', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
+            logSpeakingDiagnostic('submission_upload_accepted', {
+                submissionId: resp.submissionId,
+                elapsedMs: Math.round(performance.now() - uploadStartedAt),
+            });
 
             // Backend đã nhận và queue bài thành công: trả nút record về ngay,
             // việc chấm điểm tiếp tục chạy nền qua pollResults.
             setIsSubmissionQueueing(false);
             setStatus('processing');
             setSubmissionId(resp.submissionId);
-            const attempt = speakingAttemptRef.current;
-            speakingAttemptRef.current = null;
-            pollResults(resp.submissionId, attempt);
+            pollResults(resp.submissionId);
             loadHistory(isAssignmentMode ? currentItemId : practiceExerciseId);
             return true;
         } catch (err) {
+            logSpeakingDiagnostic('submission_upload_failed', {
+                code: err?.code ?? null,
+                status: err?.status ?? null,
+                elapsedMs: Math.round(performance.now() - uploadStartedAt),
+            });
             console.error(err);
-            finishAttempt(speakingAttemptRef.current, 'FAILED', speakingErrorCode(err, 'SUBMISSION_FAILED'));
-            speakingAttemptRef.current = null;
             if (err.code === 'OFF_TOPIC') {
                 Swal.fire({
                     icon: 'warning',
@@ -555,14 +512,24 @@ export default function SpeakingPractice({
         }
     };
 
-    const pollResults = (subId, attempt) => {
+    const pollResults = (subId) => {
         pollGenerationRef.current += 1;
         const generation = pollGenerationRef.current;
+        lastPolledStatusRef.current = null;
         if (pollTimeoutRef.current) clearTimeout(pollTimeoutRef.current);
         const check = async () => {
+            const pollStartedAt = performance.now();
             try {
                 const data = await axiosClient.get(`/student/submissions/${subId}`);
                 if (generation !== pollGenerationRef.current) return true;
+                if (data.status !== lastPolledStatusRef.current) {
+                    lastPolledStatusRef.current = data.status;
+                    logSpeakingDiagnostic('submission_status', {
+                        submissionId: subId,
+                        status: data.status,
+                        requestMs: Math.round(performance.now() - pollStartedAt),
+                    });
+                }
                 if (data.feedback?.pronunciationReport) {
                     setResults(current => ({
                         ...(current || {}),
@@ -573,11 +540,9 @@ export default function SpeakingPractice({
                 if (data.status === 'Completed') {
                     setResults(data.feedback);
                     setStatus('completed');
-                    finishAttempt(attempt, 'SUCCESS');
                     loadHistory(isAssignmentMode ? currentItemId : practiceExerciseId); // Cập nhật lại lịch sử khi đã chấm xong
                     return true;
                 } else if (data.status === 'Failed') {
-                    finishAttempt(attempt, 'FAILED', speakingErrorCode(data, 'UNKNOWN'));
                     Swal.fire('Không thể xử lý', 'Bài nói chưa được xử lý. Vui lòng thử lại.', 'error');
                     setStatus('idle');
                     return true;
@@ -588,8 +553,15 @@ export default function SpeakingPractice({
                 return false;
             } catch (err) {
                 if (generation !== pollGenerationRef.current) return true;
-                console.error('Speaking result polling failed; retrying:', err);
-                return false;
+                logSpeakingDiagnostic('submission_poll_failed', {
+                    code: err?.code ?? null,
+                    status: err?.status ?? null,
+                    requestMs: Math.round(performance.now() - pollStartedAt),
+                });
+                console.error(err);
+                setStatus('idle');
+                Swal.fire('Lỗi', 'Không thể tải kết quả chấm bài. Vui lòng thử lại.', 'error');
+                return true;
             }
         };
 
@@ -795,7 +767,7 @@ export default function SpeakingPractice({
                                                 <button
                                                     className={`${styles.recordBtn} ${isRecording ? styles.isRecordingBtn : ''}`}
                                                     onClick={isRecording ? stopRecording : startRecording}
-                                                    disabled={status === 'starting' || status === 'processing' || isSubmissionQueueing}
+                                                    disabled={status === 'starting' || isSubmissionQueueing}
                                                     title={isSubmissionQueueing ? 'Đang gửi bài lên hệ thống' : isRecording ? 'Dừng ghi âm & nộp bài' : 'Nhấn để bắt đầu nói'}
                                                 >
                                                     {isSubmissionQueueing ? (
@@ -817,6 +789,7 @@ export default function SpeakingPractice({
                 </div>
             </main>
 
+            <SpeakingDebugPanel />
         </div>
     );
 }
