@@ -122,6 +122,15 @@ function getPronWords(results) {
         spokenIpa: (w.phonemes || []).map(ph => ph.spokenPhoneme || ph.phoneme).join(' ')
     }));
 }
+function pronunciationWordsMatchTranscript(words, transcript) {
+    const wordTokens = value => (value || '')
+        .match(/[\p{L}\p{N}]+(?:['’][\p{L}\p{N}]+)*/gu)
+        ?.map(token => token.toLocaleLowerCase()) || [];
+    const transcriptWords = wordTokens(transcript);
+    const assessedWords = words.flatMap(word => wordTokens(word.word));
+    return transcriptWords.length === assessedWords.length
+        && transcriptWords.every((word, index) => word === assessedWords[index]);
+}
 const wordTone = (score = 0) => {
     if (score > 70) return 'pronWordGood';
     if (score >= 50) return 'pronWordOk';
@@ -548,6 +557,13 @@ export default function AttemptDetailView({ results }) {
         if (activeTab === 'fluency') {
             const breakMap = results.breakMap || '';
             if (!breakMap) return escHtml(raw).replace(/\n/g, '<br/>');
+            const breakMapText = breakMap
+                .replace(/\[\d+(?:[.,]\d+)?s\]/g, '')
+                .replace(/\s+/g, ' ')
+                .trim();
+            if (breakMapText !== raw.replace(/\s+/g, ' ').trim()) {
+                return escHtml(raw).replace(/\n/g, '<br/>');
+            }
             let html = '';
             const parts = breakMap.split(/(\[\d+(?:[.,]\d+)?s\])/g);
             parts.forEach(part => {
@@ -576,7 +592,9 @@ export default function AttemptDetailView({ results }) {
         // Pronunciation tab
         if (activeTab === 'pronun') {
             const pronWords = getPronWords(results);
-            if (!pronWords.length) return escHtml(raw).replace(/\n/g, '<br/>');
+            if (!pronWords.length || !pronunciationWordsMatchTranscript(pronWords, raw)) {
+                return escHtml(raw).replace(/\n/g, '<br/>');
+            }
             return `
                 <div class="${s.pronInlineTranscript}">
                     ${pronWords.map(w => {
