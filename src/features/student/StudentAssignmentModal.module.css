@@ -831,6 +831,26 @@
     align-items: center;
 }
 
+.recordingActions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.submitRecordingBtn, .retakeRecordingBtn {
+    border: 0;
+    border-radius: 0.75rem;
+    padding: 0.8rem 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.submitRecordingBtn { background: #101d54; color: white; }
+.retakeRecordingBtn { background: #e9edf5; color: #101d54; }
+.submitRecordingBtn:disabled, .retakeRecordingBtn:disabled { opacity: 0.55; cursor: not-allowed; }
+
 .recordPrompt {
     color: #101d54;
     font-size: 0.875rem;
@@ -951,9 +971,13 @@
     cursor: pointer;
 }
 
-.historyCard:hover {
+.historyCard:hover:not(:disabled) {
     border-color: #6f80c4;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.historyCard:disabled {
+    cursor: default;
 }
 
 .activeHistory {

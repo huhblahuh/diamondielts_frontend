@@ -7,6 +7,7 @@ import Pagination from '../../components/Pagination';
 import HeroArtwork from '../../components/common/HeroArtwork';
 import PageSkeleton from '../../components/common/PageSkeleton';
 import { useSearchParams } from 'react-router-dom';
+import { isUnviewableSpeakingSubmission } from '../../features/student/speakingSubmissionStatus';
 
 const PAGE_SIZE = 10;
 
@@ -33,6 +34,7 @@ export default function SubmissionHistoryPage() {
     const listContainerRef = useRef(null);
     const scrollContainerRef = useRef(null);
     const paginationHideTimerRef = useRef(null);
+    const historyRequestVersionRef = useRef(0);
 
     // Sorting state
     const [sortField, setSortField] = useState('date'); // 'date' | 'attempt'
@@ -82,22 +84,37 @@ export default function SubmissionHistoryPage() {
     }, []);
 
     const fetchHistory = async () => {
+        const requestVersion = ++historyRequestVersionRef.current;
         setLoading(true);
         try {
             const skillQuery = selectedSkill ? `&skill=${selectedSkill}` : '';
             const res = await axiosClient.get(`/student/dashboard/submissions?page=${currentPage}&pageSize=${PAGE_SIZE}${skillQuery}`);
-            if (res) {
+            if (res && requestVersion === historyRequestVersionRef.current) {
                 setSubmissions(res.data || []);
                 setTotalCount(res.totalCount || 0);
                 setTotalPages(res.totalPages || 1);
             }
         } catch (err) {
+            if (requestVersion !== historyRequestVersionRef.current) return;
             console.error('Fetch submission history error:', err);
             Swal.fire('Lỗi', 'Không thể tải lịch sử nộp bài.', 'error');
         } finally {
-            setLoading(false);
+            if (requestVersion === historyRequestVersionRef.current) setLoading(false);
         }
     };
+
+    useEffect(() => {
+        const refresh = event => {
+            if (event?.detail?.type && !['SpeakingCompleted', 'SpeakingFailed', 'SpeakingOffTopic'].includes(event.detail.type)) return;
+            void fetchHistory();
+        };
+        window.addEventListener('diamond:notification-received', refresh);
+        window.addEventListener('diamond:speaking-history-refresh', refresh);
+        return () => {
+            window.removeEventListener('diamond:notification-received', refresh);
+            window.removeEventListener('diamond:speaking-history-refresh', refresh);
+        };
+    }, [currentPage, selectedSkill]);
 
     const handleSkillTabChange = (skill) => {
         setSelectedSkill(skill);
@@ -128,6 +145,11 @@ export default function SubmissionHistoryPage() {
         axiosClient.get(`/student/submissions/${encodeURIComponent(detailId)}`)
             .then(detail => {
                 if (active) {
+                    if (detailType.toLowerCase() === 'speaking'
+                        && isUnviewableSpeakingSubmission(detail?.status)) {
+                        setSearchParams({}, { replace: true });
+                        return;
+                    }
                     setSelectedSubmission(detail);
                     setLoadedDetailId(detailId);
                 }
@@ -145,6 +167,8 @@ export default function SubmissionHistoryPage() {
     }, [detailId, detailType]);
 
     const handleViewDetail = (submission) => {
+        if ((submission.skillType || 'SPEAKING').toUpperCase() === 'SPEAKING'
+            && isUnviewableSpeakingSubmission(submission.status)) return;
         const type = (submission.skillType || 'SPEAKING').toLowerCase();
         setSearchParams({ type, id: String(submission.submissionId) });
     };
@@ -210,6 +234,9 @@ export default function SubmissionHistoryPage() {
         switch (status) {
             case 'Completed': return 'Đã chấm';
             case 'Grading': return 'Đang chấm';
+            case 'Pending': return 'Đang kiểm tra';
+            case 'Failed': return 'Xử lý thất bại';
+            case 'RejectedOffTopic': return 'Bài nói lạc đề';
             default: return 'Đã nộp';
         }
     };
@@ -276,7 +303,7 @@ export default function SubmissionHistoryPage() {
         const audioPayload = selectedSubmission.payloads?.find(
             p => p.dataType === 'AUDIO_URL' || p.dataType === 'FILE_URL'
         );
-        const audioUrl = audioPayload?.secureUrl;
+        const audioUrl = selectedSubmission.audioUrl || audioPayload?.secureUrl;
 
         if (selectedSubmission.status === 'Completed' && selectedSubmission.feedback) {
             const enrichedFeedback = {
@@ -517,6 +544,7 @@ export default function SubmissionHistoryPage() {
                                     {displaySubmissions.map((sub, index) => {
                                         const rowNum = (currentPage - 1) * PAGE_SIZE + index + 1;
                                         const isSpeaking = (sub.skillType || 'SPEAKING').toUpperCase() === 'SPEAKING';
+                                        const isUnviewableSpeaking = isSpeaking && isUnviewableSpeakingSubmission(sub.status);
                                         return (
                                             <tr key={sub.submissionId}>
                                                 {/* # Column */}
@@ -575,7 +603,7 @@ export default function SubmissionHistoryPage() {
                                                     <button
                                                         className={styles.btnView}
                                                         onClick={() => handleViewDetail(sub)}
-                                                        disabled={loadingDetail}
+                                                        disabled={loadingDetail || isUnviewableSpeaking}
                                                     >
                                                         <i className="bi bi-eye"></i> Xem kết quả
                                                     </button>
@@ -591,19 +619,20 @@ export default function SubmissionHistoryPage() {
                         <div className={styles.mobileList}>
                             {displaySubmissions.map((sub) => {
                                 const isSpeaking = (sub.skillType || 'SPEAKING').toUpperCase() === 'SPEAKING';
+                                const isUnviewableSpeaking = isSpeaking && isUnviewableSpeakingSubmission(sub.status);
                                 return (
                                     <div
                                         key={sub.submissionId}
-                                        className={styles.mobileCard}
-                                        onClick={() => handleViewDetail(sub)}
-                                        onKeyDown={(event) => {
+                                        className={`${styles.mobileCard} ${isUnviewableSpeaking ? styles.mobileCardDisabled : ''}`}
+                                        onClick={isUnviewableSpeaking ? undefined : () => handleViewDetail(sub)}
+                                        onKeyDown={isUnviewableSpeaking ? undefined : (event) => {
                                             if (event.key === 'Enter' || event.key === ' ') {
                                                 event.preventDefault();
                                                 handleViewDetail(sub);
                                             }
                                         }}
-                                        role="button"
-                                        tabIndex={0}
+                                        role={isUnviewableSpeaking ? undefined : 'button'}
+                                        tabIndex={isUnviewableSpeaking ? undefined : 0}
                                     >
                                         {/* Left Avatar Mic Circle */}
                                         <div className={styles.mobileAvatar}>

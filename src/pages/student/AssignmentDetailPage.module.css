@@ -815,10 +815,14 @@
   transition: all 0.18s ease;
 }
 
-.historyRow:hover {
+.historyRow:hover:not(.historyRowDisabled) {
   border-color: #ecd49a;
   background: #fbf7ee;
   transform: translateY(-1px);
+}
+
+.historyRowDisabled {
+  cursor: default;
 }
 
 .historyRow small {

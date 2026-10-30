@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axiosClient from '../../api/axiosClient';
 import assignmentService from '../../api/services/assignment.service';
 import styles from './StudentAssignmentModal.module.css';
+import useSpeakingAvailability from './useSpeakingAvailability';
 import Skeleton from '../../components/common/Skeleton';
 import CommonAttachmentUploader from '../../components/CommonAttachmentUploader';
 import Swal from 'sweetalert2';
@@ -12,6 +13,8 @@ import { createSpeakingPipeline } from './speakingPipelineFactory';
 import SpeakingQuestionCard from '../../components/SpeakingQuestionCard';
 import { normalizeSpeakingContent } from '../../utils/speakingContent';
 import { parseAssignmentDueDate } from '../../utils/assignmentDate';
+import { isRejectedOffTopic, isUnviewableSpeakingSubmission } from './speakingSubmissionStatus';
+import { addSpeakingHistoryCard } from './gradingHistory';
 
 // Soniox credentials are issued by the backend for each recording session.
 
@@ -35,16 +38,18 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
 
     // --- SPEAKING STUDIO STATES ---
     const [activeSpeakingItemId, setActiveSpeakingItemId] = useState(null);
+    const availability = useSpeakingAvailability({ assignmentItemId: activeSpeakingItemId });
     const [selectedPartFilter, setSelectedPartFilter] = useState('All');
     const [isRecording, setIsRecording] = useState(false);
-    const [speakingStatus, setSpeakingStatus] = useState({}); // itemId => 'idle' | 'recording' | 'processing' | 'completed'
+    const [speakingStatus, setSpeakingStatus] = useState({}); // itemId => 'idle' | 'recording' | 'processing' | 'submitted' | 'completed'
     const [speakingTimer, setSpeakingTimer] = useState(0);
+    const [pendingSpeakingRecording, setPendingSpeakingRecording] = useState(null);
     const [speakingResults, setSpeakingResults] = useState({}); // itemId => results object (feedback)
     const [activeSubmissionId, setActiveSubmissionId] = useState({}); // itemId => active attempt submission ID
     const [leftSidebarOpen, setLeftSidebarOpen] = useState(false);
     const [rightSidebarOpen, setRightSidebarOpen] = useState(false);
 
-    // Soniox realtime transcript plus local WebM capture.
+    // Local WebM capture; transcription runs after upload on the backend.
     const assessmentPipelineRef = React.useRef(null);
     const stopInProgressRef = React.useRef(false);
     const timerRef = React.useRef(null);
@@ -104,14 +109,7 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
     // Tự động dừng ghi âm khi hết thời gian
     useEffect(() => {
         if (isRecording && speakingTimer >= timeLimit && activeSpeakingItemId) {
-            stopSpeakingRecording(activeSpeakingItemId, activeSpeakingItemData?.type, activeSpeakingItemData?.content);
-            Swal.fire({
-                icon: 'info',
-                title: 'Hết thời gian ghi âm',
-                text: `Thời gian ghi âm tối đa cho Part ${partNum} là ${formatTime(timeLimit)}. Hệ thống đang chấm bài của bạn.`,
-                timer: 4000,
-                showConfirmButton: false
-            });
+            void stopSpeakingRecording(activeSpeakingItemId, activeSpeakingItemData?.type, activeSpeakingItemData?.content, false);
         }
     }, [speakingTimer, isRecording, timeLimit, partNum, activeSpeakingItemId]);
 
@@ -345,7 +343,7 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
     };
 
     const startSpeakingRecording = async (itemId, itemType, content) => {
-        if (assessmentPipelineRef.current || stopInProgressRef.current) return;
+        if (assessmentPipelineRef.current || stopInProgressRef.current || availability.status !== 'available') return;
         try {
             // Kiểm tra giới hạn số lần nộp bài trước khi bắt đầu ghi âm
             try {
@@ -370,6 +368,7 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
             await pipeline.start();
 
             setIsRecording(true);
+            setPendingSpeakingRecording(null);
             setSpeakingStatus(prev => ({ ...prev, [itemId]: 'recording' }));
             setSpeakingTimer(0);
             timerRef.current = setInterval(() => setSpeakingTimer(prev => prev + 1), 1000);
@@ -381,7 +380,7 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
         }
     };
 
-    const stopSpeakingRecording = async (itemId, itemType, content) => {
+    const stopSpeakingRecording = async (itemId, itemType, content, submitImmediately = true) => {
         if (!assessmentPipelineRef.current || stopInProgressRef.current) return;
         stopInProgressRef.current = true;
 
@@ -421,7 +420,12 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
                 return;
             }
 
-            await submitSpeakingToBackend(itemId, duration, outcome.audioBlob);
+            if (submitImmediately) {
+                await submitSpeakingToBackend(itemId, duration, outcome.audioBlob);
+            } else {
+                setPendingSpeakingRecording({ itemId, duration, audioBlob: outcome.audioBlob });
+                setSpeakingStatus(prev => ({ ...prev, [itemId]: 'ready' }));
+            }
         } catch (err) {
             console.error(err);
             assessmentPipelineRef.current = null;
@@ -432,11 +436,32 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
         }
     };
 
+    const submitPendingSpeakingRecording = async () => {
+        const recording = pendingSpeakingRecording;
+        if (!recording || stopInProgressRef.current) return;
+        stopInProgressRef.current = true;
+        setSpeakingStatus(prev => ({ ...prev, [recording.itemId]: 'processing' }));
+        try {
+            const submitted = await submitSpeakingToBackend(
+                recording.itemId, recording.duration, recording.audioBlob);
+            if (submitted) setPendingSpeakingRecording(null);
+            else setSpeakingStatus(prev => ({ ...prev, [recording.itemId]: 'ready' }));
+        } finally {
+            stopInProgressRef.current = false;
+        }
+    };
+
     const submitSpeakingToBackend = async (
         itemId,
         duration,
         audioBlob = null
     ) => {
+        if (!availability.beginSubmit()) {
+            setSpeakingStatus(prev => ({ ...prev, [itemId]: 'idle' }));
+            void availability.refresh();
+            showToastError('Vui lòng kiểm tra lại trạng thái bài nói trước khi nộp.');
+            return false;
+        }
         try {
             const formData = new FormData();
 
@@ -454,11 +479,20 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
 
-            pollSpeakingResults(itemId, resp.submissionId);
-            await fetchItemHistory(itemId);
+            setHistories(previous => ({
+                ...previous,
+                [itemId]: addSpeakingHistoryCard(previous[itemId] || [], {
+                    submissionId: resp.submissionId,
+                    displayStatus: 'Checking',
+                }),
+            }));
+            void fetchItemHistory(itemId);
+            setSpeakingStatus(prev => ({ ...prev, [itemId]: 'submitted' }));
+            availability.submitted();
             return true;
         } catch (err) {
             console.error(err);
+            availability.submitFailed(err.code === 'SUBMISSION_IN_PROGRESS');
             if (err.code === 'OFF_TOPIC') {
                 showToastError(err.message);
             } else {
@@ -471,38 +505,49 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
         }
     };
 
-    const pollSpeakingResults = async (itemId, subId) => {
-        const check = async () => {
-            try {
-                const data = await axiosClient.get(`/student/submissions/${subId}`);
-                if (data.status === 'Completed') {
-                    setSpeakingResults(prev => ({ ...prev, [itemId]: data.feedback }));
-                    setSpeakingStatus(prev => ({ ...prev, [itemId]: 'completed' }));
-                    await fetchItemHistory(itemId);
-                    return true;
-                } else if (data.status === 'Failed') {
-                    showToastError('Bài nói chưa được xử lý. Vui lòng thử lại.');
-                    setSpeakingStatus(prev => ({ ...prev, [itemId]: 'idle' }));
-                    return true;
-                }
-                return false;
-            } catch (err) {
-                console.error(err);
-                return true;
-            }
+    useEffect(() => {
+        if (!activeSpeakingItemId) return undefined;
+        const updateCard = event => {
+            if (Number(event.detail?.assignmentItemId) !== Number(activeSpeakingItemId)) return;
+            setHistories(previous => ({
+                ...previous,
+                [activeSpeakingItemId]: addSpeakingHistoryCard(
+                    previous[activeSpeakingItemId] || [], event.detail),
+            }));
         };
+        const refresh = event => {
+            if (event?.detail?.type && !['SpeakingCompleted', 'SpeakingFailed', 'SpeakingOffTopic'].includes(event.detail.type)) return;
+            if (event?.detail?.assignmentItemId && Number(event.detail.assignmentItemId) !== Number(activeSpeakingItemId)) return;
+            if (event?.detail?.exerciseId) return;
+            if (event?.detail && ['SpeakingCompleted', 'SpeakingFailed', 'SpeakingOffTopic'].includes(event.detail.type)) {
+                setSpeakingStatus(prev => ({ ...prev, [activeSpeakingItemId]: 'idle' }));
+            }
+            void fetchItemHistory(activeSpeakingItemId);
+        };
+        window.addEventListener('diamond:notification-received', refresh);
+        window.addEventListener('diamond:speaking-history-refresh', refresh);
+        window.addEventListener('diamond:speaking-availability-changed', updateCard);
+        return () => {
+            window.removeEventListener('diamond:notification-received', refresh);
+            window.removeEventListener('diamond:speaking-history-refresh', refresh);
+            window.removeEventListener('diamond:speaking-availability-changed', updateCard);
+        };
+    }, [activeSpeakingItemId]);
 
-        const interval = setInterval(async () => {
-            const done = await check();
-            if (done) clearInterval(interval);
-        }, 3000);
-    };
+    useEffect(() => {
+        if (activeSpeakingItemId && ['available', 'unavailable'].includes(availability.status)) {
+            setSpeakingStatus(prev => prev[activeSpeakingItemId] === 'submitted'
+                ? { ...prev, [activeSpeakingItemId]: 'idle' } : prev);
+        }
+    }, [activeSpeakingItemId, availability.status]);
 
     const handleSelectSpeakingHistory = async (itemId, subId) => {
+        const selected = histories[itemId]?.find(item => String(item.submissionId) === String(subId));
+        if (isUnviewableSpeakingSubmission(selected?.status)) return;
         try {
             setSpeakingStatus(prev => ({ ...prev, [itemId]: 'processing' }));
             setActiveSubmissionId(prev => ({ ...prev, [itemId]: subId }));
-            const data = await axiosClient.get(`/student/submissions/${subId}`);
+            const data = await axiosClient.get(`/student/submissions/speaking/${subId}`);
             setSpeakingResults(prev => ({ ...prev, [itemId]: data.feedback }));
             setSpeakingStatus(prev => ({ ...prev, [itemId]: 'completed' }));
         } catch (err) {
@@ -530,6 +575,8 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
 
     // --- SPEAKING STUDIO VIEW MODE ---
     if (activeSpeakingItemId) {
+        const isSpeakingProcessing = availability.status === 'processing'
+            || speakingStatus[activeSpeakingItemId] === 'submitted';
         const activeSpeakingItem = assignment.items?.find(it => it.itemId === activeSpeakingItemId);
         const activeSpeakingItemData = activeSpeakingItem
             ? { ...activeSpeakingItem, ...itemDetails[activeSpeakingItemId] }
@@ -686,19 +733,51 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
                                                         <p className={styles.recordPrompt}>
                                                             {speakingStatus[activeSpeakingItemId] === 'recording'
                                                                 ? 'Đang ghi âm...'
+                                                                : pendingSpeakingRecording?.itemId === activeSpeakingItemId
+                                                                    ? 'Đã hết thời gian. Chọn nộp bài hoặc ghi âm lại.'
+                                                                : isSpeakingProcessing
+                                                                    ? availability.displayStatus === 'Grading'
+                                                                        ? 'Đang chấm bài, bạn có thể thoát'
+                                                                        : 'Đang kiểm tra bài nói, bạn có thể thoát'
                                                                 : speakingStatus[activeSpeakingItemId] === 'processing'
-                                                                    ? 'Đang chấm bài...'
-                                                                    : 'Nhấn để bắt đầu ghi âm'}
+                                                                    ? 'Đang gửi bài nói...'
+                                                                    : availability.status === 'loading'
+                                                                        ? 'Đang kiểm tra trạng thái bài...'
+                                                                        : availability.status === 'unavailable'
+                                                                            ? 'Bạn đã hết lượt làm bài.'
+                                                                        : availability.status === 'error'
+                                                                            ? 'Chưa thể kiểm tra trạng thái bài. Vui lòng tải lại trang.'
+                                                                            : 'Nhấn để bắt đầu ghi âm'}
                                                         </p>
-                                                        <button
+                                                        {pendingSpeakingRecording?.itemId === activeSpeakingItemId && !isRecording ? (
+                                                            <div className={styles.recordingActions}>
+                                                                <button type="button" className={styles.submitRecordingBtn}
+                                                                    onClick={() => void submitPendingSpeakingRecording()}
+                                                                    disabled={speakingStatus[activeSpeakingItemId] === 'processing' || availability.status !== 'available'}>
+                                                                    <i className="bi bi-cloud-arrow-up-fill" aria-hidden="true" /> Nộp bài
+                                                                </button>
+                                                                <button type="button" className={styles.retakeRecordingBtn}
+                                                                    onClick={() => void startSpeakingRecording(activeSpeakingItemId, activeSpeakingItemData?.type, activeSpeakingItemData?.content)}
+                                                                    disabled={speakingStatus[activeSpeakingItemId] === 'processing' || availability.status !== 'available'}>
+                                                                    <i className="bi bi-arrow-counterclockwise" aria-hidden="true" /> Ghi âm lại
+                                                                </button>
+                                                            </div>
+                                                        ) : availability.status !== 'loading' && availability.status !== 'error' && <button
                                                             className={`${styles.recordBtn} ${speakingStatus[activeSpeakingItemId] === 'recording' ? styles.isRecordingBtn : ''}`}
                                                             onClick={speakingStatus[activeSpeakingItemId] === 'recording'
                                                                  ? () => stopSpeakingRecording(activeSpeakingItemId, activeSpeakingItemData?.type, activeSpeakingItemData?.content)
                                                                  : () => startSpeakingRecording(activeSpeakingItemId, activeSpeakingItemData?.type, activeSpeakingItemData?.content)}
-                                                            disabled={speakingStatus[activeSpeakingItemId] === 'processing'}
+                                                            disabled={speakingStatus[activeSpeakingItemId] === 'processing' || (!isRecording && availability.status !== 'available') || isSpeakingProcessing}
                                                         >
-                                                            <i className={`bi ${speakingStatus[activeSpeakingItemId] === 'recording' ? 'bi-stop-fill' : 'bi-mic-fill'}`}></i>
-                                                        </button>
+                                                            {isSpeakingProcessing
+                                                                ? <span className="spinner-border" role="status" aria-label="Bài đang được xử lý"></span>
+                                                                : <i className={`bi ${speakingStatus[activeSpeakingItemId] === 'recording' ? 'bi-stop-fill' : 'bi-mic-fill'}`}></i>}
+                                                        </button>}
+                                                        {availability.status === 'error' && (
+                                                            <button type="button" className="btn btn-outline-secondary mt-2" onClick={() => void availability.refresh()}>
+                                                                Thử kiểm tra lại
+                                                            </button>
+                                                        )}
                                                     </div>
                                                 </div>
                                             )}
@@ -726,21 +805,24 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
                                         <p>Ghi âm bài nói đầu tiên để lịch sử luyện tập xuất hiện ở đây.</p>
                                     </div>
                                 ) : (
-                                    activeItemHistory.map((att, idx) => (
+                                    activeItemHistory.map((att) => (
                                         <button
                                             key={att.submissionId}
                                             className={`${styles.historyCard} ${activeSubmissionId[activeSpeakingItemId] === att.submissionId ? styles.activeHistory : ''}`}
+                                            disabled={isUnviewableSpeakingSubmission(att.status)}
                                             onClick={() => {
                                                 handleSelectSpeakingHistory(activeSpeakingItemId, att.submissionId);
                                                 if (window.innerWidth < 1024) setRightSidebarOpen(false);
                                             }}
                                         >
                                             <div className={styles.historyTop}>
-                                                <div className={styles.attName}>Attempt #{activeItemHistory.length - idx}</div>
+                                                <div className={styles.attName}>{isRejectedOffTopic(att.status) ? 'Bài nói lạc đề' : `Attempt #${att.attemptNumber}`}</div>
                                                 <div className={styles.attDate}>{formatDateTime(att.createdAt)}</div>
                                             </div>
                                             <div className={styles.historyBottom}>
-                                                {att.status === 'Completed' ? (
+                                                {isRejectedOffTopic(att.status) ? (
+                                                    <span className={styles.statusBadge}>Off Topic</span>
+                                                ) : att.status === 'Completed' ? (
                                                     <span className={styles.bandBadge}>Band {att.overallScore?.toFixed(1) || '--'}</span>
                                                 ) : (
                                                     <span className={styles.statusBadge}>{att.status}</span>

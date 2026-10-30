@@ -17,6 +17,7 @@ const CAT_LABELS = {
 // ── helpers ──
 const pct = (v) => ((v ?? 0) / 9 * 100).toFixed(2);
 const escHtml = (str) => (str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const escAttr = (str) => escHtml(String(str ?? '')).replace(/"/g, '&quot;');
 const escRe = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const norm = (str) => (str || '').trim().toLowerCase().replace(/[^\w\s]/g, ' ').replace(/\s+/g, ' ').trim();
 const fmtTime = (sec) => {
@@ -121,15 +122,6 @@ function getPronWords(results) {
         expectedIpa: (w.phonemes || []).map(ph => ph.phoneme).join(' '),
         spokenIpa: (w.phonemes || []).map(ph => ph.spokenPhoneme || ph.phoneme).join(' ')
     }));
-}
-function pronunciationWordsMatchTranscript(words, transcript) {
-    const wordTokens = value => (value || '')
-        .match(/[\p{L}\p{N}]+(?:['’][\p{L}\p{N}]+)*/gu)
-        ?.map(token => token.toLocaleLowerCase()) || [];
-    const transcriptWords = wordTokens(transcript);
-    const assessedWords = words.flatMap(word => wordTokens(word.word));
-    return transcriptWords.length === assessedWords.length
-        && transcriptWords.every((word, index) => word === assessedWords[index]);
 }
 const wordTone = (score = 0) => {
     if (score > 70) return 'pronWordGood';
@@ -542,14 +534,14 @@ export default function AttemptDetailView({ results }) {
     // ── build transcript HTML ──
     const buildTranscriptHtml = () => {
         const raw = results.transcript || '';
-        if (!raw) return '<span style="color:#94a3b8;font-style:italic">Không có transcript.</span>';
+        if (!raw && activeTab !== 'pronun') return '<span style="color:#94a3b8;font-style:italic">Không có transcript.</span>';
         // Suggest tab
         if (activeTab === 'suggest') {
             const suggestion = results.suggestion_answer || '';
             if (!suggestion) return '<span style="color:#94a3b8;font-style:italic">Không có bài mẫu gợi ý.</span>';
             let html = escHtml(suggestion).replace(/\n/g, '<br/>');
             html = html.replace(/\[(.*?)\|(.*?)\]/g, (_, eng, vie) =>
-                `<span class="${s.suggestNote}" data-vie="${escHtml(vie)}" data-eng="${escHtml(eng)}">${escHtml(eng)}</span>`
+                `<span class="${s.suggestNote}" role="button" tabindex="0" data-vie="${escAttr(vie)}" data-eng="${escAttr(eng)}">${escHtml(eng)}</span>`
             );
             return html;
         }
@@ -591,36 +583,18 @@ export default function AttemptDetailView({ results }) {
         }
         // Pronunciation tab
         if (activeTab === 'pronun') {
-            const pronWords = getPronWords(results);
-            if (!pronWords.length || !pronunciationWordsMatchTranscript(pronWords, raw)) {
-                return escHtml(raw).replace(/\n/g, '<br/>');
-            }
-            return `
-                <div class="${s.pronInlineTranscript}">
-                    ${pronWords.map(w => {
+            const report = results.pronunciationReport || results.pronunciation_report || results.pronunciation;
+            const pronWords = report?.words?.length ? getPronWords(results) : [];
+            if (!pronWords.length) return '<span style="color:#94a3b8;font-style:italic">Không có transcript phát âm.</span>';
+            return `<div class="${s.pronInlineTranscript}">${pronWords.map(w => {
                 const score = Math.round(w.accuracyScore ?? 0);
                 const tone = wordTone(score);
                 const isSelected = selectedIssue && selectedIssue.cat === 'pronun' && selectedIssue.idx === w.id;
                 const phonemes = (w.phonemes || []).length > 0 ? w.phonemes : [{ phoneme: w.expectedIpa || '', spokenPhoneme: w.spokenIpa || '', accuracyScore: score }];
-                return `
-                            <span role="button" tabindex="0"
-                                class="${s.pronInlineWord} ${s[tone]} ${isSelected ? s.pronInlineSelected : ''}"
-                                data-cat="pronun"
-                                data-word="${escHtml(w.word)}"
-                                data-id="${w.id}">
-                                <span class="${s.pronInlinePhonemes}">
-                                    ${phonemes.map(ph => `
-                                        <span class="${s[getPhonemeTone(ph)]}" title="${escHtml(ph.spokenPhoneme && ph.spokenPhoneme !== ph.phoneme ? `Bạn nói: ${ph.spokenPhoneme}` : 'Đúng âm')}">
-                                            ${escHtml(ph.phoneme || '-')}
-                                        </span>
-                                    `).join('')}
-                                </span>
-                                <span class="${s.pronInlineText}">${escHtml(w.word)}</span>
-                            </span>
-                        `;
-            }).join('')}
-                </div>
-            `;
+                return `<span role="button" tabindex="0" class="${s.pronInlineWord} ${s[tone]} ${isSelected ? s.pronInlineSelected : ''}" data-cat="pronun" data-word="${escAttr(w.word)}" data-id="${w.id}">`
+                    + `<span class="${s.pronInlinePhonemes}">${phonemes.map(ph => `<span class="${s[getPhonemeTone(ph)]}" title="${escAttr(ph.spokenPhoneme && ph.spokenPhoneme !== ph.phoneme ? `Bạn nói: ${ph.spokenPhoneme}` : 'Đúng âm')}">${escHtml(ph.phoneme || '-')}</span>`).join('')}</span>`
+                    + `<span class="${s.pronInlineText}">${escHtml(w.word)}</span></span>`;
+            }).join('')}</div>`;
         }
         // Lexical / Grammar tabs
         const taggedFix = activeTab === 'lexical' ? results?.lexical_resource?.tagged_fix : results?.grammar?.tagged_fix;
@@ -682,14 +656,14 @@ export default function AttemptDetailView({ results }) {
         );
         popoverAnchorFragmentRef.current = clickedFragment >= 0 ? clickedFragment : 0;
         if (span.classList.contains(s.suggestNote)) {
-            setPopover(showNotion ? {
+            setPopover({
                 type: 'suggest',
                 eng: span.dataset.eng || span.textContent,
                 vie: span.dataset.vie || '',
                 left: 0,
                 top: 0,
                 ready: false
-            } : null);
+            });
             return;
         }
         const cat = span.dataset.cat || activeTab;
@@ -710,6 +684,13 @@ export default function AttemptDetailView({ results }) {
             };
             setSelectedIssue(issue);
             setPopover(showNotion && cat !== 'fluency' ? { type: cat, issue, left: 0, top: 0, ready: false } : null);
+        }
+    };
+    const handleTranscriptKeyDown = (e) => {
+        if ((e.key === 'Enter' || e.key === ' ')
+            && e.target.classList.contains(s.suggestNote)) {
+            e.preventDefault();
+            handleTranscriptClick(e);
         }
     };
     const sliderMax = Number.isFinite(duration) && duration > 0 ? duration : 0;
@@ -790,12 +771,6 @@ export default function AttemptDetailView({ results }) {
                             <span>Một phần kết quả chưa thể xử lý đầy đủ. Vui lòng thử lại sau.</span>
                         </div>
                     )}
-                    {results.__partial && (
-                        <div className={s.processingWarning} role="status">
-                            <i className="bi bi-hourglass-split" />
-                            <span>Pronunciation đã chấm xong. Các tiêu chí còn lại đang được xử lý.</span>
-                        </div>
-                    )}
                     <div className={s.transcriptHeader}>
                         <h3 className={s.transcriptTitle}>
                             <i className="bi bi-body-text" /> Transcript
@@ -805,6 +780,7 @@ export default function AttemptDetailView({ results }) {
                         ref={transcriptRef}
                         className={`${s.transcriptPanel} ${activeTab === 'suggest' ? s.suggestMode : ''}`}
                         onClick={handleTranscriptClick}
+                        onKeyDown={handleTranscriptKeyDown}
                         dangerouslySetInnerHTML={{ __html: buildTranscriptHtml() }}
                     />
                     {/* Audio Player Dock */}

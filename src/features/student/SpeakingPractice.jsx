@@ -2,6 +2,8 @@ import React, { useCallback, useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams, useLocation, useOutletContext } from 'react-router-dom';
 import axiosClient from '../../api/axiosClient';
 import styles from './SpeakingPractice.module.css';
+import { isRejectedOffTopic, isUnviewableSpeakingSubmission } from './speakingSubmissionStatus';
+import { addSpeakingHistoryCard } from './gradingHistory';
 import Swal from 'sweetalert2';
 import AttemptDetailView from './AttemptDetailView';
 import { formatSpeakingPipelineError } from './speakingAssessmentPipeline';
@@ -11,6 +13,7 @@ import { parseAssignmentDueDate } from '../../utils/assignmentDate';
 import PageSkeleton from '../../components/common/PageSkeleton';
 import SpeakingDebugPanel from './SpeakingDebugPanel';
 import { logSpeakingDiagnostic } from './speakingDiagnostics';
+import useSpeakingAvailability from './useSpeakingAvailability';
 
 export default function SpeakingPractice({
     isAssignmentMode = false,
@@ -52,6 +55,13 @@ export default function SpeakingPractice({
     const [submissionId, setSubmissionId] = useState(null);
     const [loadingHistory, setLoadingHistory] = useState(false);
     const [isSubmissionQueueing, setIsSubmissionQueueing] = useState(false);
+    const [pendingRecording, setPendingRecording] = useState(null);
+    const availability = useSpeakingAvailability(isAssignmentMode
+        ? { assignmentItemId: currentItemId }
+        : { exerciseId: practiceExerciseId });
+    const isAcceptedSubmissionProcessing = availability.status === 'processing';
+    const speakingProcessingLabel = availability.displayStatus === 'Grading'
+        ? 'Đang chấm bài, bạn có thể thoát' : 'Đang kiểm tra bài nói, bạn có thể thoát';
 
     // UI State for sidebars
     const [leftSidebarOpen, setLeftSidebarOpen] = useState(false);
@@ -61,9 +71,6 @@ export default function SpeakingPractice({
     // WebM capture; transcription runs on the backend after upload.
     const assessmentPipelineRef = useRef(null);
     const timerRef = useRef(null);
-    const pollTimeoutRef = useRef(null);
-    const pollGenerationRef = useRef(0);
-    const lastPolledStatusRef = useRef(null);
     const recordingStartedAtRef = useRef(null);
     const startInProgressRef = useRef(false);
     const stopInProgressRef = useRef(false);
@@ -189,14 +196,7 @@ export default function SpeakingPractice({
     // Tự động dừng ghi âm khi hết thời gian
     useEffect(() => {
         if (isRecording && timer >= timeLimit) {
-            stopRecording();
-            Swal.fire({
-                icon: 'info',
-                title: 'Hết thời gian ghi âm',
-                text: `Thời gian ghi âm tối đa cho Part ${partNum} là ${formatTime(timeLimit)}. Hệ thống đang chấm bài của bạn.`,
-                timer: 4000,
-                showConfirmButton: false
-            });
+            void stopRecording(false);
         }
     }, [timer, isRecording, timeLimit, partNum]);
 
@@ -207,6 +207,7 @@ export default function SpeakingPractice({
                 setResults(null);
                 setSubmissionId(null);
                 setStatus('idle');
+                setPendingRecording(null);
 
                 if (isAssignmentMode) {
                     if (!currentItemId) return;
@@ -229,9 +230,9 @@ export default function SpeakingPractice({
                             topicName: assignment?.title,
                             topicId: null
                         });
-                        loadHistory(activeSpeakingItem.itemId);
+                        const historyItems = await loadHistory(activeSpeakingItem.itemId);
                         if (requestedSubmissionId) {
-                            handleSelectHistory(requestedSubmissionId);
+                            handleSelectHistory(requestedSubmissionId, historyItems);
                         }
                     }
                 } else {
@@ -241,9 +242,9 @@ export default function SpeakingPractice({
                     setExercise(data);
 
                     // 2. Tải lịch sử nộp bài cho bài tập này (Cột trái)
-                    loadHistory(practiceExerciseId);
+                    const historyItems = await loadHistory(practiceExerciseId);
                     if (requestedSubmissionId) {
-                        handleSelectHistory(requestedSubmissionId);
+                        handleSelectHistory(requestedSubmissionId, historyItems);
                     }
                 }
             } catch (err) {
@@ -256,26 +257,31 @@ export default function SpeakingPractice({
 
     const loadHistory = async (targetId = null) => {
         const id = targetId || activeId;
-        if (!id) return;
+        if (!id) return [];
         try {
             setLoadingHistory(true);
             if (isAssignmentMode) {
                 const currentAssignmentId = assignmentId || assignment?.assignmentId;
                 if (!currentAssignmentId) {
                     setHistory([]);
-                    return;
+                    return [];
                 }
 
                 const itemDetail = await axiosClient.get(
                     `/student/assignment/${currentAssignmentId}/items/${id}`
                 );
-                setHistory(itemDetail?.history || []);
+                const items = itemDetail?.history || [];
+                setHistory(items);
+                return items;
             } else {
                 const data = await axiosClient.get(`/student/PracticeSpeaking/history/${id}`);
-                setHistory(data || []);
+                const items = data || [];
+                setHistory(items);
+                return items;
             }
         } catch (err) {
             console.error(err);
+            return [];
         } finally {
             setLoadingHistory(false);
         }
@@ -286,8 +292,6 @@ export default function SpeakingPractice({
             logSpeakingDiagnostic('speaking_view_unmounted', {
                 hadPipeline: Boolean(assessmentPipelineRef.current),
             });
-            pollGenerationRef.current += 1;
-            if (pollTimeoutRef.current) clearTimeout(pollTimeoutRef.current);
             assessmentPipelineRef.current?.dispose();
             if (timerRef.current) clearInterval(timerRef.current);
             timerRef.current = null;
@@ -300,6 +304,7 @@ export default function SpeakingPractice({
             startInProgressRef.current
             || stopInProgressRef.current
             || assessmentPipelineRef.current
+            || availability.status !== 'available'
         ) return;
 
         startInProgressRef.current = true;
@@ -338,6 +343,7 @@ export default function SpeakingPractice({
             logSpeakingDiagnostic('recording_started', pipeline.diagnosticState());
 
             setIsRecording(true);
+            setPendingRecording(null);
             setStatus('recording');
             setTimer(0);
             recordingStartedAtRef.current = performance.now();
@@ -362,7 +368,7 @@ export default function SpeakingPractice({
         }
     };
 
-    const stopRecording = async () => {
+    const stopRecording = async (submitImmediately = true) => {
         if (stopInProgressRef.current || !assessmentPipelineRef.current) return;
 
         stopInProgressRef.current = true;
@@ -416,7 +422,13 @@ export default function SpeakingPractice({
                 return;
             }
 
-            await submitToBackend(duration, outcome.audioBlob);
+            if (submitImmediately) {
+                await submitToBackend(duration, outcome.audioBlob);
+            } else {
+                setPendingRecording({ duration, audioBlob: outcome.audioBlob });
+                setStatus('ready');
+                setIsSubmissionQueueing(false);
+            }
         } catch (err) {
             logSpeakingDiagnostic('recording_stop_failed', {
                 code: err?.code || err?.name || 'UNKNOWN',
@@ -434,10 +446,26 @@ export default function SpeakingPractice({
         }
     };
 
+    const submitPendingRecording = async () => {
+        if (!pendingRecording || isSubmissionQueueing) return;
+        setStatus('processing');
+        setIsSubmissionQueueing(true);
+        const submitted = await submitToBackend(pendingRecording.duration, pendingRecording.audioBlob);
+        if (submitted) setPendingRecording(null);
+        else setStatus('ready');
+    };
+
     const submitToBackend = async (
         duration,
         audioBlob = null
     ) => {
+        if (!availability.beginSubmit()) {
+            setIsSubmissionQueueing(false);
+            setStatus('idle');
+            void availability.refresh();
+            Swal.fire('Chưa thể nộp bài', 'Vui lòng kiểm tra lại trạng thái bài nói trước khi nộp.', 'warning');
+            return false;
+        }
         const uploadStartedAt = performance.now();
         try {
             logSpeakingDiagnostic('submission_upload_started', {
@@ -467,17 +495,18 @@ export default function SpeakingPractice({
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             logSpeakingDiagnostic('submission_upload_accepted', {
-                submissionId: resp.submissionId,
+                requestId: resp.requestId,
                 elapsedMs: Math.round(performance.now() - uploadStartedAt),
             });
 
-            // Backend đã nhận và queue bài thành công: trả nút record về ngay,
-            // việc chấm điểm tiếp tục chạy nền qua pollResults.
+            setHistory(previous => addSpeakingHistoryCard(previous, {
+                submissionId: resp.submissionId,
+                displayStatus: 'Checking',
+            }));
+            void loadHistory(activeId);
             setIsSubmissionQueueing(false);
-            setStatus('processing');
-            setSubmissionId(resp.submissionId);
-            pollResults(resp.submissionId);
-            loadHistory(isAssignmentMode ? currentItemId : practiceExerciseId);
+            setStatus('idle');
+            availability.submitted();
             return true;
         } catch (err) {
             logSpeakingDiagnostic('submission_upload_failed', {
@@ -486,6 +515,7 @@ export default function SpeakingPractice({
                 elapsedMs: Math.round(performance.now() - uploadStartedAt),
             });
             console.error(err);
+            availability.submitFailed(err.code === 'SUBMISSION_IN_PROGRESS');
             if (err.code === 'OFF_TOPIC') {
                 Swal.fire({
                     icon: 'warning',
@@ -512,67 +542,35 @@ export default function SpeakingPractice({
         }
     };
 
-    const pollResults = (subId) => {
-        pollGenerationRef.current += 1;
-        const generation = pollGenerationRef.current;
-        lastPolledStatusRef.current = null;
-        if (pollTimeoutRef.current) clearTimeout(pollTimeoutRef.current);
-        const check = async () => {
-            const pollStartedAt = performance.now();
-            try {
-                const data = await axiosClient.get(`/student/submissions/${subId}`);
-                if (generation !== pollGenerationRef.current) return true;
-                if (data.status !== lastPolledStatusRef.current) {
-                    lastPolledStatusRef.current = data.status;
-                    logSpeakingDiagnostic('submission_status', {
-                        submissionId: subId,
-                        status: data.status,
-                        requestMs: Math.round(performance.now() - pollStartedAt),
-                    });
-                }
-                if (data.feedback?.pronunciationReport) {
-                    setResults(current => ({
-                        ...(current || {}),
-                        ...data.feedback,
-                        __partial: data.status !== 'Completed'
-                    }));
-                }
-                if (data.status === 'Completed') {
-                    setResults(data.feedback);
-                    setStatus('completed');
-                    loadHistory(isAssignmentMode ? currentItemId : practiceExerciseId); // Cập nhật lại lịch sử khi đã chấm xong
-                    return true;
-                } else if (data.status === 'Failed') {
-                    Swal.fire('Không thể xử lý', 'Bài nói chưa được xử lý. Vui lòng thử lại.', 'error');
-                    setStatus('idle');
-                    return true;
-                }
-                if (data.status === 'Grading') {
-                    setStatus('processing');
-                }
-                return false;
-            } catch (err) {
-                if (generation !== pollGenerationRef.current) return true;
-                logSpeakingDiagnostic('submission_poll_failed', {
-                    code: err?.code ?? null,
-                    status: err?.status ?? null,
-                    requestMs: Math.round(performance.now() - pollStartedAt),
-                });
-                console.error(err);
-                setStatus('idle');
-                Swal.fire('Lỗi', 'Không thể tải kết quả chấm bài. Vui lòng thử lại.', 'error');
-                return true;
-            }
+    useEffect(() => {
+        if (!activeId) return undefined;
+        const updateCard = event => {
+            const detail = event.detail;
+            if (isAssignmentMode
+                ? Number(detail?.assignmentItemId) !== Number(currentItemId)
+                : Number(detail?.exerciseId) !== Number(practiceExerciseId) || detail?.assignmentItemId) return;
+            setHistory(previous => addSpeakingHistoryCard(previous, detail));
         };
-
-        const poll = async () => {
-            const done = await check();
-            if (!done && generation === pollGenerationRef.current) {
-                pollTimeoutRef.current = setTimeout(poll, 3000);
-            }
+        const refresh = event => {
+            const detail = event?.detail;
+            if (detail?.type && !['SpeakingCompleted', 'SpeakingFailed', 'SpeakingOffTopic'].includes(detail.type)) return;
+            if (detail?.assignmentItemId && isAssignmentMode
+                && Number(detail.assignmentItemId) !== Number(currentItemId)) return;
+            if (detail?.exerciseId && !isAssignmentMode
+                && Number(detail.exerciseId) !== Number(practiceExerciseId)) return;
+            if (detail?.assignmentItemId && !isAssignmentMode) return;
+            if (detail?.exerciseId && isAssignmentMode) return;
+            void loadHistory(activeId);
         };
-        pollTimeoutRef.current = setTimeout(poll, 3000);
-    };
+        window.addEventListener('diamond:notification-received', refresh);
+        window.addEventListener('diamond:speaking-history-refresh', refresh);
+        window.addEventListener('diamond:speaking-availability-changed', updateCard);
+        return () => {
+            window.removeEventListener('diamond:notification-received', refresh);
+            window.removeEventListener('diamond:speaking-history-refresh', refresh);
+            window.removeEventListener('diamond:speaking-availability-changed', updateCard);
+        };
+    }, [activeId, isAssignmentMode, currentItemId, practiceExerciseId]);
 
     const formatTime = (s) => {
         const mins = Math.floor(s / 60);
@@ -580,11 +578,13 @@ export default function SpeakingPractice({
         return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
     };
 
-    const handleSelectHistory = async (subId) => {
+    const handleSelectHistory = async (subId, historyItems = history) => {
+        const selected = historyItems.find(item => String(item.submissionId) === String(subId));
+        if (isUnviewableSpeakingSubmission(selected?.status)) return;
         try {
             setStatus('processing');
             setSubmissionId(subId); // Sét active ID để chỉ duy nhất bài làm này sáng lên trong cột lịch sử
-            const data = await axiosClient.get(`/student/submissions/${subId}`);
+            const data = await axiosClient.get(`/student/submissions/speaking/${subId}`);
             setResults(data.feedback);
             setStatus('completed');
         } catch (err) {
@@ -653,21 +653,24 @@ export default function SpeakingPractice({
                                 <p>Ghi âm bài nói đầu tiên để lịch sử luyện tập xuất hiện ở đây.</p>
                             </div>
                         ) : (
-                            history.map((att, idx) => (
+                            history.map((att) => (
                                 <button
                                     key={att.submissionId}
                                     className={`${styles.historyCard} ${submissionId === att.submissionId ? styles.activeHistory : ''}`}
+                                    disabled={isUnviewableSpeakingSubmission(att.status)}
                                     onClick={() => {
                                         handleSelectHistory(att.submissionId);
                                         setLeftSidebarOpen(false);
                                     }}
                                 >
                                     <div className={styles.historyTop}>
-                                        <div className={styles.attName}>Attempt #{history.length - idx}</div>
+                                        <div className={styles.attName}>{isRejectedOffTopic(att.status) ? 'Bài nói lạc đề' : `Attempt #${att.attemptNumber}`}</div>
                                         <div className={styles.attDate}>{formatDateTime(att.createdAt)}</div>
                                     </div>
                                     <div className={styles.historyBottom}>
-                                        {att.status === 'Completed' ? (
+                                        {isRejectedOffTopic(att.status) ? (
+                                            <span className={styles.statusBadge}>Off Topic</span>
+                                        ) : att.status === 'Completed' ? (
                                             <span className={styles.bandBadge}>Band {att.overallScore?.toFixed(1) || '--'}</span>
                                         ) : (
                                             <span className={styles.statusBadge}>{att.status}</span>
@@ -756,7 +759,20 @@ export default function SpeakingPractice({
 
                                         {/* Record Button Area */}
                                         <div className={styles.recordArea}>
-                                            <div className={styles.recordBtnWrapper}>
+                                            {pendingRecording && !isRecording ? (
+                                                <div className={styles.recordingActions}>
+                                                    <button type="button" className={styles.submitRecordingBtn}
+                                                        onClick={() => void submitPendingRecording()}
+                                                        disabled={isSubmissionQueueing || availability.status !== 'available'}>
+                                                        <i className="bi bi-cloud-arrow-up-fill" aria-hidden="true" /> Nộp bài
+                                                    </button>
+                                                    <button type="button" className={styles.retakeRecordingBtn}
+                                                        onClick={() => void startRecording()}
+                                                        disabled={isSubmissionQueueing || availability.status !== 'available'}>
+                                                        <i className="bi bi-arrow-counterclockwise" aria-hidden="true" /> Ghi âm lại
+                                                    </button>
+                                                </div>
+                                            ) : availability.status !== 'loading' && availability.status !== 'error' && <div className={styles.recordBtnWrapper}>
                                                 {isRecording && (
                                                     <div className={styles.waveRipples}>
                                                         <span className={styles.ripple1}></span>
@@ -766,20 +782,27 @@ export default function SpeakingPractice({
                                                 )}
                                                 <button
                                                     className={`${styles.recordBtn} ${isRecording ? styles.isRecordingBtn : ''}`}
-                                                    onClick={isRecording ? stopRecording : startRecording}
-                                                    disabled={status === 'starting' || isSubmissionQueueing}
-                                                    title={isSubmissionQueueing ? 'Đang gửi bài lên hệ thống' : isRecording ? 'Dừng ghi âm & nộp bài' : 'Nhấn để bắt đầu nói'}
+                                                    onClick={isRecording ? () => void stopRecording() : () => void startRecording()}
+                                                    disabled={status === 'starting' || isSubmissionQueueing || (!isRecording && availability.status !== 'available')}
+                                                    title={isAcceptedSubmissionProcessing ? speakingProcessingLabel : availability.status === 'loading' ? 'Đang kiểm tra trạng thái bài' : availability.status === 'error' ? 'Chưa thể kiểm tra trạng thái bài' : isSubmissionQueueing ? 'Đang gửi bài lên hệ thống' : isRecording ? 'Dừng ghi âm & nộp bài' : 'Nhấn để bắt đầu nói'}
                                                 >
-                                                    {isSubmissionQueueing ? (
+                                                    {isAcceptedSubmissionProcessing ? (
+                                                        <span className="spinner-border" role="status" aria-label="Bài đang được xử lý"></span>
+                                                    ) : isSubmissionQueueing ? (
                                                         <span className="spinner-border" role="status" aria-label="Đang nộp bài"></span>
                                                     ) : (
                                                         <i className={`bi ${isRecording ? 'bi-stop-fill' : 'bi-mic-fill'}`}></i>
                                                     )}
                                                 </button>
-                                            </div>
+                                            </div>}
                                             <p className={`${styles.recordPrompt} ${isRecording ? styles.promptRecording : ''}`}>
-                                                {isRecording ? 'Đang ghi âm bài nói... Nhấn để hoàn thành' : status === 'starting' ? 'Đang chuẩn bị micro...' : isSubmissionQueueing ? 'Đang nộp bài...' : status === 'processing' ? 'Bài đã được gửi và đang được chấm điểm...' : 'Nhấn vào micro để bắt đầu làm bài'}
+                                                {isSubmissionQueueing ? 'Đang nộp bài...' : pendingRecording ? 'Đã hết thời gian. Chọn nộp bài hoặc ghi âm lại.' : isAcceptedSubmissionProcessing ? speakingProcessingLabel : isRecording ? 'Đang ghi âm bài nói... Nhấn để hoàn thành' : status === 'starting' ? 'Đang chuẩn bị micro...' : availability.status === 'loading' ? 'Đang kiểm tra trạng thái bài...' : availability.status === 'error' ? 'Chưa thể kiểm tra trạng thái bài. Vui lòng tải lại trang.' : availability.status === 'unavailable' ? 'Bạn đã hết lượt làm bài.' : 'Nhấn vào micro để bắt đầu làm bài'}
                                             </p>
+                                            {availability.status === 'error' && (
+                                                <button type="button" className="btn btn-outline-secondary mt-2" onClick={() => void availability.refresh()}>
+                                                    Thử kiểm tra lại
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
                                 )}

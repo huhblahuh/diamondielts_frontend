@@ -515,10 +515,19 @@
     transition: all 0.2s ease;
 }
 
-.btnView:hover {
+.btnView:hover:not(:disabled) {
     background-color: #f6e6b8;
     color: #101d54;
     transform: translateY(-1px);
+}
+
+.btnView:disabled {
+    cursor: default;
+    opacity: 0.55;
+}
+
+.mobileCardDisabled {
+    cursor: default !important;
 }
 
 /* ─────────────────────────────────────────────────────────────

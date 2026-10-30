@@ -939,13 +939,25 @@
 .brand { padding-bottom: 1.5rem; }
 .brandName { font-size: 0.85rem; }
 .sidebarTheme { display: none; }
-.mobileHeaderActions { display: none; }
+.sidebarUtilityActions { display: none; }
+.mobileHeaderActions { display: flex; align-items: center; }
+:global(body.dk-mode-scene) .sidebarUtilityActions,
+:global(body.dk-plain-pref) .sidebarUtilityActions {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(38px, 1fr);
+    align-items: stretch;
+    gap: 0.5rem;
+    margin: 0 1rem 0.25rem;
+}
 :global(body.dk-mode-scene) .sidebarTheme,
 :global(body.dk-plain-pref) .sidebarTheme {
     display: flex;
     align-items: center;
     gap: 0.65rem;
-    margin: 0 1rem 0.25rem;
+    width: 100%;
+    min-width: 0;
+    height: 48px;
+    margin: 0;
     padding: 0.7rem 0.85rem;
     border: 1px solid rgba(240,214,150,.45);
     border-radius: 12px;
@@ -1025,27 +1037,7 @@
     :global(body.dk-mode-scene) .sidebarTheme,
     :global(body.dk-plain-pref) .sidebarTheme { display: none; }
 }
-@media (max-width: 768px) {
-    .mobileHeaderActions { display: flex; align-items: center; gap: 6px; }
-    .mobileHeaderActions button {
-        width: 36px;
-        height: 36px;
-        display: grid;
-        place-items: center;
-        padding: 0;
-        border: 1px solid rgba(240,214,150,.5);
-        border-radius: 50%;
-        background: rgba(12,20,62,.56);
-        color: #fff;
-        font-size: 1rem;
-        cursor: pointer;
-    }
-    .mobileHeaderActions button:hover,
-    .mobileHeaderActions button:focus-visible {
-        border-color: var(--dsk-gold-hi);
-        background: #1b2d75;
-    }
-}
+@media (max-width: 768px) { .mobileHeaderActions { display: flex; align-items: center; } }
 /* lớp "trang trước" của thao tác vuốt lùi: nền trang trong suốt nên ẩn đi để không lộ khung xương */
 :global(body.dk-mode-scene) .prevPageLayer { display: none; }
 /* màn nền trơn: dải trời của kit thay cho thanh tiêu đề trắng, chỉ giữ thanh tiêu đề khi trang có nút riêng */

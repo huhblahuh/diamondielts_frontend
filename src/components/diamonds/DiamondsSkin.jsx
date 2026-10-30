@@ -3,40 +3,34 @@
    - scene: có phong cảnh (đăng nhập, các trang chính của học viên)
    - plain: nền trơn có dải trời (phòng thu Speaking, giáo viên và quản trị)
    Nút "Cổng bài tập" chỉ hiện ở màn đăng nhập. */
-import { useEffect } from 'react';
+import { useLayoutEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 
 const PORTAL = 'https://diamonds-ielts.netlify.app/';
 
 const isAuthPage = (p) => p === '/login' || p === '/forgot-password';
 
-function modeFor(path, assignmentSpeaking) {
+function modeFor(path, search) {
   if (isAuthPage(path)) return 'scene';
+  if (new URLSearchParams(search).get('offTopic') === '1') return 'scene';
   if (path.startsWith('/student/speaking/')) return 'plain';
-  if (/^\/student\/assignments\/[^/]+/.test(path) && assignmentSpeaking) return 'plain';
   if (path.startsWith('/student')) return 'scene';
   return 'plain';
 }
 
 export default function DiamondsSkin() {
-  const { pathname, state } = useLocation();
-  const assignmentSpeaking = Boolean(state?.assignmentSpeaking);
+  const { pathname, search } = useLocation();
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const DK = window.DK;
     if (!DK) return;
-    DK.init({ app: 'Speaking', portal: PORTAL });
-  }, []);
-
-  useEffect(() => {
-    const DK = window.DK;
-    if (!DK) return;
-    const mode = modeFor(pathname, assignmentSpeaking);
+    const mode = modeFor(pathname, search);
+    DK.init({ app: 'Speaking', portal: PORTAL, mode });
     DK.mode(mode);
     DK.portal(isAuthPage(pathname));
     const role = pathname.startsWith('/student') ? 'student' : isAuthPage(pathname) ? 'auth' : 'staff';
     document.body.dataset.dkRole = role;
-  }, [pathname, assignmentSpeaking]);
+  }, [pathname, search]);
 
   return null;
 }

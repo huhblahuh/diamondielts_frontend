@@ -1178,6 +1178,21 @@
     width: 100%;
     text-align: center;
     overflow-x: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #c7cddd transparent;
+}
+
+.pronCompareExpectedPhonemes::-webkit-scrollbar {
+    height: 3px;
+}
+
+.pronCompareExpectedPhonemes::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.pronCompareExpectedPhonemes::-webkit-scrollbar-thumb {
+    background: #c7cddd;
+    border-radius: 999px;
 }
 
 .pronCompareExpectedPhonemes strong {

@@ -4,9 +4,11 @@ import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import styles from './Layout.module.css';
 import siteLogo from '../../assets/site-logo.webp';
 import PageSkeleton from '../common/PageSkeleton';
+import PushPermissionNudge from '../PushPermissionNudge';
 import userQuotaService from '../../api/services/userQuota.service';
 import authService from '../../api/services/auth.service';
-import Swal from 'sweetalert2';
+import NotificationCenter from '../../notifications/NotificationCenter';
+import { notificationConnectionManager } from '../../notifications/NotificationConnectionManager';
 import {
     getMissingBrowserPermissions,
     requestMissingBrowserPermissions,
@@ -57,6 +59,8 @@ export default function Layout() {
 
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [mobileHeaderHost, setMobileHeaderHost] = useState(null);
+    const [isMobileViewport, setIsMobileViewport] = useState(() => window.innerWidth <= 768);
+    const [isCompactLayout, setIsCompactLayout] = useState(() => window.innerWidth <= 1024);
     const [isQuotaOpen, setIsQuotaOpen] = useState(false);
     const [mySpeakingQuota, setMySpeakingQuota] = useState(
         user.speakingQuota || null,
@@ -67,6 +71,20 @@ export default function Layout() {
     const [customHeader, setCustomHeader] = useState(null);
     const [pushStatus, setPushStatus] = useState(null);
     const pushInitializedRef = useRef(false);
+
+    useEffect(() => {
+        notificationConnectionManager.start();
+        return () => notificationConnectionManager.stop();
+    }, []);
+
+    useEffect(() => {
+        const onResize = () => {
+            setIsMobileViewport(window.innerWidth <= 768);
+            setIsCompactLayout(window.innerWidth <= 1024);
+        };
+        window.addEventListener('resize', onResize);
+        return () => window.removeEventListener('resize', onResize);
+    }, []);
 
     useEffect(() => {
         const findHeader = () => document.querySelector('.dk-top-r');
@@ -128,30 +146,9 @@ export default function Layout() {
 
             permissionPromptOpen = true;
             try {
-                const names = [
-                    missing.microphone && 'micro',
-                    missing.notifications && 'thông báo',
-                ].filter(Boolean).join(' và ');
-                const response = await Swal.fire({
-                    icon: 'info',
-                    title: 'Cho phép truy cập ' + names,
-                    text: 'Nhấn Cấp quyền để trình duyệt lưu lựa chọn của bạn.',
-                    confirmButtonText: 'Cấp quyền',
-                    showCancelButton: true,
-                    cancelButtonText: 'Để sau',
-                    preConfirm: () => requestMissingBrowserPermissions(missing),
-                });
-                if (response.isConfirmed && active) {
-                    if (missing.notifications && role === 'Student') {
-                        setPushStatus(await getPushStatus());
-                    }
-                    if (!response.value.microphoneGranted || !response.value.notifications.success) {
-                        await Swal.fire({
-                            icon: 'warning',
-                            title: 'Chưa cấp đủ quyền',
-                            text: 'Hãy kiểm tra quyền micro và thông báo trong cài đặt của trình duyệt rồi thử lại.',
-                        });
-                    }
+                await requestMissingBrowserPermissions(missing);
+                if (active && missing.notifications && role === 'Student') {
+                    setPushStatus(await getPushStatus());
                 }
             } finally {
                 permissionPromptOpen = false;
@@ -163,6 +160,7 @@ export default function Layout() {
     }, [role]);
 
     const handleLogout = () => {
+        notificationConnectionManager.stop();
         authService.logout();
         navigate('/login');
     };
@@ -564,23 +562,7 @@ export default function Layout() {
         <div className={styles.wrapper}>
             {mobileHeaderHost && createPortal(
                 <div className={styles.mobileHeaderActions}>
-                    {role === 'Student' && (
-                        <button
-                            type="button"
-                            onClick={() => navigate('/student/settings/notification')}
-                            aria-label="Cài đặt thông báo"
-                        >
-                            <i className="bi bi-bell" aria-hidden="true" />
-                        </button>
-                    )}
-                    <button
-                        type="button"
-                        onClick={() => setIsSidebarOpen((open) => !open)}
-                        aria-label={isSidebarOpen ? 'Đóng menu' : 'Mở menu'}
-                        aria-expanded={isSidebarOpen}
-                    >
-                        <i className={`bi ${isSidebarOpen ? 'bi-x-lg' : 'bi-list'}`} aria-hidden="true" />
-                    </button>
+                    {isCompactLayout && <NotificationCenter />}
                 </div>,
                 mobileHeaderHost,
             )}
@@ -644,16 +626,19 @@ export default function Layout() {
                     })}
                 </nav>
 
-                {/* Sidebar Logout */}
-                <button
-                    type="button"
-                    className={styles.sidebarTheme}
-                    onClick={() => document.querySelector('.dk-themebtn')?.click()}
-                    aria-label="Đổi phong cảnh hoặc nền trơn"
-                >
-                    <i className="bi bi-palette" aria-hidden="true" />
-                    <span>Đổi giao diện</span>
-                </button>
+                {/* Sidebar utilities */}
+                {!isCompactLayout && <div className={styles.sidebarUtilityActions}>
+                    <button
+                        type="button"
+                        className={styles.sidebarTheme}
+                        onClick={() => document.querySelector('.dk-themebtn')?.click()}
+                        aria-label="Đổi phong cảnh hoặc nền trơn"
+                    >
+                        <i className="bi bi-palette" aria-hidden="true" />
+                        <span>Đổi giao diện</span>
+                    </button>
+                    <NotificationCenter variant="sidebar" />
+                </div>}
                 <div className={styles.sidebarLogout}>
                     <button onClick={handleLogout} className={styles.btnLogoutFull} title="Đăng xuất">
                         <i className="bi bi-box-arrow-left"></i>
@@ -689,6 +674,7 @@ export default function Layout() {
                     ) : (
                         <h2>{(role === 'Teacher' || role === 'Admin') ? 'Bảng Điều Khiển Giáo Viên' : 'Cổng Học Viên / Student Portal'}</h2>
                     )}
+                    {isCompactLayout && !mobileHeaderHost && <NotificationCenter />}
                 </header>
                 <div className={`${styles.pageBody} ${isSpeakingStudioView ? styles.speakingStudioPageBody : ''}`}>
                     <Suspense fallback={<PageSkeleton />}>
@@ -705,6 +691,13 @@ export default function Layout() {
                     </Suspense>
                 </div>
             </main>
+
+            {role === 'Student' && (
+                <PushPermissionNudge
+                    pushStatus={pushStatus}
+                    onStatusChange={setPushStatus}
+                />
+            )}
 
             {role === 'Student' && isQuotaOpen && (
                 <div

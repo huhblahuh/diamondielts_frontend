@@ -10,7 +10,7 @@ import { parseAssignmentDueDate } from '../../utils/assignmentDate';
 import AssignmentDetailHero from './AssignmentDetailHero';
 import AssignmentTaskCard from './AssignmentTaskCard';
 import AssignmentSpeakingModal from './AssignmentSpeakingModal';
-import { filterAssignmentItems, getAssignmentFilterOptions } from './assignmentDetailUtils';
+import { filterAssignmentItems, getAssignmentFilterOptions, hasCompletedSpeakingAttempt, isSpeakingItem } from './assignmentDetailUtils';
 import useAssignmentFileSubmissions from './useAssignmentFileSubmissions';
 
 export default function AssignmentDetailPage() {
@@ -185,6 +185,24 @@ export default function AssignmentDetailPage() {
         }
     };
 
+    useEffect(() => {
+        if (!assignmentId) return undefined;
+        const refresh = event => {
+            if (event?.detail?.type && !['SpeakingCompleted', 'SpeakingFailed', 'SpeakingOffTopic'].includes(event.detail.type)) return;
+            if (event?.detail?.assignmentItemId && !assignment?.items?.some(item =>
+                item.itemId === Number(event.detail.assignmentItemId))) return;
+            if (event?.detail?.exerciseId) return;
+            void assignmentService.getStudentAssignmentSummary(assignmentId).then(setAssignment);
+            if (expandedItemId && !activeSpeakingItemId) void fetchItemDetail(expandedItemId, true);
+        };
+        window.addEventListener('diamond:notification-received', refresh);
+        window.addEventListener('diamond:speaking-history-refresh', refresh);
+        return () => {
+            window.removeEventListener('diamond:notification-received', refresh);
+            window.removeEventListener('diamond:speaking-history-refresh', refresh);
+        };
+    }, [assignmentId, assignment, expandedItemId, activeSpeakingItemId]);
+
     const handleToggleItem = async (itemId) => {
         if (expandedItemId === itemId) {
             setClosingItemId(itemId);
@@ -247,10 +265,11 @@ export default function AssignmentDetailPage() {
     const isBlockedByDeadline = isOverdue && !assignment.allowLateSubmission;
     const totalItems = assignment.items?.length || 0;
 
-    // Count items completed: either item has submission flag or history has entries
+    // A rejected Speaking attempt stays in history but does not complete the item.
     const completedItemsCount = assignment.items?.filter(it => {
         const hist = histories[it.itemId];
-        if (hist && hist.length > 0) return true;
+        if (hist && hist.length > 0) return isSpeakingItem(it)
+            ? hasCompletedSpeakingAttempt(hist) : true;
         return it.hasSubmission;
     }).length || 0;
 

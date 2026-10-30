@@ -22,6 +22,12 @@ if (!/<script\b[^>]*type="module"[^>]*src="\/assets\/[^\"]+\.js"/.test(html)) {
   throw new Error('Compiled Vite JavaScript entry is missing from dist/index.html');
 }
 
+const kitScript = html.indexOf('<script src="/diamonds-kit.js"></script>');
+const appScript = html.search(/<script\b[^>]*type="module"[^>]*src="\/assets\//);
+if (kitScript < 0 || kitScript > appScript) {
+  throw new Error('Diamonds kit must load synchronously before the React entry');
+}
+
 for (const match of html.matchAll(/<(?:script|link)\b[^>]*(?:src|href)="(\/[^"]+)"/g)) {
   const assetPath = decodeURIComponent(match[1].split(/[?#]/, 1)[0]).slice(1);
   requireFile(assetPath);

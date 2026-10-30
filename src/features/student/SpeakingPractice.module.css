@@ -170,11 +170,15 @@
     cursor: pointer;
 }
 
-.historyCard:hover {
+.historyCard:hover:not(:disabled) {
     border-color: var(--di-sky, #e0b762);
     background-color: #fbf7ee;
     transform: translateY(-1px);
     box-shadow: 0 4px 14px rgba(16, 29, 84, 0.08);
+}
+
+.historyCard:disabled {
+    cursor: default;
 }
 
 .activeHistory {
@@ -540,6 +544,26 @@
     align-items: center;
 }
 
+.recordingActions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.submitRecordingBtn, .retakeRecordingBtn {
+    border: 0;
+    border-radius: 0.75rem;
+    padding: 0.8rem 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.submitRecordingBtn { background: #101d54; color: white; }
+.retakeRecordingBtn { background: #e9edf5; color: #101d54; }
+.submitRecordingBtn:disabled, .retakeRecordingBtn:disabled { opacity: 0.55; cursor: not-allowed; }
+
 .recordBtnWrapper {
     position: relative;
     display: flex;
@@ -760,8 +784,33 @@
 /* ══ Diamonds IELTS skin ════════════════════════════════════════════════
    Màn ghi âm dùng nền trơn, trừ phần dải trời 64px của kit. */
 :global(body.dk-mode-plain) .studioContainer { min-height: calc(100vh - 80px - var(--dsk-band, 0px)); }
+:global(body.dk-mode-scene) .studioContainer:not(.embedded) {
+    min-height: 0;
+    gap: 12px;
+    background: transparent;
+}
+:global(body.dk-mode-scene) .studioContainer:not(.embedded) .questionSidebar,
+:global(body.dk-mode-scene) .studioContainer:not(.embedded) .recordingCard {
+    background: var(--dsk-frost);
+    border: 1px solid var(--dsk-frost-line);
+    border-radius: 20px;
+    box-shadow: var(--dsk-frost-shadow);
+}
+:global(body.dk-mode-scene) .studioContainer:not(.embedded) .questionSidebar {
+    border-right: 1px solid var(--dsk-frost-line);
+}
+:global(body.dk-mode-scene) .studioContainer:not(.embedded) .sidebarHeader,
+:global(body.dk-mode-scene) .studioContainer:not(.embedded) .cardHeader {
+    background: transparent;
+    border-bottom-color: var(--dsk-frost-line);
+}
 @media (max-width: 768px) {
     :global(body.dk-mode-plain) .studioContainer { min-height: 100%; }
+    :global(body.dk-mode-scene) .studioContainer:not(.embedded) {
+        width: calc(100% - 1.3rem);
+        margin-inline: .65rem;
+        gap: 0;
+    }
 }
 
 .studioContainer.embedded,

@@ -3,6 +3,7 @@ import styles from './StudentAssignmentModal.module.css';
 import axiosClient from '../../api/axiosClient';
 import Swal from 'sweetalert2';
 import SpeakingQuestionCard from '../../components/SpeakingQuestionCard';
+import { isUnviewableSpeakingSubmission } from './speakingSubmissionStatus';
 
 export default function SpeakingSubmissionItem({
     item,
@@ -134,7 +135,10 @@ export default function SpeakingSubmissionItem({
                         <i className="bi bi-clock-history"></i> Lịch sử bài làm đã nộp ({itemHistory.length})
                     </p>
                     {itemHistory.map((att) => {
+                        const isProcessing = isUnviewableSpeakingSubmission(att.status)
+                            && ['pending', 'grading'].includes(att.status?.toLowerCase());
                         const handleViewAttempt = async () => {
+                            if (isUnviewableSpeakingSubmission(att.status)) return;
                             try {
                                 setActiveSpeakingItemId(item.itemId);
                                 setSpeakingResults(prev => ({ ...prev, [item.itemId]: null }));
@@ -150,9 +154,9 @@ export default function SpeakingSubmissionItem({
                             <div
                                 key={att.submissionId}
                                 className={styles.historyItem}
-                                style={{ cursor: 'pointer', transition: 'all 0.2s' }}
+                                style={{ cursor: isUnviewableSpeakingSubmission(att.status) ? 'default' : 'pointer', transition: 'all 0.2s' }}
                                 onClick={handleViewAttempt}
-                                title="Bấm để xem lại bài nộp và kết quả chi tiết"
+                                title={isProcessing ? 'Bài đang được xử lý' : isUnviewableSpeakingSubmission(att.status) ? 'Bài này chưa có kết quả để xem' : 'Bấm để xem lại bài nộp và kết quả chi tiết'}
                             >
                                 <div className={styles.historyLeft}>
                                     <span className={styles.attemptNum}>Lần nộp #{att.attemptNumber}</span>
@@ -162,7 +166,9 @@ export default function SpeakingSubmissionItem({
                                 </div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                                     <span className={styles.statusBadgeSubmitted}>
-                                        Band {att.overallScore?.toFixed(1) || '--'}
+                                        {isProcessing ? (att.status?.toLowerCase() === 'grading' ? 'Đang chấm' : 'Đang kiểm tra')
+                                            : isUnviewableSpeakingSubmission(att.status) ? 'Không có kết quả'
+                                                : `Band ${att.overallScore?.toFixed(1) || '--'}`}
                                     </span>
                                 </div>
                             </div>

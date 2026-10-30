@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@microsoft/signalr": "^8.0.29",
     "@soniox/client": "^2.4.0",
     "@tiptap/extension-underline": "^3.23.1",
     "@tiptap/pm": "^3.23.1",

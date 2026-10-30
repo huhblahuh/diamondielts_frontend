@@ -3,7 +3,8 @@ import styles from './AssignmentDetailPage.module.css';
 import { normalizeSpeakingContent } from '../../utils/speakingContent';
 import CommonAttachmentUploader from '../../components/CommonAttachmentUploader';
 import { QuestionMarquee } from './AssignmentQuestionMarquee';
-import { cleanFileName, detectPartNumber, formatDateTime, isSpeakingItem, truncateText } from './assignmentDetailUtils';
+import { cleanFileName, countOccupiedSpeakingAttempts, detectPartNumber, formatDateTime, hasCompletedSpeakingAttempt, isSpeakingItem, truncateText } from './assignmentDetailUtils';
+import { isFailedSpeakingSubmission, isRejectedOffTopic, isUnviewableSpeakingSubmission } from '../../features/student/speakingSubmissionStatus';
 
 export default function AssignmentTaskCard({
     item, index, itemDetail, itemHistory, isOpen, isClosing,
@@ -13,16 +14,18 @@ export default function AssignmentTaskCard({
     onViewSubmission, onEditFile, onRemoveFile, onStartSpeaking,
 }) {
     const isSpeaking = isSpeakingItem(item);
-    const isDone = item.hasSubmission || itemHistory.length > 0;
+    const isDone = item.hasSubmission || (isSpeaking
+        ? hasCompletedSpeakingAttempt(itemHistory) : itemHistory.length > 0);
     const partNum = detectPartNumber(item.type || item.itemType);
     const isPart2 = isSpeaking && partNum === 2;
     const partLabel = isSpeaking ? `Part ${partNum}` : 'Tự luận';
     const content = normalizeSpeakingContent(itemDetail?.content || item.content);
     const questionText = content.question || item.description || item.title || (isSpeaking ? `Speaking Exercise ${index + 1}` : 'Nộp bài tự luận');
     const cueList = content.suggestions || [];
-    const attemptCount = itemHistory.length;
+    const attemptCount = isSpeaking ? countOccupiedSpeakingAttempts(itemHistory) : itemHistory.length;
     const maxAttemptsText = item.maxAttempts || '∞';
     const scoredAttempt = itemHistory.find(attempt => attempt.overallScore != null);
+    const viewableAttempt = itemHistory.find(attempt => !isSpeaking || !isUnviewableSpeakingSubmission(attempt.status));
     const bandScore = scoredAttempt ? Number(scoredAttempt.overallScore).toFixed(1) : null;
 
     return (
@@ -208,26 +211,30 @@ export default function AssignmentTaskCard({
                                         </div>
                                         <div className={styles.history}>
                                             {itemHistory.map((h) => {
+                                                const canView = isSpeaking && !isUnviewableSpeakingSubmission(h.status);
                                                 const bandDisplay = h.overallScore !== null && h.overallScore !== undefined
                                                     ? `Band ${Number(h.overallScore).toFixed(1)}`
-                                                    : (h.status === 'Completed' ? 'Đã chấm' : 'Đang xử lý');
+                                                    : (h.status === 'Completed' ? 'Đã chấm'
+                                                        : isFailedSpeakingSubmission(h.status) ? 'Xử lý thất bại'
+                                                            : isRejectedOffTopic(h.status) ? 'Bài nói lạc đề' : 'Đang xử lý');
                                                 return (
                                                     <div
                                                         key={h.submissionId}
-                                                        className={styles.historyRow}
-                                                        onClick={() => isSpeaking && onViewSubmission(item.itemId, h.submissionId)}
-                                                        onKeyDown={isSpeaking ? (event) => {
+                                                        className={`${styles.historyRow} ${isSpeaking && !canView ? styles.historyRowDisabled : ''}`}
+                                                        onClick={canView ? () => onViewSubmission(item.itemId, h.submissionId) : undefined}
+                                                        onKeyDown={canView ? (event) => {
                                                             if (event.key === 'Enter' || event.key === ' ') {
                                                                 event.preventDefault();
                                                                 onViewSubmission(item.itemId, h.submissionId);
                                                             }
                                                         } : undefined}
-                                                        role={isSpeaking ? 'button' : undefined}
-                                                        tabIndex={isSpeaking ? 0 : undefined}
-                                                        title={isSpeaking ? 'Bấm để xem chi tiết bài làm này' : undefined}
+                                                        role={canView ? 'button' : undefined}
+                                                        tabIndex={canView ? 0 : undefined}
+                                                        title={canView ? 'Bấm để xem chi tiết bài làm này' : undefined}
                                                     >
                                                         <div>
-                                                            <strong>Lần nộp #{h.attemptNumber}</strong>
+                                                            <strong>{isSpeaking && isRejectedOffTopic(h.status)
+                                                                ? 'Bài nói lạc đề' : `Lần nộp #${h.attemptNumber}`}</strong>
                                                             <br />
                                                             <small>{formatDateTime(h.createdAt)}</small>
                                                         </div>
@@ -272,13 +279,13 @@ export default function AssignmentTaskCard({
                                             onClick={() => onStartSpeaking(item)}
                                         >
                                             <i className="bi bi-mic-fill"></i>
-                                            {itemHistory.length > 0 ? 'Làm lại bài' : 'Bắt đầu làm bài'}
+                                            {attemptCount > 0 ? 'Làm lại bài' : 'Bắt đầu làm bài'}
                                         </button>
-                                        {itemHistory.length > 0 && (
+                                        {viewableAttempt && (
                                             <button
                                                 type="button"
                                                 className={styles.secondary}
-                                                onClick={() => onViewSubmission(item.itemId, itemHistory[0].submissionId)}
+                                                onClick={() => onViewSubmission(item.itemId, viewableAttempt.submissionId)}
                                             >
                                                 <i className="bi bi-file-earmark-text"></i>
                                                 Xem chi tiết bài chấm

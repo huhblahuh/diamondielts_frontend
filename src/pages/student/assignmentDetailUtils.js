@@ -2,6 +2,12 @@ import { parseAssignmentDueDate } from '../../utils/assignmentDate.js';
 
 export const isSpeakingItem = (item) => ['AI_SPEAKING', 'SPEAKING'].includes((item.itemType || '').toUpperCase());
 
+export const countOccupiedSpeakingAttempts = history =>
+    history.filter(attempt => ['Completed', 'Pending', 'Grading'].includes(attempt.status)).length;
+
+export const hasCompletedSpeakingAttempt = history =>
+    history.some(attempt => attempt.status === 'Completed');
+
 export const detectPartNumber = (type) => {
     const value = (type || '').toLowerCase();
     if (value.includes('part 2') || value.includes('part2') || value.includes('speaking2')) return 2;
