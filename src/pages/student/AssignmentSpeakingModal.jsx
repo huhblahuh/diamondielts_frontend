@@ -56,6 +56,7 @@ export default function AssignmentSpeakingModal({ assignmentId, itemId, assignme
                     <SpeakingPractice
                         isAssignmentMode={true}
                         embedded={true}
+                        contained={true}
                         assignmentId={assignmentId}
                         assignmentItemId={itemId}
                         assignment={assignment}

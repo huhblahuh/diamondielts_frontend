@@ -34,6 +34,10 @@
     font-size: 0.78rem;
 }
 
+:global(body.dk-mode-scene) .header > div:first-child > span,
+:global(body.dk-mode-scene) .header h2 { color: #fff; }
+:global(body.dk-mode-scene) .header p { color: rgba(255, 255, 255, .8); }
+
 .summaryGrid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));

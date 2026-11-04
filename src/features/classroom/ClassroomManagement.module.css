@@ -40,6 +40,10 @@
     gap: 0.35rem;
 }
 
+:global(body.dk-mode-scene) .header { border-bottom-color: rgba(255, 255, 255, .25); }
+:global(body.dk-mode-scene) .title { color: #fff; }
+:global(body.dk-mode-scene) .subtitle { color: rgba(255, 255, 255, .8); }
+
 .highlightCount {
     background: #fbf3de;
     color: #101d54;

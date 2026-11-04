@@ -14,7 +14,9 @@ const axiosClient = axios.create({
 axiosClient.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem('token');
-        if (token) {
+        if (config.skipAuth) {
+            delete config.headers.Authorization;
+        } else if (token) {
             config.headers.Authorization = `Bearer ${token}`;
         }
 
@@ -28,7 +30,7 @@ axiosClient.interceptors.response.use(
     (error) => {
         const status = error.response?.status;
         const responseData = error.response?.data;
-        if (status === 401 && localStorage.getItem('token')) {
+        if (status === 401 && !error.config?.skipAuth && localStorage.getItem('token')) {
             localStorage.removeItem('token');
             localStorage.removeItem('user');
 
@@ -58,6 +60,9 @@ axiosClient.interceptors.response.use(
             code: publicCode,
             message,
             status,
+            requestId: typeof responseData?.requestId === 'string'
+                ? responseData.requestId
+                : error.config?.headers?.['X-Request-ID'],
             canRetry: responseData?.canRetry === true,
         });
     }

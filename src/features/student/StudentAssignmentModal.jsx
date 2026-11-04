@@ -10,6 +10,7 @@ import { showToastError } from '../../utils/toast';
 import AttemptDetailView from './AttemptDetailView';
 import { formatSpeakingPipelineError } from './speakingAssessmentPipeline';
 import { createSpeakingPipeline } from './speakingPipelineFactory';
+import useSpeakingRecordingPreview from './useSpeakingRecordingPreview';
 import SpeakingQuestionCard from '../../components/SpeakingQuestionCard';
 import { normalizeSpeakingContent } from '../../utils/speakingContent';
 import { parseAssignmentDueDate } from '../../utils/assignmentDate';
@@ -44,6 +45,7 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
     const [speakingStatus, setSpeakingStatus] = useState({}); // itemId => 'idle' | 'recording' | 'processing' | 'submitted' | 'completed'
     const [speakingTimer, setSpeakingTimer] = useState(0);
     const [pendingSpeakingRecording, setPendingSpeakingRecording] = useState(null);
+    const recordingPreviewUrl = useSpeakingRecordingPreview(pendingSpeakingRecording?.audioBlob);
     const [speakingResults, setSpeakingResults] = useState({}); // itemId => results object (feedback)
     const [activeSubmissionId, setActiveSubmissionId] = useState({}); // itemId => active attempt submission ID
     const [leftSidebarOpen, setLeftSidebarOpen] = useState(false);
@@ -109,7 +111,7 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
     // Tự động dừng ghi âm khi hết thời gian
     useEffect(() => {
         if (isRecording && speakingTimer >= timeLimit && activeSpeakingItemId) {
-            void stopSpeakingRecording(activeSpeakingItemId, activeSpeakingItemData?.type, activeSpeakingItemData?.content, false);
+            void stopSpeakingRecording(activeSpeakingItemId, activeSpeakingItemData?.type, activeSpeakingItemData?.content);
         }
     }, [speakingTimer, isRecording, timeLimit, partNum, activeSpeakingItemId]);
 
@@ -380,7 +382,7 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
         }
     };
 
-    const stopSpeakingRecording = async (itemId, itemType, content, submitImmediately = true) => {
+    const stopSpeakingRecording = async (itemId, itemType, content) => {
         if (!assessmentPipelineRef.current || stopInProgressRef.current) return;
         stopInProgressRef.current = true;
 
@@ -420,12 +422,8 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
                 return;
             }
 
-            if (submitImmediately) {
-                await submitSpeakingToBackend(itemId, duration, outcome.audioBlob);
-            } else {
-                setPendingSpeakingRecording({ itemId, duration, audioBlob: outcome.audioBlob });
-                setSpeakingStatus(prev => ({ ...prev, [itemId]: 'ready' }));
-            }
+            setPendingSpeakingRecording({ itemId, duration, audioBlob: outcome.audioBlob });
+            setSpeakingStatus(prev => ({ ...prev, [itemId]: 'ready' }));
         } catch (err) {
             console.error(err);
             assessmentPipelineRef.current = null;
@@ -734,7 +732,7 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
                                                             {speakingStatus[activeSpeakingItemId] === 'recording'
                                                                 ? 'Đang ghi âm...'
                                                                 : pendingSpeakingRecording?.itemId === activeSpeakingItemId
-                                                                    ? 'Đã hết thời gian. Chọn nộp bài hoặc ghi âm lại.'
+                                                                    ? 'Đã ghi âm xong. Nghe lại, nộp bài hoặc ghi âm lại.'
                                                                 : isSpeakingProcessing
                                                                     ? availability.displayStatus === 'Grading'
                                                                         ? 'Đang chấm bài, bạn có thể thoát'
@@ -773,6 +771,9 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
                                                                 ? <span className="spinner-border" role="status" aria-label="Bài đang được xử lý"></span>
                                                                 : <i className={`bi ${speakingStatus[activeSpeakingItemId] === 'recording' ? 'bi-stop-fill' : 'bi-mic-fill'}`}></i>}
                                                         </button>}
+                                                        {pendingSpeakingRecording?.itemId === activeSpeakingItemId && recordingPreviewUrl && (
+                                                            <audio className={styles.recordingPreview} controls src={recordingPreviewUrl} aria-label="Nghe lại bài nói đã ghi âm" />
+                                                        )}
                                                         {availability.status === 'error' && (
                                                             <button type="button" className="btn btn-outline-secondary mt-2" onClick={() => void availability.refresh()}>
                                                                 Thử kiểm tra lại

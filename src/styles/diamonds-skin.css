@@ -1,6 +1,6 @@
 /* ══ Diamonds IELTS skin (toàn cục) ═══════════════════════════════════════
-   Đi cùng public/diamonds-kit.js. Kit vẽ phong cảnh, thanh trên cùng và
-   gắn class lên <body>:
+   Đi cùng DiamondsLayout.jsx và diamonds-kit.css. Layout vẽ phong cảnh,
+   thanh trên cùng và gắn class lên <body>:
      body.dk-mode-scene  : có phong cảnh
      body.dk-mode-plain  : nền trơn, có dải trời phía trên
      body[data-dk-role]  : student | staff | auth
@@ -22,6 +22,7 @@
 
 /* nội dung app nằm trên lớp phong cảnh của kit */
 #root { position: relative; z-index: 1; }
+.dk-sheet { z-index: 2000; }
 
 /* dải trời (màn nền trơn): web Speaking dùng bản thấp 64px cho đỡ chiếm chỗ,
    thay cho thanh tiêu đề trắng cũ. Khung app chừa đúng chỗ này. */

@@ -839,6 +839,12 @@
     margin-bottom: 0.75rem;
 }
 
+.recordingPreview {
+    display: block;
+    width: min(100%, 24rem);
+    margin: 0.75rem auto 1rem;
+}
+
 .submitRecordingBtn, .retakeRecordingBtn {
     border: 0;
     border-radius: 0.75rem;

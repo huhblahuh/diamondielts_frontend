@@ -980,6 +980,7 @@
 :global(body.dk-mode-scene) .wrapper,
 :global(body.dk-mode-scene) .mainContent,
 :global(body.dk-mode-scene) .pageBody { background: transparent; }
+:global(body[data-dk-role="staff"]) .mainContent { color-scheme: light; }
 :global(body.dk-mode-scene) .wrapper { box-sizing: border-box; padding-top: 14px; }
 
 :global(body.dk-mode-scene) .sidebar {

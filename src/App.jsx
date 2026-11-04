@@ -3,12 +3,20 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useParams, useLocatio
 import Layout from './components/layout/Layout';
 import ProtectedRoute from './components/routing/ProtectedRoute';
 import LoadingSpinner from './components/common/LoadingSpinner';
-import DiamondsSkin from './components/diamonds/DiamondsSkin';
+import DiamondsLayout from './components/diamonds/DiamondsLayout';
 
 const RedirectToStudentAssignment = () => {
   const { assignmentId } = useParams();
   const location = useLocation();
-  return <Navigate to={`/student/assignments/${assignmentId}${location.search}${location.hash}`} state={location.state} replace />;
+  const params = new URLSearchParams(location.search);
+  const itemId = params.get('itemId') || params.get('assignmentItemId') || location.state?.assignmentSpeaking?.itemId;
+  const submissionId = params.get('submissionId') || location.state?.assignmentSpeaking?.submissionId || null;
+  const view = submissionId ? 'detail' : params.get('history') === '1' || params.get('view') === 'history' ? 'history' : 'practice';
+  return <Navigate
+    to={`/student/assignments/${assignmentId}${itemId ? `/?itemId=${encodeURIComponent(itemId)}` : ''}${location.hash}`}
+    state={itemId ? { ...(location.state || {}), assignmentView: { itemId, view, submissionId } } : location.state}
+    replace
+  />;
 };
 
 const Login = lazy(() => import('./features/auth/Login'));
@@ -50,7 +58,7 @@ function App() {
 
   return (
     <Router>
-      <DiamondsSkin />
+      <DiamondsLayout>
       <Routes>
         {/* Tự động chuyển hướng dựa trên Role */}
         <Route path="/" element={<Navigate to={getRedirectPath()} replace />} />
@@ -119,10 +127,11 @@ function App() {
             <Route path="dashboard" element={<StudentDashboard />} />
             <Route path="dashboard/progress" element={<StudentProgress />} />
             <Route path="practice" element={<StudentPractice />} />
+            <Route path="practice/:exerciseId" element={<StudentPractice />} />
             <Route path="speaking/:exerciseId" element={<SpeakingPractice />} />
             <Route path="assignments" element={<StudentClassrooms />} />
-            <Route path="assignment" element={<Navigate to="/student/assignments" replace />} />
             <Route path="assignments/:assignmentId" element={<StudentAssignmentDetail />} />
+            <Route path="assignment" element={<Navigate to="/student/assignments" replace />} />
             <Route path="assignment/:assignmentId" element={<RedirectToStudentAssignment />} />
             <Route path="classrooms" element={<Navigate to="/student/assignments" replace />} />
             <Route path="classroom" element={<Navigate to="/student/assignments" replace />} />
@@ -141,6 +150,7 @@ function App() {
 
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
+      </DiamondsLayout>
     </Router>
   )
 }

@@ -1,14 +1,16 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import styles from './Login.module.css';
 import axiosClient from '../../api/axiosClient';
 import Swal from 'sweetalert2';
-import backgroundImg from '../../assets/backgroundLogin.webp';
 import userQuotaService from '../../api/services/userQuota.service';
 import ForgotPassword from './ForgotPassword';
 
-function getLoginErrorMessage(status) {
-    if (status === 401) {
+export function getLoginErrorMessage(status, code) {
+    if (status === 401 && code === 'INVALID_CREDENTIALS') {
         return 'Email, tên tài khoản hoặc mật khẩu không chính xác.';
+    }
+    if (status === 401) {
+        return 'Không thể xác thực đăng nhập. Vui lòng thử lại sau.';
     }
     if (status === 400) {
         return 'Thông tin đăng nhập không hợp lệ. Vui lòng kiểm tra và thử lại.';
@@ -34,27 +36,36 @@ export default function Login() {
         password: ''
     });
     const [loading, setLoading] = useState(false);
+    const submitting = useRef(false);
     const [showPassword, setShowPassword] = useState(false);
     const [showForgotPassword, setShowForgotPassword] = useState(false);
 
     const handleChange = (e) => {
-        setFormData({
-            ...formData,
-            [e.target.name]: e.target.value
-        });
+        const { name, value } = e.target;
+        setFormData(previous => ({ ...previous, [name]: value }));
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!formData.email || !formData.password) {
+        if (submitting.current) return;
+        const fields = new FormData(e.currentTarget);
+        const credentials = { email: String(fields.get('email') || '').trim(), password: String(fields.get('password') || '') };
+        if (!credentials.email || !credentials.password) {
             Swal.fire('Chú ý', 'Vui lòng điền đầy đủ email và mật khẩu!', 'warning');
             return;
         }
 
+        submitting.current = true;
         setLoading(true);
+        const requestId = crypto.randomUUID().replaceAll('-', '');
+        let loginSucceeded = false;
         try {
-            // Call our new robust C# API endpoint directly
-            const data = await axiosClient.post('/auth/login', formData);
+            const data = await axiosClient.post('/auth/login', credentials, {
+                skipAuth: true,
+                timeout: 30000,
+                headers: { 'X-Request-ID': requestId, 'X-Client-Version': __APP_BUILD_ID__ },
+            });
+            if (!data.success || !data.token) throw { status: 502, requestId };
             
             if (data.success) {
                 // Persist the token first so the authenticated quota request
@@ -78,6 +89,7 @@ export default function Login() {
                     speakingQuota,
                 }));
 
+                loginSucceeded = true;
                 Swal.fire({
                     icon: 'success',
                     title: 'Thành công!',
@@ -96,19 +108,21 @@ export default function Login() {
                 });
             }
         } catch (error) {
-            console.error("Login Error: ", error);
             Swal.fire({
                 icon: 'error',
                 title: 'Lỗi đăng nhập',
-                text: getLoginErrorMessage(error.status)
+                text: `${getLoginErrorMessage(error.status, error.code)} Mã tra cứu: ${error.requestId || requestId}`
             });
         } finally {
-            setLoading(false);
+            if (!loginSucceeded) {
+                submitting.current = false;
+                setLoading(false);
+            }
         }
     };
 
     return (
-        <div className={styles.loginContainer} style={{ backgroundImage: `url(${backgroundImg})` }}>
+        <div className={styles.loginContainer}>
             <div className={styles.loginCard}>
                 {showForgotPassword && (
                     <ForgotPassword
@@ -131,6 +145,7 @@ export default function Login() {
                                     <input
                                         type="text"
                                         name="email"
+                                        autoComplete="username"
                                         className={styles.input}
                                         placeholder="Email hoặc Username..."
                                         value={formData.email}
@@ -149,6 +164,7 @@ export default function Login() {
                                     <input
                                         type={showPassword ? "text" : "password"}
                                         name="password"
+                                        autoComplete="current-password"
                                         className={styles.input}
                                         placeholder="Nhập mật khẩu"
                                         value={formData.password}

@@ -1,0 +1,42 @@
+/* Native scrolling stays intact; the visual thumb is drawn above the content. */
+html,
+body,
+html * {
+  scrollbar-width: none !important;
+}
+
+*::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+.app-overlay-scrollbar {
+  position: fixed;
+  z-index: 999999998;
+  border: 1px solid rgba(255, 240, 190, 0.65);
+  border-radius: 999px;
+  background: linear-gradient(180deg, #e5c678, #aa7d31);
+  box-shadow: 0 2px 8px rgba(16, 29, 84, 0.24);
+  opacity: 1;
+  cursor: grab;
+  touch-action: none;
+  transition: opacity 180ms ease;
+}
+
+.app-overlay-scrollbar[data-hidden="true"] {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.app-overlay-scrollbar:active {
+  cursor: grabbing;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-overlay-scrollbar { transition: none; }
+}
+
+@media (forced-colors: active) {
+  .app-overlay-scrollbar { border-color: CanvasText; background: Highlight; }
+}

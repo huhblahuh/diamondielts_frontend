@@ -97,7 +97,7 @@
 .panel header button { flex: 0 0 auto; white-space: nowrap; }
 .panel header button:hover:not(:disabled), .more:hover { background: #f4f5fa; color: #101d54; }
 .panel header button:disabled { color: #a6aec0; cursor: default; }
-.list { min-width: 0; max-height: 21.6rem; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: #c9cfdd transparent; }
+.list { min-width: 0; max-height: 21.6rem; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; }
 .list p { padding: 2rem 1rem; color: #78839c; text-align: center; font-size: .85rem; }
 .item {
   width: 100%;

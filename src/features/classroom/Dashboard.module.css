@@ -19,6 +19,9 @@
   color: #64748b;
   font-size: 0.8rem;
 }
+
+:global(body.dk-mode-scene) .analyticsTitle h1 { color: #fff; }
+:global(body.dk-mode-scene) .analyticsTitle p { color: rgba(255, 255, 255, .78); }
 .dateControls,
 .presets,
 .dateRange,

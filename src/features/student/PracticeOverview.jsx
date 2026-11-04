@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import axiosClient from '../../api/axiosClient';
 import styles from './PracticeOverview.module.css';
 import Swal from 'sweetalert2';
@@ -104,6 +104,7 @@ function QuestionAreaSkeleton({ count = 9 }) {
 export default function PracticeOverview() {
     const navigate = useNavigate();
     const location = useLocation();
+    const { exerciseId: routeExerciseId } = useParams();
     const [topics, setTopics] = useState([]);
     const [loadingTopics, setLoadingTopics] = useState(true);
     const [openTopicId, setOpenTopicId] = useState(null);
@@ -119,7 +120,8 @@ export default function PracticeOverview() {
     const filterRef = useRef(null);
 
     const [searchParams, setSearchParams] = useSearchParams();
-    const exerciseId = searchParams.get('exerciseId') || searchParams.get('exerciseid');
+    const legacyExerciseId = searchParams.get('exerciseId') || searchParams.get('exerciseid');
+    const exerciseId = routeExerciseId || legacyExerciseId;
     const topicIdParam = searchParams.get('topicId') || searchParams.get('topicid');
     const partParam = searchParams.get('part');
     const hasActiveFilter = Boolean(partParam);
@@ -134,6 +136,17 @@ export default function PracticeOverview() {
         const params = new URLSearchParams({ skill: 'SPEAKING', ...practiceParams(extra) });
         return params.toString();
     };
+
+    useEffect(() => {
+        if (!legacyExerciseId || routeExerciseId) return;
+        navigate(`/student/practice/${encodeURIComponent(legacyExerciseId)}`, {
+            replace: true,
+            state: {
+                ...(location.state || {}),
+                practiceTopicId: topicIdParam || location.state?.practiceTopicId,
+            },
+        });
+    }, [legacyExerciseId, routeExerciseId, topicIdParam, navigate]);
 
     const updateFilter = (nextPart) => {
         setSearchParams({
@@ -303,14 +316,15 @@ export default function PracticeOverview() {
         setTopicPages({});
     }, [partParam]);
 
-    // Đồng bộ trạng thái mở chủ đề khi query param `topicId` trên URL thay đổi
+    // Accept existing topic links and restore the expanded topic after returning from an exercise.
     useEffect(() => {
-        if (!topicIdParam) {
+        const requestedTopicId = topicIdParam || location.state?.practiceTopicId;
+        if (!requestedTopicId) {
             setOpenTopicId(null);
             return;
         }
 
-        const tid = Number(topicIdParam);
+        const tid = Number(requestedTopicId);
         if (openTopicId === tid) return;
 
         if (exercisesMap[tid] && exercisesMap[tid].length > 0) {
@@ -338,18 +352,36 @@ export default function PracticeOverview() {
         };
         loadDirectTopic();
         return () => { isCancelled = true; };
-    }, [topicIdParam, partParam]);
+    }, [topicIdParam, location.state?.practiceTopicId, partParam]);
+
+    useEffect(() => {
+        if (!topicIdParam || exerciseId) return;
+        const params = new URLSearchParams(searchParams);
+        params.delete('topicId');
+        params.delete('topicid');
+        params.delete('type');
+        navigate({ pathname: '/student/practice', search: params.toString() }, {
+            replace: true,
+            state: { ...(location.state || {}), practiceTopicId: topicIdParam },
+        });
+    }, [topicIdParam, exerciseId, navigate]);
 
     // Toggle collapse/expand tại chỗ (in-place accordion)
     const handleToggleTopic = (topic) => {
         if (openTopicId === topic.id) {
             setOpenTopicId(null);
-            setSearchParams(practiceParams());
+            navigate({ pathname: '/student/practice', search: location.search }, {
+                replace: true,
+                state: { ...(location.state || {}), practiceTopicId: null },
+            });
             return;
         }
 
         setOpenTopicId(topic.id);
-        setSearchParams(practiceParams({ type: 'speaking', topicId: topic.id }));
+        navigate({ pathname: '/student/practice', search: location.search }, {
+            replace: true,
+            state: { ...(location.state || {}), practiceTopicId: topic.id },
+        });
 
         const hasCached = Object.prototype.hasOwnProperty.call(exercisesMap, topic.id);
 
@@ -370,13 +402,10 @@ export default function PracticeOverview() {
     };
 
     const handleExerciseClick = (ex, topic) => {
-        setSearchParams(practiceParams({
-            type: 'speaking',
-            topicId: topic.id,
-            exerciseId: ex.exerciseId,
-        }), {
+        navigate(`/student/practice/${encodeURIComponent(ex.exerciseId)}`, {
             state: {
                 ...(location.state || {}),
+                practiceTopicId: topic.id,
                 speakingExerciseOpen: true,
                 speakingResultOpen: false,
                 speakingSubmissionId: null,
@@ -390,15 +419,14 @@ export default function PracticeOverview() {
             return;
         }
 
-        const activeTopic = topicIdParam || openTopicId;
-        if (activeTopic) {
-            setSearchParams(
-                practiceParams({ type: 'speaking', topicId: activeTopic }),
-                { replace: true, state: { ...(location.state || {}), speakingExerciseOpen: false } },
-            );
-        } else {
-            setSearchParams(practiceParams(), { replace: true, state: { ...(location.state || {}), speakingExerciseOpen: false } });
-        }
+        navigate('/student/practice', {
+            replace: true,
+            state: {
+                ...(location.state || {}),
+                practiceTopicId: location.state?.practiceTopicId || topicIdParam || openTopicId,
+                speakingExerciseOpen: false,
+            },
+        });
     };
 
     const cleanTerm = searchTerm.trim().toLowerCase();
@@ -424,12 +452,10 @@ export default function PracticeOverview() {
         rows.push(filteredTopics.slice(i, i + groupSize));
     }
 
+    if (exerciseId) return <SpeakingPractice onBack={handleBackFromExercise} />;
+
     return (
-        <div className={exerciseId ? styles.studioWrapper : styles.container}>
-            {exerciseId ? (
-                <SpeakingPractice onBack={handleBackFromExercise} />
-            ) : (
-                <>
+        <div className={styles.container}>
                     <section className={`${styles.hero} ${filterOpen ? styles.heroFilterOpen : ''}`}>
                         <div className={styles.heroMain}>
                             <div className={styles.heroIcon}>
@@ -714,8 +740,6 @@ export default function PracticeOverview() {
                             })
                         )}
                     </section>
-                </>
-            )}
         </div>
     );
 }

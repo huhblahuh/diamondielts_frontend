@@ -34,6 +34,9 @@
     font-size: 0.875rem;
 }
 
+:global(body.dk-mode-scene) .header h3 { color: #fff; }
+:global(body.dk-mode-scene) .header p { color: rgba(255, 255, 255, .8); }
+
 .headerActions {
     display: flex;
     align-items: center;

@@ -2,6 +2,10 @@
 
 `design-tokens.css` is loaded before `index.css` and `diamonds-skin.css` in `main.jsx`. Use its typography, control, spacing, and radius values inside CSS Modules. Existing `--di-*` and `--dsk-*` colors remain available for branded surfaces and the Diamonds Kit skin.
 
+`components/diamonds/DiamondsLayout.jsx` owns the shared scene, header, and theme picker in React. The route policy lives in `components/diamonds/studentLayoutPolicy.js`. Login, student, teacher, and admin routes always show the Diamonds scene; studio routes only change content spacing in `Layout`. Staff pages keep the scene visible around their content cards. The old `dk_plain` preference no longer overrides these routes. Keep route mode decisions in this policy instead of adding page-specific switches.
+
+`scrollbars.css` hides native scrollbar tracks; `components/layout/OverlayScrollbars.jsx` draws a rounded thumb at the edge of the active scroll area and fades it after scrolling stops. The thumb is fixed above content, so scrolling does not reserve layout width.
+
 ## Typography
 
 | Role | Token | Desktop | Mobile |

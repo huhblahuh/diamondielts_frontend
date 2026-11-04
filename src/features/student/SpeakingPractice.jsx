@@ -14,6 +14,7 @@ import PageSkeleton from '../../components/common/PageSkeleton';
 import SpeakingDebugPanel from './SpeakingDebugPanel';
 import { logSpeakingDiagnostic } from './speakingDiagnostics';
 import useSpeakingAvailability from './useSpeakingAvailability';
+import useSpeakingRecordingPreview from './useSpeakingRecordingPreview';
 
 export default function SpeakingPractice({
     isAssignmentMode = false,
@@ -23,7 +24,11 @@ export default function SpeakingPractice({
     assignmentItemDetail = null,
     initialSubmissionId = null,
     onBack = null,
-    embedded = false
+    onOpenSubmission = null,
+    onResultBack = null,
+    embedded = false,
+    contained = false,
+    initialHistoryOpen = false
 }) {
     const { exerciseId: routeExerciseId } = useParams();
     const [searchParams] = useSearchParams();
@@ -32,8 +37,7 @@ export default function SpeakingPractice({
     const outletContext = useOutletContext();
     const registerBackHandler = outletContext?.registerBackHandler;
 
-    // Ưu tiên query param (khi render trong trang practice), fallback sang path param (route cũ)
-    const practiceExerciseId = searchParams.get('exerciseId') || routeExerciseId;
+    const practiceExerciseId = routeExerciseId || searchParams.get('exerciseId') || searchParams.get('exerciseid');
 
     const [currentItemId, setCurrentItemId] = useState(assignmentItemId || null);
 
@@ -56,6 +60,7 @@ export default function SpeakingPractice({
     const [loadingHistory, setLoadingHistory] = useState(false);
     const [isSubmissionQueueing, setIsSubmissionQueueing] = useState(false);
     const [pendingRecording, setPendingRecording] = useState(null);
+    const recordingPreviewUrl = useSpeakingRecordingPreview(pendingRecording?.audioBlob);
     const availability = useSpeakingAvailability(isAssignmentMode
         ? { assignmentItemId: currentItemId }
         : { exerciseId: practiceExerciseId });
@@ -64,7 +69,7 @@ export default function SpeakingPractice({
         ? 'Đang chấm bài, bạn có thể thoát' : 'Đang kiểm tra bài nói, bạn có thể thoát';
 
     // UI State for sidebars
-    const [leftSidebarOpen, setLeftSidebarOpen] = useState(false);
+    const [leftSidebarOpen, setLeftSidebarOpen] = useState(initialHistoryOpen);
     const [rightSidebarOpen, setRightSidebarOpen] = useState(false);
     const [selectedPartFilter, setSelectedPartFilter] = useState('All');
 
@@ -110,6 +115,10 @@ export default function SpeakingPractice({
     }, [location.hash, location.pathname, location.search, location.state, navigate, resultMarkerActive, results]);
 
     const closeResultView = useCallback(() => {
+        if (onResultBack) {
+            onResultBack();
+            return;
+        }
         if (embedded) {
             setResults(null);
             setSubmissionId(null);
@@ -133,7 +142,7 @@ export default function SpeakingPractice({
                 state: nextState,
             });
         }
-    }, [embedded, location.hash, location.pathname, location.search, location.state, navigate, resultMarkerActive]);
+    }, [embedded, location.hash, location.pathname, location.search, location.state, navigate, onResultBack, resultMarkerActive]);
 
     const handlePageBack = useCallback(() => {
         if (rightSidebarOpen) {
@@ -196,7 +205,7 @@ export default function SpeakingPractice({
     // Tự động dừng ghi âm khi hết thời gian
     useEffect(() => {
         if (isRecording && timer >= timeLimit) {
-            void stopRecording(false);
+            void stopRecording();
         }
     }, [timer, isRecording, timeLimit, partNum]);
 
@@ -368,7 +377,7 @@ export default function SpeakingPractice({
         }
     };
 
-    const stopRecording = async (submitImmediately = true) => {
+    const stopRecording = async () => {
         if (stopInProgressRef.current || !assessmentPipelineRef.current) return;
 
         stopInProgressRef.current = true;
@@ -422,13 +431,9 @@ export default function SpeakingPractice({
                 return;
             }
 
-            if (submitImmediately) {
-                await submitToBackend(duration, outcome.audioBlob);
-            } else {
-                setPendingRecording({ duration, audioBlob: outcome.audioBlob });
-                setStatus('ready');
-                setIsSubmissionQueueing(false);
-            }
+            setPendingRecording({ duration, audioBlob: outcome.audioBlob });
+            setStatus('ready');
+            setIsSubmissionQueueing(false);
         } catch (err) {
             logSpeakingDiagnostic('recording_stop_failed', {
                 code: err?.code || err?.name || 'UNKNOWN',
@@ -612,7 +617,7 @@ export default function SpeakingPractice({
     const speakingContent = normalizeSpeakingContent(exercise.content);
 
     return (
-        <div className={`${styles.studioContainer} ${results ? styles.resultsActive : ''} ${embedded ? styles.embedded : ''}`}>
+        <div className={`${styles.studioContainer} ${results ? styles.resultsActive : ''} ${contained ? styles.contained : ''}`}>
             {/* CỘT 1: HISTORY SIDEBAR (Trái) */}
             <aside className={`${styles.questionSidebar} ${leftSidebarOpen ? styles.isOpen : ''}`}>
                 <div className={styles.sidebarContent}>
@@ -659,7 +664,8 @@ export default function SpeakingPractice({
                                     className={`${styles.historyCard} ${submissionId === att.submissionId ? styles.activeHistory : ''}`}
                                     disabled={isUnviewableSpeakingSubmission(att.status)}
                                     onClick={() => {
-                                        handleSelectHistory(att.submissionId);
+                                        if (onOpenSubmission) onOpenSubmission(att.submissionId);
+                                        else handleSelectHistory(att.submissionId);
                                         setLeftSidebarOpen(false);
                                     }}
                                 >
@@ -782,9 +788,9 @@ export default function SpeakingPractice({
                                                 )}
                                                 <button
                                                     className={`${styles.recordBtn} ${isRecording ? styles.isRecordingBtn : ''}`}
-                                                    onClick={isRecording ? () => void stopRecording() : () => void startRecording()}
+                                                     onClick={isRecording ? () => void stopRecording() : () => void startRecording()}
                                                     disabled={status === 'starting' || isSubmissionQueueing || (!isRecording && availability.status !== 'available')}
-                                                    title={isAcceptedSubmissionProcessing ? speakingProcessingLabel : availability.status === 'loading' ? 'Đang kiểm tra trạng thái bài' : availability.status === 'error' ? 'Chưa thể kiểm tra trạng thái bài' : isSubmissionQueueing ? 'Đang gửi bài lên hệ thống' : isRecording ? 'Dừng ghi âm & nộp bài' : 'Nhấn để bắt đầu nói'}
+                                                     title={isAcceptedSubmissionProcessing ? speakingProcessingLabel : availability.status === 'loading' ? 'Đang kiểm tra trạng thái bài' : availability.status === 'error' ? 'Chưa thể kiểm tra trạng thái bài' : isSubmissionQueueing ? 'Đang gửi bài lên hệ thống' : isRecording ? 'Dừng ghi âm' : 'Nhấn để bắt đầu nói'}
                                                 >
                                                     {isAcceptedSubmissionProcessing ? (
                                                         <span className="spinner-border" role="status" aria-label="Bài đang được xử lý"></span>
@@ -796,8 +802,11 @@ export default function SpeakingPractice({
                                                 </button>
                                             </div>}
                                             <p className={`${styles.recordPrompt} ${isRecording ? styles.promptRecording : ''}`}>
-                                                {isSubmissionQueueing ? 'Đang nộp bài...' : pendingRecording ? 'Đã hết thời gian. Chọn nộp bài hoặc ghi âm lại.' : isAcceptedSubmissionProcessing ? speakingProcessingLabel : isRecording ? 'Đang ghi âm bài nói... Nhấn để hoàn thành' : status === 'starting' ? 'Đang chuẩn bị micro...' : availability.status === 'loading' ? 'Đang kiểm tra trạng thái bài...' : availability.status === 'error' ? 'Chưa thể kiểm tra trạng thái bài. Vui lòng tải lại trang.' : availability.status === 'unavailable' ? 'Bạn đã hết lượt làm bài.' : 'Nhấn vào micro để bắt đầu làm bài'}
+                                                 {isSubmissionQueueing ? 'Đang nộp bài...' : pendingRecording ? 'Đã ghi âm xong. Nghe lại, nộp bài hoặc ghi âm lại.' : isAcceptedSubmissionProcessing ? speakingProcessingLabel : isRecording ? 'Đang ghi âm bài nói... Nhấn để dừng' : status === 'starting' ? 'Đang chuẩn bị micro...' : availability.status === 'loading' ? 'Đang kiểm tra trạng thái bài...' : availability.status === 'error' ? 'Chưa thể kiểm tra trạng thái bài. Vui lòng tải lại trang.' : availability.status === 'unavailable' ? 'Bạn đã hết lượt làm bài.' : 'Nhấn vào micro để bắt đầu làm bài'}
                                             </p>
+                                            {pendingRecording && recordingPreviewUrl && (
+                                                <audio className={styles.recordingPreview} controls src={recordingPreviewUrl} aria-label="Nghe lại bài nói đã ghi âm" />
+                                            )}
                                             {availability.status === 'error' && (
                                                 <button type="button" className="btn btn-outline-secondary mt-2" onClick={() => void availability.refresh()}>
                                                     Thử kiểm tra lại

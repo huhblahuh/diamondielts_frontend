@@ -324,28 +324,3 @@
 }
 .loginCard p { color: rgba(255,255,255,.65) !important; }
 .helperText, .statusText { color: rgba(255,255,255,.75) !important; }
-
-/* Kit v3: keep the login readable when the user selects "Nền trơn". */
-:global(body.dk-mode-plain) .loginContainer { padding-top: 64px; }
-:global(body.dk-mode-plain) .loginCard {
-    background: #fff !important;
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
-    border: 1.5px solid #e6d3a3 !important;
-    box-shadow: 0 4px 16px rgba(16,29,84,.08) !important;
-    color: #1a1f36;
-}
-:global(body.dk-mode-plain) .loginHeader h1 { color: #101d54; }
-:global(body.dk-mode-plain) .label { color: #4a5168; }
-:global(body.dk-mode-plain) .inputWrapper { background: #fff !important; border: 1.5px solid #c3c9da !important; }
-:global(body.dk-mode-plain) .inputWrapper:focus-within { border-color: #101d54 !important; box-shadow: 0 0 0 3px rgba(16,29,84,.15) !important; }
-:global(body.dk-mode-plain) .input { color: #1a1f36 !important; }
-:global(body.dk-mode-plain) .input::placeholder { color: #6b7288 !important; }
-:global(body.dk-mode-plain) .linkButton,
-:global(body.dk-mode-plain) .textLink { color: #9a671f !important; }
-:global(body.dk-mode-plain) .loginCard p { color: #4a5168 !important; }
-:global(body.dk-mode-plain) .loginCard .brandWordmark { color: #101d54 !important; }
-:global(body.dk-mode-plain) .brandWordmark span {
-    color: #815314;
-    border-left-color: #c3c9da;
-}

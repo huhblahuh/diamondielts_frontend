@@ -8,6 +8,8 @@ import PushPermissionNudge from '../PushPermissionNudge';
 import userQuotaService from '../../api/services/userQuota.service';
 import authService from '../../api/services/auth.service';
 import NotificationCenter from '../../notifications/NotificationCenter';
+import { isStudentStudioRoute } from '../diamonds/studentLayoutPolicy';
+import { useDiamondLayout } from '../diamonds/DiamondsLayout';
 import { notificationConnectionManager } from '../../notifications/NotificationConnectionManager';
 import {
     getMissingBrowserPermissions,
@@ -45,17 +47,11 @@ function formatResetRemaining(resetDate, now = Date.now()) {
 
 export default function Layout() {
     const navigate = useNavigate();
+    const { openThemePicker } = useDiamondLayout();
     const location = useLocation();
     const [user, setUser] = useState(() => authService.getCurrentUser() || {});
     const role = user.role || 'Student';
-    const practiceSearchParams = new URLSearchParams(location.search);
-    const isSpeakingStudioView = role === 'Student' && (
-        location.pathname.startsWith('/student/speaking/') ||
-        (location.pathname === '/student/practice' && (
-            practiceSearchParams.has('exerciseId') ||
-            practiceSearchParams.has('exerciseid')
-        ))
-    );
+    const isSpeakingStudioView = role === 'Student' && isStudentStudioRoute(location.pathname, location.search);
 
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [mobileHeaderHost, setMobileHeaderHost] = useState(null);
@@ -248,10 +244,24 @@ export default function Layout() {
                 return `/student/practice${query ? `?${query}` : ''}`;
             }
         }
+        if (clean.startsWith('/student/practice/')) {
+            return '/student/practice';
+        }
         if (clean === '/student/assignments') {
             return '/student/dashboard';
         }
-        if (clean.startsWith('/student/assignments/') || clean.startsWith('/student/assignment/')) {
+        if (/^\/student\/assignments\/[^/]+$/.test(clean)) {
+            const params = new URLSearchParams(search);
+            if (params.has('submissionId') || params.has('history') || params.has('view')) {
+                params.delete('view');
+                params.delete('submissionId');
+                params.delete('history');
+                return `${clean}?${params}`;
+            }
+            if (params.has('itemId')) return clean;
+            return '/student/assignments';
+        }
+        if (clean.startsWith('/student/assignment/')) {
             return '/student/assignments';
         }
         if (clean.includes('/speaking')) {
@@ -631,7 +641,7 @@ export default function Layout() {
                     <button
                         type="button"
                         className={styles.sidebarTheme}
-                        onClick={() => document.querySelector('.dk-themebtn')?.click()}
+                        onClick={openThemePicker}
                         aria-label="Đổi phong cảnh hoặc nền trơn"
                     >
                         <i className="bi bi-palette" aria-hidden="true" />

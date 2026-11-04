@@ -9,7 +9,7 @@ import PageSkeleton from '../../components/common/PageSkeleton';
 import { parseAssignmentDueDate } from '../../utils/assignmentDate';
 import AssignmentDetailHero from './AssignmentDetailHero';
 import AssignmentTaskCard from './AssignmentTaskCard';
-import AssignmentSpeakingModal from './AssignmentSpeakingModal';
+import SpeakingPractice from '../../features/student/SpeakingPractice';
 import { filterAssignmentItems, getAssignmentFilterOptions, hasCompletedSpeakingAttempt, isSpeakingItem } from './assignmentDetailUtils';
 import useAssignmentFileSubmissions from './useAssignmentFileSubmissions';
 
@@ -17,6 +17,72 @@ export default function AssignmentDetailPage() {
     const { assignmentId } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
+    const assignmentParams = new URLSearchParams(location.search);
+    const speakingItemId = assignmentParams.get('itemId');
+    const assignmentView = String(location.state?.assignmentView?.itemId) === String(speakingItemId)
+        ? location.state.assignmentView : null;
+    const speakingView = speakingItemId ? assignmentView?.view || 'practice' : null;
+    const speakingSubmissionId = assignmentView?.submissionId || null;
+
+    useEffect(() => {
+        const basePath = location.pathname.replace(/\/+$/, '');
+        const canonicalPath = speakingItemId ? `${basePath}/` : basePath;
+        if (location.pathname === canonicalPath) return;
+        navigate(`${canonicalPath}${location.search}${location.hash}`, {
+            replace: true,
+            state: location.state,
+        });
+    }, [location.pathname, location.search, location.hash, speakingItemId, navigate]);
+
+    useEffect(() => {
+        const oldView = assignmentParams.get('view');
+        const oldSubmissionId = assignmentParams.get('submissionId');
+        const oldHistory = assignmentParams.get('history') === '1';
+        const oldOffTopic = assignmentParams.has('offTopic');
+        if (!speakingItemId || (!oldView && !oldSubmissionId && !oldHistory && !oldOffTopic)) return;
+        const params = new URLSearchParams(assignmentParams);
+        params.delete('view');
+        params.delete('submissionId');
+        params.delete('history');
+        params.delete('offTopic');
+        const view = oldSubmissionId ? 'detail' : oldHistory || oldView === 'history' ? 'history' : 'practice';
+        navigate(`/student/assignments/${assignmentId}/?${params}`, {
+            replace: true,
+            state: {
+                ...(location.state || {}),
+                assignmentView: { itemId: speakingItemId, view, submissionId: oldSubmissionId },
+            },
+        });
+    }, [assignmentId, location.search, navigate]);
+
+    const assignmentUrl = (extra = {}) => {
+        const params = new URLSearchParams(extra);
+        return `/student/assignments/${assignmentId}${params.has('itemId') ? '/' : ''}${params.size ? `?${params}` : ''}`;
+    };
+    const openAssignmentView = (itemId, view, submissionId = null) => {
+        navigate(assignmentUrl({ itemId }), {
+            state: {
+                ...(location.state || {}),
+                assignmentView: { itemId, view: view || 'practice', submissionId },
+                assignmentViewEntry: true,
+            },
+        });
+    };
+    const backFromAssignmentView = () => {
+        if (location.state?.assignmentViewEntry && Number(window.history.state?.idx) > 0) {
+            navigate(-1);
+            return;
+        }
+        navigate((speakingView === 'history' || speakingView === 'detail') && speakingItemId
+            ? assignmentUrl({ itemId: speakingItemId }) : assignmentUrl(), {
+            replace: true,
+            state: {
+                classId: assignment?.classId,
+                ...((speakingView === 'history' || speakingView === 'detail') && speakingItemId
+                    ? { assignmentView: { itemId: speakingItemId, view: 'practice', submissionId: null } } : {}),
+            },
+        });
+    };
 
     const [assignment, setAssignment] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -68,68 +134,12 @@ export default function AssignmentDetailPage() {
     const [itemDetailLoadingId, setItemDetailLoadingId] = useState(null);
     const [itemDetailErrors, setItemDetailErrors] = useState({});
 
-    // Speaking Studio mode
-    const [activeSpeakingItemId, setActiveSpeakingItemId] = useState(null);
-    const [initialSubmissionId, setInitialSubmissionId] = useState(null);
-    const lastSpeakingItemIdRef = useRef(null);
-
-    const assignmentSpeakingState = location.state?.assignmentSpeaking;
-
     useEffect(() => {
-        const itemId = assignmentSpeakingState?.itemId || null;
-
-        if (itemId) {
-            lastSpeakingItemIdRef.current = itemId;
-            setActiveSpeakingItemId(itemId);
-            setInitialSubmissionId(assignmentSpeakingState.submissionId || null);
-            return;
+        const item = assignment?.items?.find(entry => String(entry.itemId) === String(speakingItemId));
+        if (item && !itemDetails[speakingItemId] && !isSpeakingItem(item)) {
+            void fetchItemDetail(speakingItemId);
         }
-
-        const previousItemId = lastSpeakingItemIdRef.current;
-        lastSpeakingItemIdRef.current = null;
-        setActiveSpeakingItemId(null);
-        setInitialSubmissionId(null);
-
-        if (previousItemId) {
-            fetchItemDetail(previousItemId, true);
-        }
-    }, [assignmentSpeakingState?.itemId, assignmentSpeakingState?.submissionId]);
-
-    const openSpeakingView = (itemId, submissionId = null) => {
-        navigate(`${location.pathname}${location.search}${location.hash}`, {
-            state: {
-                ...(location.state || {}),
-                assignmentSpeaking: { itemId, submissionId },
-                speakingResultOpen: false,
-                speakingSubmissionId: null,
-            },
-        });
-    };
-
-    const closeSpeakingView = () => {
-        if (assignmentSpeakingState && Number(window.history.state?.idx) > 0) {
-            navigate(-1);
-            return;
-        }
-
-        const previousItemId = activeSpeakingItemId;
-        setActiveSpeakingItemId(null);
-        setInitialSubmissionId(null);
-        if (previousItemId) fetchItemDetail(previousItemId, true);
-
-        if (assignmentSpeakingState) {
-            const {
-                assignmentSpeaking: _discardedMarker,
-                speakingResultOpen: _discardedResult,
-                speakingSubmissionId: _discardedSubmission,
-                ...nextState
-            } = location.state || {};
-            navigate(`${location.pathname}${location.search}${location.hash}`, {
-                replace: true,
-                state: nextState,
-            });
-        }
-    };
+    }, [assignment, speakingItemId]);
 
     useEffect(() => {
         if (!assignmentId) return;
@@ -193,7 +203,7 @@ export default function AssignmentDetailPage() {
                 item.itemId === Number(event.detail.assignmentItemId))) return;
             if (event?.detail?.exerciseId) return;
             void assignmentService.getStudentAssignmentSummary(assignmentId).then(setAssignment);
-            if (expandedItemId && !activeSpeakingItemId) void fetchItemDetail(expandedItemId, true);
+            if (expandedItemId && !speakingItemId) void fetchItemDetail(expandedItemId, true);
         };
         window.addEventListener('diamond:notification-received', refresh);
         window.addEventListener('diamond:speaking-history-refresh', refresh);
@@ -201,7 +211,7 @@ export default function AssignmentDetailPage() {
             window.removeEventListener('diamond:notification-received', refresh);
             window.removeEventListener('diamond:speaking-history-refresh', refresh);
         };
-    }, [assignmentId, assignment, expandedItemId, activeSpeakingItemId]);
+    }, [assignmentId, assignment, expandedItemId, speakingItemId]);
 
     const handleToggleItem = async (itemId) => {
         if (expandedItemId === itemId) {
@@ -237,16 +247,16 @@ export default function AssignmentDetailPage() {
                 });
                 return;
             }
-            openSpeakingView(item.itemId);
+            openAssignmentView(item.itemId, 'practice');
         } catch (err) {
             console.error('Failed to check attempt limit:', err);
             // Even if check fails, allow student to enter practice studio
-            openSpeakingView(item.itemId);
+            openAssignmentView(item.itemId, 'practice');
         }
     };
 
     const handleViewSubmissionDetail = (itemId, submissionId) => {
-        openSpeakingView(itemId, submissionId);
+        openAssignmentView(itemId, 'detail', submissionId);
     };
 
     const {
@@ -260,6 +270,26 @@ export default function AssignmentDetailPage() {
     }
 
     if (!assignment) return null;
+
+    if (speakingItemId && assignment.items?.some(item => String(item.itemId) === String(speakingItemId) && isSpeakingItem(item))
+        && (speakingView === 'practice' || speakingView === 'history' || speakingView === 'detail')) {
+        return (
+            <SpeakingPractice
+                key={`${speakingItemId}:${speakingView}:${speakingSubmissionId || ''}`}
+                isAssignmentMode={true}
+                embedded={true}
+                assignmentId={assignmentId}
+                assignmentItemId={speakingItemId}
+                assignment={assignment}
+                assignmentItemDetail={itemDetails[speakingItemId]}
+                initialSubmissionId={speakingSubmissionId}
+                initialHistoryOpen={speakingView === 'history'}
+                onBack={backFromAssignmentView}
+                onOpenSubmission={submissionId => openAssignmentView(speakingItemId, 'detail', submissionId)}
+                onResultBack={backFromAssignmentView}
+            />
+        );
+    }
 
     const isOverdue = assignment.dueDate && parseAssignmentDueDate(assignment.dueDate) < new Date();
     const isBlockedByDeadline = isOverdue && !assignment.allowLateSubmission;
@@ -277,7 +307,9 @@ export default function AssignmentDetailPage() {
 
     const items = assignment.items || [];
     const filterOptions = getAssignmentFilterOptions(items);
-    const filteredItems = filterAssignmentItems(items, activeFilter);
+    const filteredItems = speakingItemId
+        ? items.filter(item => String(item.itemId) === String(speakingItemId))
+        : filterAssignmentItems(items, activeFilter);
 
     return (
         <div className={styles.pageWrapper}>
@@ -288,7 +320,9 @@ export default function AssignmentDetailPage() {
                     completedItemsCount={completedItemsCount}
                     totalItems={totalItems}
                     progressPercent={progressPercent}
-                    onBack={() => navigate('/student/assignments', { state: { classId: assignment.classId } })}
+                    onBack={() => speakingItemId
+                        ? backFromAssignmentView()
+                        : navigate('/student/assignments', { state: { classId: assignment.classId } })}
                 />
 
                 {/* Main Section */}
@@ -368,16 +402,6 @@ export default function AssignmentDetailPage() {
                     </div>
                 </section>
             </div>
-            {activeSpeakingItemId && (
-                <AssignmentSpeakingModal
-                    assignmentId={assignmentId}
-                    itemId={activeSpeakingItemId}
-                    assignment={assignment}
-                    itemDetail={itemDetails[activeSpeakingItemId]}
-                    initialSubmissionId={initialSubmissionId}
-                    onClose={closeSpeakingView}
-                />
-            )}
         </div>
     );
 }

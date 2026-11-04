@@ -23,6 +23,9 @@
     font-size: 0.85rem;
 }
 
+:global(body.dk-mode-scene) .pageHeader h3 { color: #fff; }
+:global(body.dk-mode-scene) .pageHeader p { color: rgba(255, 255, 255, .8); }
+
 .contentGrid {
     display: grid;
     grid-template-columns: 350px 1fr;

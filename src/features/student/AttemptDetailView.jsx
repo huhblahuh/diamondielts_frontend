@@ -534,7 +534,7 @@ export default function AttemptDetailView({ results }) {
     // ── build transcript HTML ──
     const buildTranscriptHtml = () => {
         const raw = results.transcript || '';
-        if (!raw && activeTab !== 'pronun') return '<span style="color:#94a3b8;font-style:italic">Không có transcript.</span>';
+        if (!raw && activeTab !== 'pronun' && !(activeTab === 'fluency' && results.breakMap)) return '<span style="color:#94a3b8;font-style:italic">Không có transcript.</span>';
         // Suggest tab
         if (activeTab === 'suggest') {
             const suggestion = results.suggestion_answer || '';
@@ -549,13 +549,6 @@ export default function AttemptDetailView({ results }) {
         if (activeTab === 'fluency') {
             const breakMap = results.breakMap || '';
             if (!breakMap) return escHtml(raw).replace(/\n/g, '<br/>');
-            const breakMapText = breakMap
-                .replace(/\[\d+(?:[.,]\d+)?s\]/g, '')
-                .replace(/\s+/g, ' ')
-                .trim();
-            if (breakMapText !== raw.replace(/\s+/g, ' ').trim()) {
-                return escHtml(raw).replace(/\n/g, '<br/>');
-            }
             let html = '';
             const parts = breakMap.split(/(\[\d+(?:[.,]\d+)?s\])/g);
             parts.forEach(part => {

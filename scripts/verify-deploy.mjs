@@ -22,10 +22,8 @@ if (!/<script\b[^>]*type="module"[^>]*src="\/assets\/[^\"]+\.js"/.test(html)) {
   throw new Error('Compiled Vite JavaScript entry is missing from dist/index.html');
 }
 
-const kitScript = html.indexOf('<script src="/diamonds-kit.js"></script>');
-const appScript = html.search(/<script\b[^>]*type="module"[^>]*src="\/assets\//);
-if (kitScript < 0 || kitScript > appScript) {
-  throw new Error('Diamonds kit must load synchronously before the React entry');
+if (html.includes('/diamonds-kit.js')) {
+  throw new Error('Legacy Diamonds script is still referenced in dist/index.html');
 }
 
 for (const match of html.matchAll(/<(?:script|link)\b[^>]*(?:src|href)="(\/[^"]+)"/g)) {

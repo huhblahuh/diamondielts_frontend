@@ -1,0 +1,224 @@
+/* Diamonds scene and controls, owned by the React layout. */
+.dk-sky{position:absolute; inset:0; transition:opacity 1.6s ease}
+.dk-sky-b{opacity:0}
+.dk-stars{position:absolute; inset:0 0 40% 0; opacity:var(--stars); transition:opacity 1.6s ease}
+.dk-star{position:absolute; border-radius:50%; background:#fff; animation:dk-tw 3.4s ease-in-out infinite}
+@keyframes dk-tw{0%,100%{opacity:.25}50%{opacity:1}}
+.dk-orb{position:absolute; border-radius:50%; transform:translate(-50%,-50%); cursor:pointer;
+  transition:left 1.6s ease, top 1.6s ease, opacity 1.6s ease, width .5s ease, height .5s ease, filter .5s ease}
+.dk-sun{width:100px; height:100px; background:radial-gradient(circle,#fffbe8 0 34%,#ffe39a 52%,rgba(255,214,120,0) 72%);
+  filter:drop-shadow(0 0 40px rgba(255,214,120,.6))}
+.dk-sun.dk-flare{width:140px; height:140px; filter:drop-shadow(0 0 80px rgba(255,220,130,.95)) brightness(1.15)}
+.dk-moon{width:58px; height:58px; background:radial-gradient(circle at 38% 38%,#fffdf3,#e7e3d2 60%,#cfcab4); box-shadow:0 0 50px 12px rgba(255,250,225,.18)}
+.dk-moon::after{content:""; position:absolute; inset:0; border-radius:50%;
+  background:radial-gradient(circle at 66% 34%,rgba(0,0,0,.08) 0 6px,transparent 7px),radial-gradient(circle at 36% 66%,rgba(0,0,0,.07) 0 4px,transparent 5px)}
+.dk-cloud{position:absolute; fill:var(--cloud); opacity:.85; filter:blur(1px); overflow:visible; cursor:pointer;
+  transition:fill 1.6s ease; animation:dk-drift linear infinite}
+.dk-cloud path{transform-origin:100px 40px; transition:transform .35s cubic-bezier(.3,1.6,.5,1)}
+.dk-cloud.dk-puff path{transform:scale(1.18)}
+@keyframes dk-drift{from{transform:translateX(-25vw)}to{transform:translateX(125vw)}}
+.dk-land{position:absolute; inset:0; width:100%; height:100%; pointer-events:none}
+.dk-land *{transition:fill 1.6s ease, stop-color 1.6s ease, opacity 1.6s ease}
+.dk-f-far{fill:var(--far)} .dk-f-mid{fill:var(--mid)} .dk-f-near{fill:var(--near)}
+.dk-f-g1{fill:var(--g1)} .dk-f-g2{fill:var(--g2)} .dk-f-g3{fill:var(--g3)}
+.dk-f-w2{fill:var(--w2)} .dk-f-snow{fill:var(--snow)} .dk-f-cloud{fill:var(--cloud)}
+.dk-f-sand{fill:var(--sand,#e8c47c)} .dk-f-sand2{fill:var(--sand2,#d2a862)}
+.dk-spoke{stroke:var(--mid)}
+.dk-spin{animation:dk-spin 80s linear infinite} @keyframes dk-spin{to{transform:rotate(360deg)}}
+.dk-bus{animation:dk-bus 22s linear infinite} @keyframes dk-bus{from{transform:translateX(0)}to{transform:translateX(1000px)}}
+.dk-tram{animation:dk-tram 26s linear infinite} @keyframes dk-tram{from{transform:translateX(-260px)}to{transform:translateX(1700px)}}
+.dk-caravan{animation:dk-caravan 120s linear infinite} @keyframes dk-caravan{from{transform:translateX(-400px)}to{transform:translateX(1700px)}}
+.dk-lan{opacity:calc(.55 + var(--win) * .45); filter:drop-shadow(0 0 6px rgba(255,190,90,.6))}
+.dk-fall{animation:dk-fall 10s linear infinite} @keyframes dk-fall{from{transform:translate(0,-40px) rotate(0)}to{transform:translate(80px,980px) rotate(300deg)}}
+.dk-aurora{opacity:var(--stars); mix-blend-mode:screen; filter:blur(18px)}
+.dk-aur{opacity:.55; animation:dk-aur 9s ease-in-out infinite alternate} @keyframes dk-aur{from{transform:translateX(-40px) scaleY(.9)}to{transform:translateX(40px) scaleY(1.15)}}
+.dk-graze{animation:dk-bob 4s ease-in-out infinite}
+.dk-pinkish{filter:brightness(calc(1 - var(--win) * .65))}
+.dk-petalc{opacity:calc(1 - var(--win) * .6)}
+.dk-bfly{opacity:calc(1 - var(--win)); animation:dk-bfly 12s ease-in-out infinite} @keyframes dk-bfly{0%,100%{transform:translate(0,0)}25%{transform:translate(120px,-40px)}50%{transform:translate(240px,10px)}75%{transform:translate(110px,30px)}}
+.dk-bfly path{transform-box:fill-box; transform-origin:center; animation:dk-wing .25s ease-in-out infinite alternate} @keyframes dk-wing{to{transform:scaleX(.3)}}
+.dk-flag{animation:dk-flag 2.4s ease-in-out infinite} @keyframes dk-flag{0%,100%{transform:skewY(0) scaleX(1)}50%{transform:skewY(-5deg) scaleX(.94)}}
+.dk-fire{transform-box:fill-box; transform-origin:right center; animation:dk-fire .5s ease-in-out infinite alternate} @keyframes dk-fire{from{transform:scaleX(.8);opacity:.8}to{transform:scaleX(1.1);opacity:1}}
+.dk-skylan{animation:dk-skylan 22s linear infinite} @keyframes dk-skylan{from{transform:translate(0,40px)}to{transform:translate(60px,-760px)}}
+.dk-win{fill:#ffd88a; opacity:var(--win); pointer-events:auto; cursor:pointer}
+.dk-win.dk-off{opacity:0 !important; transition:opacity .2s}
+.dk-glowlite{opacity:var(--win)}
+.dk-wave{animation:dk-wave 7s linear infinite}
+.dk-wave.dk-s2{animation-duration:11s; animation-direction:reverse}
+@keyframes dk-wave{from{transform:translateX(0)}to{transform:translateX(-200px)}}
+.dk-beam{transform-origin:0 0; animation:dk-beam 6s linear infinite}
+@keyframes dk-beam{0%{transform:rotate(-40deg)}50%{transform:rotate(40deg)}100%{transform:rotate(-40deg)}}
+.dk-boat{animation:dk-boat 60s linear infinite}
+@keyframes dk-boat{from{transform:translateX(-500px)}to{transform:translateX(700px)}}
+.dk-bob{animation:dk-bob 3s ease-in-out infinite}
+@keyframes dk-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(4px)}}
+.dk-smoke{animation:dk-smoke 5s ease-out infinite; opacity:0}
+@keyframes dk-smoke{0%{transform:translate(0,0) scale(.4);opacity:0}20%{opacity:.6}100%{transform:translate(30px,-90px) scale(1.6);opacity:0}}
+.dk-mist{animation:dk-mist 40s linear infinite}
+.dk-mist.dk-s2{animation-duration:55s; animation-direction:reverse}
+@keyframes dk-mist{from{transform:translateX(-300px)}to{transform:translateX(300px)}}
+.dk-fly{fill:#fff2a0; opacity:var(--win); filter:drop-shadow(0 0 4px #ffe066); animation:dk-ffly 6s ease-in-out infinite}
+@keyframes dk-ffly{0%,100%{transform:translate(0,0)}25%{transform:translate(14px,-10px)}50%{transform:translate(-6px,-18px)}75%{transform:translate(-14px,-4px)}}
+.dk-blink{animation:dk-blinkr 1.4s steps(1) infinite}
+@keyframes dk-blinkr{0%{opacity:1}50%{opacity:.15}}
+.dk-shade{position:absolute; inset:0; background:radial-gradient(ellipse at 50% 55%,rgba(5,9,35,0) 30%,rgba(5,9,35,.35) 100%); pointer-events:none}
+.dk-fx{position:absolute; inset:0; pointer-events:none}
+.dk-bird{position:absolute; left:0; top:0; width:30px; height:18px; cursor:pointer; pointer-events:auto; z-index:3}
+.dk-bird svg{width:100%; height:100%; overflow:visible}
+.dk-bird .dk-w{fill:var(--birdc); transform-origin:17px 11px; animation:dk-flap .42s ease-in-out infinite alternate}
+.dk-bird .dk-w2{animation-name:dk-flap2}
+.dk-bird.dk-scared .dk-w{animation-duration:.12s}
+@keyframes dk-flap{from{transform:scaleY(1)}to{transform:scaleY(-.55)}}
+@keyframes dk-flap2{from{transform:scaleX(-1) scaleY(1)}to{transform:scaleX(-1) scaleY(-.55)}}
+.dk-feather{position:absolute; width:11px; height:5px; border-radius:50%; background:var(--birdc); pointer-events:none; z-index:3}
+.dk-shoot{position:absolute; width:140px; height:2px; border-radius:2px; pointer-events:none;
+  background:linear-gradient(90deg,rgba(255,255,255,0),#fff 80%,#fffbe0); filter:drop-shadow(0 0 6px #fff)}
+.dk-plane{position:absolute; width:6px; height:6px; border-radius:50%; background:#ff6b6b; box-shadow:0 0 8px 2px rgba(255,107,107,.8); pointer-events:none}
+
+@media(prefers-reduced-motion:reduce){ .dk-scene *{animation-duration:0s!important; animation-iteration-count:1!important} }
+
+/* ---------- giao dien chung ---------- */
+body.dk{margin:0; font-family:"Be Vietnam Pro",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; position:relative; min-height:100svh;
+  --dk-navy:#101d54; --dk-gold:#e0b762; --dk-gold-hi:#fff0a5; --dk-ok:#1a7f4b; --dk-warn:#b45309; --dk-bad:#b42318;
+  -webkit-tap-highlight-color:transparent}
+body.dk-mode-scene{background:#0b1340; color:#fff; color-scheme:dark;
+  --dk-text:#fff; --dk-mute:rgba(255,255,255,.72); --dk-line:rgba(255,255,255,.22);
+  --dk-surface:linear-gradient(160deg,rgba(255,255,255,.18),rgba(255,255,255,.05)), rgba(12,20,62,.42);
+  --dk-field:rgba(255,255,255,.10); --dk-field-line:rgba(255,255,255,.30); --dk-focus:var(--dk-gold-hi);
+  --dk-ok-t:#7ee2a8; --dk-warn-t:#ffd37a; --dk-bad-t:#ffb0a3}
+body.dk-mode-plain{background:#f4f5fa; color:#1a1f36; color-scheme:light;
+  --dk-text:#1a1f36; --dk-mute:#6b7288; --dk-line:#e2e5ef;
+  --dk-surface:#fff; --dk-field:#fff; --dk-field-line:#d5d9e6; --dk-focus:var(--dk-navy);
+  --dk-ok-t:#1a7f4b; --dk-warn-t:#b45309; --dk-bad-t:#b42318}
+body.dk .dk-page, body.dk .dk-card, body.dk .dk-item, body.dk .dk-seg, body.dk .dk-btn, body.dk .dk-top, body.dk .dk-pill{box-sizing:border-box}
+body.dk button, body.dk input, body.dk select, body.dk textarea{font-family:inherit}
+
+/* nen phong canh (man co canh) */
+.dk-scene{position:fixed; top:0; left:0; right:0; z-index:0; overflow:hidden; height:100vh; height:100lvh; background:#0b1340}
+body.dk-mode-plain .dk-scene{display:none}
+/* dai troi mong (man nen tron) */
+.dk-band{display:none; position:relative; height:112px; overflow:hidden; background:#2c7ad4}
+body.dk-mode-plain .dk-band{display:block}
+@media(min-width:760px){ .dk-band{height:140px} }
+.dk-band .dk-land{position:absolute; inset:0; width:100%; height:100%}
+.dk-band::after{content:""; position:absolute; inset:0; background:linear-gradient(180deg,rgba(5,9,35,.15),rgba(5,9,35,0) 40%,rgba(5,9,35,.25))}
+.dk-still *{animation:none !important}
+
+/* thanh tren cung */
+.dk-top{position:absolute; z-index:5; left:0; right:0; top:max(14px,env(safe-area-inset-top)); display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:8px;
+  padding:0 max(14px,env(safe-area-inset-right,0px)) 0 max(14px,env(safe-area-inset-left,0px)); pointer-events:none}
+.dk-top > *{pointer-events:auto}
+.dk-top-l{justify-self:start} .dk-top-r{justify-self:end; display:flex; gap:8px; align-items:center} .dk-top-slot{display:contents}
+.dk-logo{display:flex; align-items:center; gap:8px; padding:8px 16px; border-radius:999px; background:rgba(255,255,255,.88);
+  -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px); border:1px solid rgba(240,214,150,.7); box-shadow:0 6px 20px rgba(4,8,30,.25); text-decoration:none}
+.dk-logo img{height:24px; width:auto; display:block}
+.dk-logo .dk-wm{font-weight:800; font-size:15px; line-height:1; white-space:nowrap}
+.dk-logo .dk-wm b{font-weight:800; background:linear-gradient(180deg,#c8902e 0%,#f6d77a 48%,#b9832c 100%); -webkit-background-clip:text; background-clip:text; color:transparent}
+.dk-logo .dk-wm i{font-style:normal; color:#101d54}
+.dk-logo .dk-app{font-weight:700; font-size:13px; color:#6b7288; padding-left:8px; margin-left:2px; border-left:1px solid #d9dce6}
+.dk-pill{display:inline-flex; align-items:center; gap:6px; height:38px; padding:0 14px; border-radius:999px; color:#fff; text-decoration:none; font-weight:700; font-size:13.5px; cursor:pointer;
+  background:linear-gradient(160deg,rgba(255,255,255,.22),rgba(255,255,255,.06)), rgba(12,20,62,.35); -webkit-backdrop-filter:blur(14px) saturate(1.4); backdrop-filter:blur(14px) saturate(1.4);
+  border:1px solid rgba(240,214,150,.5); box-shadow:inset 0 1px 0 rgba(255,255,255,.35)}
+.dk-pill svg{width:16px; height:16px}
+.dk-pill[hidden]{display:none}
+@media(max-width:520px){
+  .dk-top{grid-template-columns:auto minmax(0,1fr) auto; gap:6px}
+  .dk-logo{justify-self:center; padding:7px 12px; gap:6px} .dk-logo img{height:20px} .dk-logo .dk-wm{font-size:13.5px} .dk-logo .dk-app{display:none}
+  .dk-top-r{gap:6px} .dk-pill{padding:0 11px; height:36px} .dk-themebtn{width:36px; padding:0}
+}
+
+/* trang noi dung */
+.dk-page{position:relative; z-index:1; width:min(560px,100%); margin:0 auto; padding:calc(max(14px,env(safe-area-inset-top)) + 72px) 16px 40px}
+body.dk-mode-plain .dk-page{padding-top:18px}
+.dk-page.wide{width:min(900px,100%)}
+
+/* khung */
+.dk-card{position:relative; background:var(--dk-surface); border-radius:22px; padding:20px; color:var(--dk-text)}
+body.dk-mode-scene .dk-card{-webkit-backdrop-filter:blur(16px) saturate(1.5); backdrop-filter:blur(16px) saturate(1.5);
+  border:1px solid rgba(240,214,150,.45); box-shadow:inset 0 1px 0 rgba(255,255,255,.4), 0 12px 32px rgba(4,8,30,.3)}
+body.dk-mode-plain .dk-card{border:1px solid var(--dk-line); box-shadow:0 2px 10px rgba(16,29,84,.06)}
+.dk-card + .dk-card{margin-top:14px}
+.dk-title{margin:0 0 4px; font-size:22px; font-weight:800; letter-spacing:.005em}
+.dk-sub{margin:0; font-size:13.5px; color:var(--dk-mute); font-weight:600}
+.dk-label{display:block; margin:16px 0 6px; font-size:12px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--dk-mute)}
+
+/* nut */
+.dk-btn{display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:48px; padding:0 20px; border:0; border-radius:14px; cursor:pointer;
+  font-size:15.5px; font-weight:800; color:#101d54; text-decoration:none; background:linear-gradient(180deg,#f8dd85,#e2b55a); box-shadow:inset 0 1px 0 rgba(255,255,255,.6), 0 6px 16px rgba(160,110,20,.28);
+  transition:transform .12s, filter .12s}
+.dk-btn:active{transform:scale(.97)} .dk-btn:hover{filter:brightness(1.04)}
+.dk-btn[disabled]{opacity:.5; cursor:default; transform:none}
+.dk-btn.block{display:flex; width:100%}
+.dk-btn.alt{color:var(--dk-text); background:transparent; border:1.5px solid var(--dk-field-line); box-shadow:none}
+body.dk-mode-plain .dk-btn.alt{color:#101d54; background:#fff}
+.dk-btn.sm{min-height:36px; padding:0 14px; font-size:13.5px; border-radius:11px}
+
+/* o nhap */
+.dk-input, .dk-select, .dk-textarea{display:block; width:100%; box-sizing:border-box; min-height:48px; padding:12px 14px; border-radius:13px; font-size:16px; font-weight:600;
+  color:var(--dk-text); background:var(--dk-field); border:1.5px solid var(--dk-field-line); outline:none; transition:border-color .15s, box-shadow .15s}
+.dk-input::placeholder, .dk-textarea::placeholder{color:var(--dk-mute); opacity:.8}
+.dk-input:focus, .dk-select:focus, .dk-textarea:focus{border-color:var(--dk-focus); box-shadow:0 0 0 3px color-mix(in srgb, var(--dk-focus) 25%, transparent)}
+.dk-select{appearance:none; -webkit-appearance:none; padding-right:40px; cursor:pointer;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e0b762' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right 12px center; background-size:18px}
+body.dk-mode-scene .dk-select option{color:#1a1f36; background:#fff}
+.dk-textarea{min-height:260px; line-height:1.65; font-weight:500; resize:vertical}
+.dk-pin{text-align:center; font-size:26px; font-weight:800; letter-spacing:.6em; padding-left:calc(14px + .6em); font-variant-numeric:tabular-nums}
+.dk-msg{min-height:20px; margin:10px 0 0; font-size:13.5px; font-weight:700; color:var(--dk-bad-t)}
+
+/* danh sach */
+.dk-list{display:flex; flex-direction:column; gap:10px; margin:0; padding:0; list-style:none}
+.dk-item{display:flex; align-items:center; gap:12px; padding:14px 16px; border-radius:16px; background:var(--dk-surface); color:var(--dk-text); text-decoration:none; cursor:pointer; transition:transform .12s}
+body.dk-mode-scene .dk-item{-webkit-backdrop-filter:blur(14px) saturate(1.4); backdrop-filter:blur(14px) saturate(1.4); border:1px solid rgba(240,214,150,.32)}
+body.dk-mode-plain .dk-item{border:1px solid var(--dk-line)}
+.dk-item:active{transform:scale(.985)}
+.dk-item-b{flex:1; min-width:0}
+.dk-item-t{display:block; font-weight:800; font-size:15.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.dk-item-s{display:block; margin-top:3px; font-size:12.5px; font-weight:600; color:var(--dk-mute)}
+.dk-tag{flex:none; display:inline-flex; align-items:center; height:24px; padding:0 10px; border-radius:999px; font-size:12px; font-weight:800; white-space:nowrap;
+  color:var(--dk-mute); background:color-mix(in srgb, currentColor 14%, transparent)}
+.dk-tag.ok{color:var(--dk-ok-t)} .dk-tag.warn{color:var(--dk-warn-t)} .dk-tag.bad{color:var(--dk-bad-t)}
+.dk-tag.new{color:#101d54; background:linear-gradient(180deg,#f8dd85,#e2b55a)}
+
+/* chuyen tab nho */
+.dk-seg{display:flex; gap:4px; padding:4px; border-radius:14px; background:var(--dk-field); border:1px solid var(--dk-line); margin:0 0 14px}
+.dk-seg button{flex:1; min-height:38px; border:0; border-radius:10px; background:transparent; color:var(--dk-mute); font-size:14px; font-weight:800; cursor:pointer}
+.dk-seg button.on{background:linear-gradient(180deg,#f8dd85,#e2b55a); color:#101d54}
+
+/* so diem */
+.dk-score{font-size:56px; line-height:1; font-weight:800; letter-spacing:-.02em; background:linear-gradient(180deg,#fff6c8,#f2c95c 60%,#c9902e); -webkit-background-clip:text; background-clip:text; color:transparent}
+body.dk-mode-plain .dk-score{background:linear-gradient(180deg,#d6a23c,#a8741e); -webkit-background-clip:text; background-clip:text}
+.dk-row{display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+.dk-row.between{justify-content:space-between}
+.dk-gap{height:14px}
+
+/* nut doi chu de va bang chon */
+.dk-themebtn{width:38px; padding:0; justify-content:center; color:var(--dk-gold-hi)}
+.dk-themebtn svg{width:19px; height:19px}
+body.dk-mode-plain .dk-themebtn{display:none}
+body.dk-plain-pref .dk-themebtn{display:inline-flex}
+.dk-sheet{position:fixed; z-index:50; inset:0; display:grid; place-items:end center; padding:16px; padding-bottom:calc(16px + env(safe-area-inset-bottom,0px)); background:rgba(4,8,30,.25); box-sizing:border-box}
+.dk-sheet[hidden]{display:none}
+.dk-panel{width:min(480px,100%); box-sizing:border-box; border-radius:26px; padding:16px; color:#fff; animation:dk-up .3s cubic-bezier(.2,1,.3,1);
+  background:linear-gradient(160deg,rgba(255,255,255,.20),rgba(255,255,255,.06)), rgba(12,20,62,.45); -webkit-backdrop-filter:blur(16px) saturate(1.5); backdrop-filter:blur(16px) saturate(1.5);
+  border:1px solid rgba(240,214,150,.45); box-shadow:inset 0 1px 0 rgba(255,255,255,.42), 0 12px 32px rgba(4,8,30,.28)}
+@keyframes dk-up{from{transform:translateY(30px);opacity:0}}
+.dk-panel h2{margin:2px 4px 12px; font-size:15px; font-weight:800; color:var(--dk-gold-hi); letter-spacing:.02em}
+.dk-tiles{max-height:min(66vh,560px); overflow-y:auto; margin:0 -6px; padding:0 6px 4px; overscroll-behavior:contain}
+.dk-tiles .dk-grid{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px}
+.dk-tiles h3{margin:16px 2px 8px; font-size:12px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:rgba(255,240,200,.8)}
+.dk-tile{display:flex; flex-direction:column; align-items:center; gap:6px; padding:0; background:none; border:0; color:#fff; cursor:pointer}
+.dk-tile .dk-th{display:block; width:100%; aspect-ratio:1; border-radius:16px; border:2px solid rgba(255,255,255,.25); overflow:hidden}
+.dk-tile .dk-th svg{width:100%; height:100%; display:block}
+.dk-tile .dk-th *{animation:none !important}
+.dk-tile.dk-on .dk-th{border-color:var(--dk-gold-hi); box-shadow:0 0 0 2px rgba(224,183,98,.4)}
+.dk-tile > span:last-child{font-size:11px; line-height:1.2; text-align:center; font-weight:700; color:rgba(255,255,255,.9)}
+.dk-tile:focus-visible, .dk-pill:focus-visible{outline:2px solid var(--dk-gold-hi); outline-offset:3px}
+
+/* Nền trơn: ô trong bảng chọn và chỉnh cho dễ nhìn hơn */
+.dk-tile .dk-th-plain{position:relative; background:linear-gradient(180deg,#2c7ad4 0 26%,#f4f5fa 26%)}
+.dk-th-plain i{position:absolute; left:16%; right:16%; height:12%; border-radius:4px; background:#fff; border:1px solid #d3d8e6}
+.dk-th-plain i:nth-child(1){top:36%} .dk-th-plain i:nth-child(2){top:54%} .dk-th-plain i:nth-child(3){top:72%; right:40%; background:#f2cd6a; border-color:#e2b55a}
+body.dk-plain-pref{--dk-mute:#4a5168; --dk-line:#d3d8e6; --dk-field-line:#c3c9da}
+body.dk-plain-pref .dk-card, body.dk-plain-pref .dk-item{border-width:1.5px}
+body.dk-plain-pref .dk-sub{font-size:14.5px} body.dk-plain-pref .dk-item-s{font-size:13.5px} body.dk-plain-pref .dk-label{font-size:12.5px}

@@ -16,7 +16,7 @@
     --text-sub: #5f7398;
     width: 100%;
     min-width: 0;
-    padding: clamp(8px, 1.4vw, 16px);
+    padding: 0;
     background:
         radial-gradient(circle at 9% 7%, rgba(111, 128, 196, 0.13) 0 9%, transparent 9.2%),
         radial-gradient(circle at 82% 3%, rgba(111, 128, 196, 0.1) 0 17%, transparent 17.2%),
@@ -1178,21 +1178,6 @@
     width: 100%;
     text-align: center;
     overflow-x: auto;
-    scrollbar-width: thin;
-    scrollbar-color: #c7cddd transparent;
-}
-
-.pronCompareExpectedPhonemes::-webkit-scrollbar {
-    height: 3px;
-}
-
-.pronCompareExpectedPhonemes::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.pronCompareExpectedPhonemes::-webkit-scrollbar-thumb {
-    background: #c7cddd;
-    border-radius: 999px;
 }
 
 .pronCompareExpectedPhonemes strong {
@@ -1236,8 +1221,6 @@
 }
 
 @media (max-width: 760px) {
-    .detailContainer { padding: 14px; }
-
     .metricGrid {
         display: grid;
         margin-inline: 0;
@@ -1324,7 +1307,6 @@
 }
 
 @media (max-width: 340px) {
-    .detailContainer { padding: 10px; }
     .overallHero { padding: 12px 14px; }
     .overallScore { font-size: 2.35rem; }
     .metricGrid { padding: 4px; }

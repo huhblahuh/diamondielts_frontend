@@ -73,10 +73,25 @@ export default function NotificationCenter({ variant = 'icon' }) {
             const target = new URL(item.targetUrl, window.location.origin);
             const assignmentItemId = Number(target.searchParams.get('assignmentItemId'));
             const isOffTopic = target.searchParams.get('offTopic') === '1';
-            navigate(item.targetUrl, {
-                state: isOffTopic && Number.isInteger(assignmentItemId) && assignmentItemId > 0
-                    ? { assignmentSpeaking: { itemId: assignmentItemId, submissionId: null } }
-                    : undefined,
+            const isAssignmentTarget = /^\/student\/assignments\/\d+\/?$/.test(target.pathname);
+            const itemId = target.searchParams.get('itemId') || (assignmentItemId ? String(assignmentItemId) : null);
+            let assignmentView = null;
+            if (isAssignmentTarget && itemId) {
+                const submissionId = target.searchParams.get('submissionId');
+                const view = submissionId ? 'detail'
+                    : target.searchParams.get('history') === '1' || target.searchParams.get('view') === 'history'
+                        ? 'history' : 'practice';
+                assignmentView = { itemId, view, submissionId };
+                target.pathname = `${target.pathname.replace(/\/+$/, '')}/`;
+                target.searchParams.delete('assignmentItemId');
+                target.searchParams.delete('history');
+                target.searchParams.delete('view');
+                target.searchParams.delete('submissionId');
+                target.searchParams.delete('offTopic');
+                target.searchParams.set('itemId', itemId);
+            }
+            navigate(`${target.pathname}${target.search}${target.hash}`, {
+                state: assignmentView ? { assignmentView } : undefined,
             });
             if (isOffTopic) {
                 window.requestAnimationFrame(() => {
