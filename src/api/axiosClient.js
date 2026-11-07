@@ -54,7 +54,11 @@ axiosClient.interceptors.response.use(
             && typeof responseData.code === 'string'
             ? responseData.code
             : undefined;
-        const message = publicMessage || fallbackMessage;
+        const submissionCode = publicCode?.startsWith('SPEAKING_')
+            || publicCode?.startsWith('FILE_SUBMISSION_');
+        const message = submissionCode && publicMessage
+            ? `${publicMessage} (Mã lỗi: ${publicCode})`
+            : publicMessage || fallbackMessage;
 
         return Promise.reject({
             code: publicCode,
