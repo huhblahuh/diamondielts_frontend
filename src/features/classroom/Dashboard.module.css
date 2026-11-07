@@ -582,6 +582,20 @@
 .chartScroll {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin !important;
+  scrollbar-color: #8b9bc7 #edf1f6 !important;
+}
+.chartScroll::-webkit-scrollbar {
+  display: block !important;
+  height: 8px !important;
+}
+.chartScroll::-webkit-scrollbar-track {
+  background: #edf1f6;
+  border-radius: 999px;
+}
+.chartScroll::-webkit-scrollbar-thumb {
+  background: #8b9bc7;
+  border-radius: 999px;
 }
 .chartScroll:focus-visible {
   outline: 2px solid #101d54;
