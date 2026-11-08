@@ -1,3 +1,4 @@
+import { reportHandledError } from '../../utils/errorReporting.js';
 import React, { useRef, useState } from 'react';
 import styles from './Login.module.css';
 import axiosClient from '../../api/axiosClient';
@@ -76,7 +77,8 @@ export default function Login() {
                     try {
                         speakingQuota =
                             await userQuotaService.getMySpeakingQuota();
-                    } catch {
+                    } catch (caughtError) {
+                        reportHandledError(caughtError, "features/auth/Login.jsx:70");
                         // Login remains successful; Layout will retry loading.
                     }
                 }
@@ -108,6 +110,7 @@ export default function Login() {
                 });
             }
         } catch (error) {
+            reportHandledError(error, "features/auth/Login.jsx:101");
             Swal.fire({
                 icon: 'error',
                 title: 'Lỗi đăng nhập',

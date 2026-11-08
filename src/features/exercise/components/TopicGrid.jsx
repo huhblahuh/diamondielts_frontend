@@ -1,3 +1,4 @@
+import { reportHandledError } from '../../../utils/errorReporting.js';
 import React from 'react';
 import Swal from 'sweetalert2';
 import topicService from '../../../api/services/topic.service';
@@ -12,7 +13,7 @@ export default function TopicGrid({ topics, loading, onSelectTopic, onDeleteTopi
                 <div class="exercise-topic-form">
                     <label for="swal-topic-name">Tên Chủ Đề <span>*</span></label>
                     <input id="swal-topic-name" class="swal2-input" placeholder="Nhập tên chủ đề (Ví dụ: Environment, Tech...)">
-                    
+
                     <label for="swal-topic-desc">Mô Tả Chủ Đề</label>
                     <textarea id="swal-topic-desc" class="swal2-textarea" placeholder="Nhập mô tả tóm tắt..."></textarea>
                 </div>
@@ -38,8 +39,9 @@ export default function TopicGrid({ topics, loading, onSelectTopic, onDeleteTopi
                 await topicService.create(formValues.name, formValues.desc);
                 Swal.fire('Thành công', 'Đã thêm chủ đề mới!', 'success');
                 onRefreshTopics();
-            } catch (err) { 
-                Swal.fire('Thất bại', 'Lỗi hệ thống', 'error'); 
+            } catch (err) {
+                reportHandledError(err, "features/exercise/components/TopicGrid.jsx:43");
+                Swal.fire('Thất bại', 'Lỗi hệ thống', 'error');
             }
         }
     };
@@ -63,7 +65,7 @@ export default function TopicGrid({ topics, loading, onSelectTopic, onDeleteTopi
 
                     {topics.map((topic) => (
                         <div key={topic.id} className={styles.card} onClick={() => onSelectTopic(topic)}>
-                            <button 
+                            <button
                                 onClick={(e) => { e.stopPropagation(); onDeleteTopic(topic); }}
                                 className={styles.deleteTopicBtn}
                                 title="Xóa chủ đề"

@@ -1,3 +1,4 @@
+import { reportHandledError } from '../../utils/errorReporting.js';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate, useOutletContext } from 'react-router-dom';
@@ -90,6 +91,7 @@ export default function StudentDashboard() {
         dashboardService.getActivity({ months: 2 })
             .then((data) => { if (active) setActivity(data || EMPTY_ACTIVITY); })
             .catch((error) => {
+                reportHandledError(error, "features/student/StudentDashboard.jsx:94");
                 if (active) {
                     setActivity(EMPTY_ACTIVITY);
                     setActivityError(error?.message || 'Không thể tải nhịp luyện tập.');
@@ -106,6 +108,7 @@ export default function StudentDashboard() {
         dashboardService.getSummary({ includeProgress: false })
             .then((data) => { if (active) setSummary(data); })
             .catch((error) => {
+                reportHandledError(error, "features/student/StudentDashboard.jsx:111");
                 if (active) {
                     setSummary(null);
                     setSummaryError(error?.message || 'Không thể tải deadline.');

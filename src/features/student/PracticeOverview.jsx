@@ -1,3 +1,4 @@
+import { reportHandledError } from '../../utils/errorReporting.js';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import axiosClient from '../../api/axiosClient';
@@ -188,6 +189,7 @@ export default function PracticeOverview() {
                 setFilterData({ key: filterKey, topicIds });
             })
             .catch((err) => {
+                reportHandledError(err, "features/student/PracticeOverview.jsx:179");
                 if (cancelled) return;
                 console.error('Lỗi khi lọc bài tập:', err);
                 setFilterError(true);
@@ -238,6 +240,7 @@ export default function PracticeOverview() {
                 const topicsResp = await axiosClient.get('/topic');
                 setTopics(topicsResp || []);
             } catch (err) {
+                reportHandledError(err, "features/student/PracticeOverview.jsx:230");
                 console.error(err);
                 Swal.fire('Lỗi', 'Không thể tải danh sách chủ đề', 'error');
             } finally {
@@ -258,6 +261,7 @@ export default function PracticeOverview() {
                 [topicId]: Array.isArray(res) ? res : []
             }));
         } catch (err) {
+            reportHandledError(err, "features/student/PracticeOverview.jsx:251");
             console.error('Lỗi khi tải câu hỏi của chủ đề:', err);
             setExercisesMap(prev => ({
                 ...prev,
@@ -297,6 +301,7 @@ export default function PracticeOverview() {
                 }
                 setSearchResultsByTopic(grouped);
             } catch (err) {
+                reportHandledError(err, "features/student/PracticeOverview.jsx:291");
                 if (!cancelled) console.error('Lỗi khi tìm kiếm câu hỏi:', err);
             } finally {
                 if (!cancelled) setIsSearching(false);
@@ -345,6 +350,7 @@ export default function PracticeOverview() {
                     setOpenTopicId(tid);
                 }
             } catch (err) {
+                reportHandledError(err, "features/student/PracticeOverview.jsx:339");
                 console.error(err);
             } finally {
                 if (!isCancelled) setLoadingTopicId(null);
@@ -393,6 +399,7 @@ export default function PracticeOverview() {
                     [topic.id]: Array.isArray(res) ? res : []
                 }));
             }).catch(err => {
+                reportHandledError(err, "features/student/PracticeOverview.jsx:370");
                 console.error(err);
                 setExercisesMap(prev => ({ ...prev, [topic.id]: [] }));
             }).finally(() => {

@@ -1,9 +1,11 @@
+import { reportHandledError } from './errorReporting.js';
 export const normalizeSpeakingContent = (value) => {
     let content = value;
     if (typeof content === 'string') {
         try {
             content = JSON.parse(content);
-        } catch {
+        } catch (caughtError) {
+            reportHandledError(caughtError, "utils/speakingContent.js:8");
             content = {};
         }
     }

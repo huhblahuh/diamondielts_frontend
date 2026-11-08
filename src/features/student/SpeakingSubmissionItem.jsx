@@ -1,3 +1,4 @@
+import { reportHandledError } from '../../utils/errorReporting.js';
 import React from 'react';
 import styles from './StudentAssignmentModal.module.css';
 import axiosClient from '../../api/axiosClient';
@@ -119,6 +120,7 @@ export default function SpeakingSubmissionItem({
                             setActiveSpeakingItemId(item.itemId);
                             setSpeakingResults(prev => ({ ...prev, [item.itemId]: null }));
                         } catch (err) {
+                            reportHandledError(err, "features/student/SpeakingSubmissionItem.jsx:123");
                             console.error(err);
                             Swal.fire('Lỗi', 'Không thể kiểm tra giới hạn nộp bài. Vui lòng thử lại sau.', 'error');
                         }
@@ -145,6 +147,7 @@ export default function SpeakingSubmissionItem({
                                 const data = await axiosClient.get(`/student/submissions/${att.submissionId}`);
                                 setSpeakingResults(prev => ({ ...prev, [item.itemId]: data.feedback }));
                             } catch (err) {
+                                reportHandledError(err, "features/student/SpeakingSubmissionItem.jsx:150");
                                 console.error("Error viewing attempt:", err);
                                 Swal.fire('Lỗi', 'Không thể tải chi tiết bài nộp này', 'error');
                             }

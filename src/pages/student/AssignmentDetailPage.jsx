@@ -1,3 +1,4 @@
+import { reportHandledError } from '../../utils/errorReporting.js';
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import axiosClient from '../../api/axiosClient';
@@ -158,6 +159,7 @@ export default function AssignmentDetailPage() {
             setClosingItemId(null);
 
         } catch (err) {
+            reportHandledError(err, "pages/student/AssignmentDetailPage.jsx:152");
             console.error('Failed to fetch assignment detail:', err);
             showToastError('Không thể tải chi tiết bài tập. Vui lòng thử lại sau.');
             navigate('/student/assignments');
@@ -184,6 +186,7 @@ export default function AssignmentDetailPage() {
             setExpandedItemId(itemId);
             return detail;
         } catch (e) {
+            reportHandledError(e, "pages/student/AssignmentDetailPage.jsx:179");
             console.error(`Failed to load item detail ${itemId}:`, e);
             setItemDetailErrors(prev => ({
                 ...prev,
@@ -249,6 +252,7 @@ export default function AssignmentDetailPage() {
             }
             openAssignmentView(item.itemId, 'practice');
         } catch (err) {
+            reportHandledError(err, "pages/student/AssignmentDetailPage.jsx:245");
             console.error('Failed to check attempt limit:', err);
             // Even if check fails, allow student to enter practice studio
             openAssignmentView(item.itemId, 'practice');

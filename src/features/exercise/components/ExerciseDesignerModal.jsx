@@ -1,3 +1,4 @@
+import { reportHandledError } from '../../../utils/errorReporting.js';
 import React, { useEffect, useState } from 'react';
 import Swal from 'sweetalert2';
 import exerciseService from '../../../api/services/exercise.service';
@@ -35,6 +36,7 @@ export default function ExerciseDesignerModal({ isOpen, onClose, topic, exercise
             onSaved?.();
             onClose();
         } catch (error) {
+            reportHandledError(error, "features/exercise/components/ExerciseDesignerModal.jsx:39");
             await Swal.fire('Lỗi', error?.message || 'Không thể lưu đề bài.', 'error');
         } finally {
             setSaving(false);

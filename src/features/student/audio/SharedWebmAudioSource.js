@@ -1,3 +1,4 @@
+import { reportHandledError } from '../../../utils/errorReporting.js';
 const MIME_TYPE = 'audio/webm;codecs=opus';
 const TIMESLICE_MS = 100;
 
@@ -34,17 +35,20 @@ export class SharedWebmAudioSource {
                     this.handlers.onData(buffer);
                     this.chunksSent += 1;
                 }).catch(error => {
+                    reportHandledError(error, "features/student/audio/SharedWebmAudioSource.js:38");
                     this.captureError = error;
                     this.handlers.onError(error);
                 });
             };
             this.recorder.onerror = event => {
                 this.captureError = event.error || new Error('MediaRecorder gặp lỗi.');
+                reportHandledError(this.captureError, 'audio.MediaRecorder.onerror');
                 this.handlers.onError(this.captureError);
             };
             this.recorder.start(TIMESLICE_MS);
             this.startedAt = performance.now();
         } catch (error) {
+            reportHandledError(error, "features/student/audio/SharedWebmAudioSource.js:51");
             this.stop();
             throw error;
         }
@@ -57,7 +61,8 @@ export class SharedWebmAudioSource {
             if (this.recorder.state !== 'inactive') {
                 await new Promise((resolve, reject) => {
                     this.recorder.addEventListener('stop', resolve, { once: true });
-                    try { this.recorder.stop(); } catch (error) { reject(error); }
+                    try { this.recorder.stop(); } catch (error) {
+                        reportHandledError(error, "features/student/audio/SharedWebmAudioSource.js:65"); reject(error); }
                 });
             }
             this.stoppedAt ??= performance.now();

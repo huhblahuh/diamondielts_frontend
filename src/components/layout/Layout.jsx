@@ -1,3 +1,4 @@
+import { reportHandledError } from '../../utils/errorReporting.js';
 import React, { Suspense, useCallback, useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
@@ -123,6 +124,7 @@ export default function Layout() {
                 const status = await getPushStatus();
                 if (isActive) setPushStatus(status);
             } catch (error) {
+                reportHandledError(error, "components/layout/Layout.jsx:131");
                 console.error('Automatic push setup failed:', error);
             }
         };
@@ -175,7 +177,8 @@ export default function Layout() {
                     setMySpeakingQuota(quota || null);
                 }
             })
-            .catch(() => {
+            .catch((caughtError) => {
+                reportHandledError(caughtError, "components/layout/Layout.jsx:185");
                 if (isActive) setMySpeakingQuota(null);
             })
             .finally(() => {
@@ -479,6 +482,7 @@ export default function Layout() {
             const quota = await userQuotaService.getMySpeakingQuota();
             setMySpeakingQuota(quota || null);
         } catch (error) {
+            reportHandledError(error, "components/layout/Layout.jsx:475");
             setQuotaError(error?.message || 'Không thể tải quota lúc này.');
         } finally {
             setIsQuotaLoading(false);

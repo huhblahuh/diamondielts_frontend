@@ -1,3 +1,4 @@
+import { reportHandledError } from '../../utils/errorReporting.js';
 import React, { useState, useEffect } from 'react';
 import axiosClient from '../../api/axiosClient';
 import assignmentService from '../../api/services/assignment.service';
@@ -78,6 +79,7 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
             setItemDetailErrors({});
             setExpandedItemId(null);
         } catch (err) {
+            reportHandledError(err, "features/student/StudentAssignmentModal.jsx:80");
             console.error("Failed to fetch assignment detail:", err);
             showToastError('Không thể tải chi tiết bài tập. Vui lòng kiểm tra lại kết nối.');
             onClose();
@@ -133,6 +135,7 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
             }));
             return detail;
         } catch (e) {
+            reportHandledError(e, "features/student/StudentAssignmentModal.jsx:136");
             console.error(`Failed to load item detail ${itemId}:`, e);
             setItemDetailErrors(prev => ({
                 ...prev,
@@ -192,6 +195,7 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
 
             await fetchItemHistory(itemId);
         } catch (err) {
+            reportHandledError(err, "features/student/StudentAssignmentModal.jsx:196");
             console.error("Failed to delete submission:", err);
             showToastError(err?.code === 'SUBMISSION_ALREADY_GRADED'
                 ? err.message
@@ -267,6 +271,7 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
 
             await fetchItemHistory(itemId);
         } catch (err) {
+            reportHandledError(err, "features/student/StudentAssignmentModal.jsx:272");
             console.error("Failed to edit submission:", err);
             showToastError(err?.code === 'SUBMISSION_ALREADY_GRADED'
                 ? err.message
@@ -319,6 +324,7 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
             // Cập nhật lại lịch sử nộp bài của hạng mục này
             await fetchItemHistory(itemId);
         } catch (err) {
+            reportHandledError(err, "features/student/StudentAssignmentModal.jsx:325");
             console.error("Failed to submit homework:", err);
             showToastError('Nộp bài thất bại. Vui lòng thử lại sau.');
         } finally {
@@ -362,6 +368,7 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
                     return;
                 }
             } catch (err) {
+                reportHandledError(err, "features/student/StudentAssignmentModal.jsx:369");
                 console.error("Failed to check attempt limit:", err);
             }
 
@@ -376,6 +383,7 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
             timerRef.current = setInterval(() => setSpeakingTimer(prev => prev + 1), 1000);
 
         } catch (err) {
+            reportHandledError(err, "features/student/StudentAssignmentModal.jsx:384");
             console.error(err);
             assessmentPipelineRef.current = null;
             showToastError('Không thể bắt đầu ghi âm. Vui lòng thử lại.');
@@ -414,6 +422,7 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
                                 Swal.fire('Đã truy cập được micro', 'Nếu vẫn không nhận diện được giọng nói, hãy kiểm tra thiết bị đầu vào và âm lượng micro rồi ghi âm lại.', 'info');
                             })
                             .catch(err => {
+                                reportHandledError(err, "features/student/StudentAssignmentModal.jsx:423");
                                 console.error(err);
                                 Swal.fire('Thất bại', 'Không thể truy cập micro. Vui lòng bật quyền truy cập Micro trong cài đặt trình duyệt của bạn.', 'error');
                             });
@@ -425,6 +434,7 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
             setPendingSpeakingRecording({ itemId, duration, audioBlob: outcome.audioBlob });
             setSpeakingStatus(prev => ({ ...prev, [itemId]: 'ready' }));
         } catch (err) {
+            reportHandledError(err, "features/student/StudentAssignmentModal.jsx:439");
             console.error(err);
             assessmentPipelineRef.current = null;
             setSpeakingStatus(prev => ({ ...prev, [itemId]: 'idle' }));
@@ -489,6 +499,7 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
             availability.submitted();
             return true;
         } catch (err) {
+            reportHandledError(err, "features/student/StudentAssignmentModal.jsx:504");
             console.error(err);
             availability.submitFailed(err.code === 'SUBMISSION_IN_PROGRESS');
             if (err.code === 'OFF_TOPIC') {
@@ -549,6 +560,7 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
             setSpeakingResults(prev => ({ ...prev, [itemId]: data.feedback }));
             setSpeakingStatus(prev => ({ ...prev, [itemId]: 'completed' }));
         } catch (err) {
+            reportHandledError(err, "features/student/StudentAssignmentModal.jsx:565");
             Swal.fire('Lỗi', 'Không thể xem chi tiết bài nộp cũ', 'error');
             setSpeakingStatus(prev => ({ ...prev, [itemId]: 'idle' }));
         }
@@ -1192,6 +1204,7 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
                                                         setActiveSpeakingItemId(item.itemId);
                                                         setSpeakingResults(prev => ({ ...prev, [item.itemId]: null }));
                                                     } catch (err) {
+                                                        reportHandledError(err, "features/student/StudentAssignmentModal.jsx:1206");
                                                         console.error(err);
                                                         Swal.fire('Lỗi', 'Không thể kiểm tra giới hạn nộp bài. Vui lòng thử lại sau.', 'error');
                                                     }

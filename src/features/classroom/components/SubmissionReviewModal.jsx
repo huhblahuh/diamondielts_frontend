@@ -1,3 +1,4 @@
+import { reportHandledError } from '../../../utils/errorReporting.js';
 import React, { useState, useEffect, useRef } from 'react';
 import axiosClient from '../../../api/axiosClient';
 import Swal from 'sweetalert2';
@@ -11,7 +12,8 @@ import { parseAssignmentDueDate } from '../../../utils/assignmentDate';
 // ─────────────────────────────────────────────
 const tryParseJson = (str) => {
     if (!str) return {};
-    try { return JSON.parse(str); } catch { return {}; }
+    try { return JSON.parse(str); } catch (caughtError) {
+        reportHandledError(caughtError, "features/classroom/components/SubmissionReviewModal.jsx:16"); return {}; }
 };
 
 const fmtDateTime = (iso, isDueDate = false) => {
@@ -73,7 +75,8 @@ function SpeakingSubmissionViewer({ attempt, onGrade }) {
                             const a = audioRef.current;
                             if (!a) return;
                             if (a.paused) {
-                                a.play().catch(() => {
+                                a.play().catch((caughtError) => {
+                                    reportHandledError(caughtError, "features/classroom/components/SubmissionReviewModal.jsx:79");
                                     if (a.error) setUnavailableAudioSource(audioSource);
                                 });
                             } else {
@@ -246,6 +249,7 @@ function TeacherGradePanel({ attempt, onGrade }) {
                 originalFileName: res.fileName
             }]);
         } catch (err) {
+            reportHandledError(err, "features/classroom/components/SubmissionReviewModal.jsx:252");
             Swal.fire('Lỗi', 'Không thể tải file lên. Vui lòng thử lại.', 'error');
         } finally {
             setUploadingFile(false);
@@ -279,6 +283,7 @@ function TeacherGradePanel({ attempt, onGrade }) {
             setPayloadsToDelete([]);
             onGrade && onGrade(attempt.submissionId);
         } catch (err) {
+            reportHandledError(err, "features/classroom/components/SubmissionReviewModal.jsx:286");
             Swal.fire('Lỗi', 'Không thể lưu thông tin. Vui lòng thử lại.', 'error');
         } finally {
             setSubmitting(false);
@@ -517,6 +522,7 @@ export default function SubmissionReviewModal({ assignmentId, onClose }) {
                 setSelectedItemId(result.items[0].itemId);
             }
         } catch (err) {
+            reportHandledError(err, "features/classroom/components/SubmissionReviewModal.jsx:525");
             console.error(err);
             Swal.fire('Lỗi', 'Không thể tải dữ liệu bài nộp.', 'error');
             onClose();

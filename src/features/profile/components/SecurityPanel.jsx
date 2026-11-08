@@ -1,3 +1,4 @@
+import { reportHandledError } from '../../../utils/errorReporting.js';
 import React, { useState } from 'react';
 import authService from '../../../api/services/auth.service';
 import { showToastError, showToastSuccess } from '../../../utils/toast';
@@ -75,7 +76,8 @@ export default function SecurityPanel({ email, isOpen = true, onToggle }) {
         if (!request?.requestId) return;
         setBusy(true);
         try { await authService.resendOtp(request.requestId); showToastSuccess('Đã gửi lại mã OTP.'); }
-        catch (error) { fail(error); } finally { setBusy(false); }
+        catch (error) {
+            reportHandledError(error, "features/profile/components/SecurityPanel.jsx:80"); fail(error); } finally { setBusy(false); }
     };
     const requestPassword = async (event) => {
         event.preventDefault();
@@ -84,7 +86,8 @@ export default function SecurityPanel({ email, isOpen = true, onToggle }) {
         }
         setBusy(true);
         try { setRequest(await authService.requestPasswordChange({ currentPassword: passwords.currentPassword })); setOtp(''); }
-        catch (error) { fail(error); } finally { setBusy(false); }
+        catch (error) {
+            reportHandledError(error, "features/profile/components/SecurityPanel.jsx:90"); fail(error); } finally { setBusy(false); }
     };
     const confirmPassword = async () => {
         setBusy(true);
@@ -92,7 +95,8 @@ export default function SecurityPanel({ email, isOpen = true, onToggle }) {
             const verified = await authService.verifyOtp({ requestId: request.requestId, otp });
             await authService.confirmPasswordChange({ requestId: request.requestId, actionToken: verified.actionToken, newPassword: passwords.newPassword, confirmPassword: passwords.confirmPassword });
             finishSecurityChange('Đổi mật khẩu thành công. Vui lòng đăng nhập lại.');
-        } catch (error) { fail(error); } finally { setBusy(false); }
+        } catch (error) {
+            reportHandledError(error, "features/profile/components/SecurityPanel.jsx:99"); fail(error); } finally { setBusy(false); }
     };
     const requestEmailChange = async (event) => {
         event.preventDefault();
@@ -101,7 +105,8 @@ export default function SecurityPanel({ email, isOpen = true, onToggle }) {
         try {
             const next = await authService.requestNewEmailVerification({ newEmail: emailForm.newEmail });
             setRequest(next); setEmailStage('newOtp'); setOtp('');
-        } catch (error) { fail(error); } finally { setBusy(false); }
+        } catch (error) {
+            reportHandledError(error, "features/profile/components/SecurityPanel.jsx:109"); fail(error); } finally { setBusy(false); }
     };
     const confirmEmail = async () => {
         setBusy(true);
@@ -109,7 +114,8 @@ export default function SecurityPanel({ email, isOpen = true, onToggle }) {
             const verified = await authService.verifyOtp({ requestId: request.requestId, otp });
             await authService.confirmEmailChange({ requestId: request.requestId, actionToken: verified.actionToken });
             finishSecurityChange('Đổi email thành công. Vui lòng đăng nhập lại.');
-        } catch (error) { fail(error); } finally { setBusy(false); }
+        } catch (error) {
+            reportHandledError(error, "features/profile/components/SecurityPanel.jsx:118"); fail(error); } finally { setBusy(false); }
     };
     const resetFlow = () => { setRequest(null); setEmailStage('form'); setOtp(''); };
 

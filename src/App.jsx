@@ -1,3 +1,4 @@
+import { reportHandledError } from './utils/errorReporting.js';
 import React, { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useParams, useLocation } from 'react-router-dom';
 import Layout from './components/layout/Layout';
@@ -52,6 +53,7 @@ function App() {
       if (user.role === 'Teacher') return "/teacher/dashboard";
       return "/student/dashboard";
     } catch (e) {
+        reportHandledError(e, "App.jsx:48");
       return "/login";
     }
   };

@@ -1,3 +1,4 @@
+import { reportHandledError } from '../../../utils/errorReporting.js';
 import React, { useState, useEffect } from 'react';
 import axiosClient from '../../../api/axiosClient';
 import Swal from 'sweetalert2';
@@ -86,6 +87,7 @@ export default function StudentDetailsModal({ show, onClose, classId, studentId,
                 const data = await axiosClient.get(`/teacher/classroom/${classId}/student/${studentId}/details`);
                 setDetails(data);
             } catch (err) {
+                reportHandledError(err, "features/classroom/components/StudentDetailsModal.jsx:90");
                 console.error("Error loading student class details:", err);
                 Swal.fire('Lỗi', 'Không thể nạp dữ liệu chi tiết học viên từ máy chủ', 'error');
                 onClose();

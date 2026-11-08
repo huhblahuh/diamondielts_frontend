@@ -1,3 +1,4 @@
+import { reportHandledError } from '../../utils/errorReporting.js';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import axiosClient from '../../api/axiosClient';
 import Swal from 'sweetalert2';
@@ -95,6 +96,7 @@ export default function SubmissionHistoryPage() {
                 setTotalPages(res.totalPages || 1);
             }
         } catch (err) {
+            reportHandledError(err, "pages/student/SubmissionHistoryPage.jsx:99");
             if (requestVersion !== historyRequestVersionRef.current) return;
             console.error('Fetch submission history error:', err);
             Swal.fire('Lỗi', 'Không thể tải lịch sử nộp bài.', 'error');
@@ -155,6 +157,7 @@ export default function SubmissionHistoryPage() {
                 }
             })
             .catch(err => {
+                reportHandledError(err, "pages/student/SubmissionHistoryPage.jsx:160");
                 if (!active) return;
                 console.error('Fetch submission detail error:', err);
                 Swal.fire('Lỗi', 'Không thể tải chi tiết bài làm.', 'error');

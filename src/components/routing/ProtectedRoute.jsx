@@ -1,3 +1,4 @@
+import { reportHandledError } from '../../utils/errorReporting.js';
 import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 
@@ -10,6 +11,7 @@ const ProtectedRoute = ({ allowedRoles = [] }) => {
         try {
             user = JSON.parse(userRaw);
         } catch (e) {
+            reportHandledError(e, "components/routing/ProtectedRoute.jsx:14");
             user = null;
         }
     }

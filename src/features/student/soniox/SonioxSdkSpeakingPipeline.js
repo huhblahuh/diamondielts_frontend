@@ -1,3 +1,4 @@
+import { reportHandledError } from '../../../utils/errorReporting.js';
 import { SonioxClient } from '@soniox/client';
 import { SharedWebmAudioSource } from '../audio/SharedWebmAudioSource';
 import { finalizedText, sonioxTokensToWords } from './SonioxTokenAdapter';
@@ -104,6 +105,7 @@ export class SonioxSdkSpeakingPipeline {
             logSpeakingDiagnostic('sdk_state_change', { state: update.new_state, reason: update.reason ?? null });
         });
         this.recording.on('error', error => {
+            reportHandledError(error, 'soniox.recording.error');
             this.fatalError = error;
             rejectConnected(error);
             logSpeakingDiagnostic('sdk_error', {
@@ -116,6 +118,7 @@ export class SonioxSdkSpeakingPipeline {
             await withTimeout(connected, CONNECT_TIMEOUT_MS, 'Kết nối Soniox quá thời gian. Vui lòng thử lại.');
             logSpeakingDiagnostic('sdk_connected', this.diagnosticState());
         } catch (error) {
+            reportHandledError(error, "features/student/soniox/SonioxSdkSpeakingPipeline.js:121");
             await this.dispose();
             throw error;
         }

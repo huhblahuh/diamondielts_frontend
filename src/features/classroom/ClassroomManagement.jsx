@@ -1,3 +1,4 @@
+import { reportHandledError } from '../../utils/errorReporting.js';
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axiosClient from '../../api/axiosClient';
@@ -63,6 +64,7 @@ export default function ClassroomManagement() {
             const data = await axiosClient.get('/teacher/classroom');
             setClasses(data || []);
         } catch (error) {
+            reportHandledError(error, "features/classroom/ClassroomManagement.jsx:67");
             console.error(error);
             Swal.fire('Lỗi', 'Không thể tải danh sách lớp học từ máy chủ', 'error');
         } finally {
@@ -101,6 +103,7 @@ export default function ClassroomManagement() {
             setShowClassFormModal(false);
             fetchClasses();
         } catch (error) {
+            reportHandledError(error, "features/classroom/ClassroomManagement.jsx:106");
             console.error("Save class error:", error);
             Swal.fire('Thất bại', 'Không thể lưu thông tin. Vui lòng thử lại.', 'error');
         } finally {
@@ -126,6 +129,7 @@ export default function ClassroomManagement() {
                     Swal.fire('Thành công', 'Đã xóa lớp học thành công!', 'success');
                     fetchClasses();
                 } catch (error) {
+                    reportHandledError(error, "features/classroom/ClassroomManagement.jsx:132");
                     console.error("Delete class error:", error);
                     Swal.fire('Lỗi', 'Không thể thực hiện thao tác. Vui lòng thử lại.', 'error');
                 } finally {
@@ -159,6 +163,7 @@ export default function ClassroomManagement() {
             const details = await axiosClient.get(`/teacher/classroom/${cls.classId}`);
             setDetailedClass(details);
         } catch (err) {
+            reportHandledError(err, "features/classroom/ClassroomManagement.jsx:166");
             console.error(err);
             Swal.fire('Thông báo', 'Có lỗi khi tải chi tiết lớp học.', 'error');
         } finally {
@@ -172,6 +177,7 @@ export default function ClassroomManagement() {
             const data = await axiosClient.get(`/teacher/assignment/class/${selectedClass.classId}`);
             setDeadlines(data || []);
         } catch (err) {
+            reportHandledError(err, "features/classroom/ClassroomManagement.jsx:180");
             console.error("Failed to load deadlines:", err);
         }
     };
@@ -195,6 +201,7 @@ export default function ClassroomManagement() {
             const allEx = await axiosClient.get('/teacher/exercise');
             setOldExercises(allEx || []);
         } catch (err) {
+            reportHandledError(err, "features/classroom/ClassroomManagement.jsx:204");
             console.error("Error loading exercises:", err);
         }
     };
@@ -219,6 +226,7 @@ export default function ClassroomManagement() {
             const data = await axiosClient.get('/teacher/classroom/users-pool');
             setUsersPool(data || []);
         } catch (err) {
+            reportHandledError(err, "features/classroom/ClassroomManagement.jsx:229");
             console.error(err);
             Swal.fire('Lỗi', 'Không thể tải danh sách thành viên', 'error');
         } finally {
@@ -276,6 +284,7 @@ export default function ClassroomManagement() {
                 const details = await axiosClient.get(`/teacher/classroom/${selectedClass.classId}`);
                 setDetailedClass(details);
             } catch (err) {
+                reportHandledError(err, "features/classroom/ClassroomManagement.jsx:287");
                 Swal.fire('Lỗi', 'Không thể xóa thành viên.', 'error');
             }
         }
@@ -300,6 +309,7 @@ export default function ClassroomManagement() {
                 Swal.fire('Thành công', 'Đã xóa bài tập thành công!', 'success');
                 await fetchDeadlines();
             } catch (err) {
+                reportHandledError(err, "features/classroom/ClassroomManagement.jsx:312");
                 console.error(err);
                 Swal.fire('Lỗi', 'Không thể thực hiện thao tác. Vui lòng thử lại.', 'error');
             } finally {

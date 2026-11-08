@@ -1,3 +1,4 @@
+import { reportHandledError } from '../utils/errorReporting.js';
 import React, { useEffect, useState } from 'react';
 import { getPushStatus, isPushSupported, subscribePush } from '../utils/pushNotification';
 import styles from './PushPermissionNudge.module.css';
@@ -43,6 +44,7 @@ export default function PushPermissionNudge({ pushStatus, onStatusChange }) {
                 dismiss();
             }
         } catch (error) {
+            reportHandledError(error, "components/PushPermissionNudge.jsx:47");
             console.error('Failed to enable push notifications:', error);
         } finally {
             setLoading(false);

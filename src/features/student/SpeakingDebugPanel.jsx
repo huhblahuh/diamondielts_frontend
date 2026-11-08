@@ -1,3 +1,4 @@
+import { reportHandledError } from '../../utils/errorReporting.js';
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
@@ -46,7 +47,8 @@ export default function SpeakingDebugPanel() {
         try {
             await navigator.clipboard.writeText(text);
             setCopyStatus('Đã sao chép log');
-        } catch {
+        } catch (caughtError) {
+            reportHandledError(caughtError, "features/student/SpeakingDebugPanel.jsx:51");
             textRef.current?.focus();
             textRef.current?.select();
             setCopyStatus('Đã chọn log; hãy dùng lệnh Sao chép của trình duyệt');

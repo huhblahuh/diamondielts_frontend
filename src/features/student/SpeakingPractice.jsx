@@ -1,3 +1,4 @@
+import { reportHandledError } from '../../utils/errorReporting.js';
 import React, { useCallback, useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams, useLocation, useOutletContext } from 'react-router-dom';
 import axiosClient from '../../api/axiosClient';
@@ -188,7 +189,8 @@ export default function SpeakingPractice({
                 if (pContent.includes('part 2') || pContent.includes('part2')) return 2;
                 if (pContent.includes('part 3') || pContent.includes('part3')) return 3;
                 if (pContent.includes('part 1') || pContent.includes('part1')) return 1;
-            } catch (e) { }
+            } catch (e) {
+                reportHandledError(e, "features/student/SpeakingPractice.jsx:184"); }
         }
         return 1;
     };
@@ -257,6 +259,7 @@ export default function SpeakingPractice({
                     }
                 }
             } catch (err) {
+                reportHandledError(err, "features/student/SpeakingPractice.jsx:253");
                 console.error(err);
                 Swal.fire('Lỗi', 'Không thể tải dữ liệu bài tập', 'error');
             }
@@ -289,6 +292,7 @@ export default function SpeakingPractice({
                 return items;
             }
         } catch (err) {
+            reportHandledError(err, "features/student/SpeakingPractice.jsx:286");
             console.error(err);
             return [];
         } finally {
@@ -342,6 +346,7 @@ export default function SpeakingPractice({
                     return;
                 }
             } catch (err) {
+                reportHandledError(err, "features/student/SpeakingPractice.jsx:340");
                 logSpeakingDiagnostic('attempt_check_failed', { code: err?.code ?? null, status: err?.status ?? null });
                 console.error("Failed to check attempt limit:", err);
             }
@@ -367,6 +372,7 @@ export default function SpeakingPractice({
             }, 250);
 
         } catch (err) {
+            reportHandledError(err, "features/student/SpeakingPractice.jsx:366");
             logSpeakingDiagnostic('recording_start_failed', { code: err?.code || err?.name || 'UNKNOWN' });
             console.error('Speaking recording could not start:', err);
             assessmentPipelineRef.current = null;
@@ -423,6 +429,7 @@ export default function SpeakingPractice({
                                 Swal.fire('Đã truy cập được micro', 'Nếu vẫn không nhận diện được giọng nói, hãy kiểm tra thiết bị đầu vào và âm lượng micro rồi ghi âm lại.', 'info');
                             })
                             .catch(err => {
+                                reportHandledError(err, "features/student/SpeakingPractice.jsx:423");
                                 console.error(err);
                                 Swal.fire('Thất bại', 'Không thể truy cập micro. Vui lòng bật quyền truy cập Micro trong cài đặt trình duyệt của bạn.', 'error');
                             });
@@ -435,6 +442,7 @@ export default function SpeakingPractice({
             setStatus('ready');
             setIsSubmissionQueueing(false);
         } catch (err) {
+            reportHandledError(err, "features/student/SpeakingPractice.jsx:440");
             logSpeakingDiagnostic('recording_stop_failed', {
                 code: err?.code || err?.name || 'UNKNOWN',
                 ...pipeline.diagnosticState(),
@@ -514,6 +522,7 @@ export default function SpeakingPractice({
             availability.submitted();
             return true;
         } catch (err) {
+            reportHandledError(err, "features/student/SpeakingPractice.jsx:520");
             logSpeakingDiagnostic('submission_upload_failed', {
                 code: err?.code ?? null,
                 status: err?.status ?? null,
@@ -593,6 +602,7 @@ export default function SpeakingPractice({
             setResults(data.feedback);
             setStatus('completed');
         } catch (err) {
+            reportHandledError(err, "features/student/SpeakingPractice.jsx:600");
             Swal.fire('Lỗi', 'Không thể xem chi tiết bài nộp cũ', 'error');
             setStatus('idle');
         }

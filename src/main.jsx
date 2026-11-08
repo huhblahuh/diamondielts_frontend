@@ -1,5 +1,7 @@
+import './sentry'
 import React from 'react'
 import ReactDOM from 'react-dom/client'
+import * as Sentry from '@sentry/react'
 import App from './App.jsx'
 import OverlayScrollbars from './components/layout/OverlayScrollbars.jsx'
 import './styles/design-tokens.css'
@@ -15,7 +17,14 @@ void registerServiceWorker()
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <App />
-    <OverlayScrollbars />
+    <Sentry.ErrorBoundary fallback={
+      <div role="alert" style={{ padding: '2rem', textAlign: 'center' }}>
+        <p>Ứng dụng gặp lỗi. Vui lòng tải lại trang để tiếp tục.</p>
+        <button onClick={() => window.location.reload()}>Tải lại trang</button>
+      </div>
+    }>
+      <App />
+      <OverlayScrollbars />
+    </Sentry.ErrorBoundary>
   </React.StrictMode>,
 )

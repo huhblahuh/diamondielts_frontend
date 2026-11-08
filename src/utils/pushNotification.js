@@ -1,3 +1,4 @@
+import { reportHandledError } from './errorReporting.js';
 import axiosClient from '../api/axiosClient';
 
 const DISMISS_STORAGE_KEY = 'push_banner_dismissed_until';
@@ -44,6 +45,7 @@ export async function registerServiceWorker() {
         });
         return registration;
     } catch (err) {
+        reportHandledError(err, "utils/pushNotification.js:48");
         console.error('Service Worker registration failed:', err);
         return null;
     }
@@ -57,6 +59,7 @@ export async function getVapidPublicKey() {
         const data = await axiosClient.get('/config/vapid-public-key');
         return data?.publicKey || '';
     } catch (err) {
+        reportHandledError(err, "utils/pushNotification.js:62");
         console.error('Failed to get VAPID public key:', err);
         return '';
     }
@@ -92,6 +95,7 @@ export async function getPushStatus() {
             supported: true
         };
     } catch (err) {
+        reportHandledError(err, "utils/pushNotification.js:98");
         console.error('Failed to fetch push status:', err);
         return { hasActive: false, hasExpired: false, supported: true };
     }
@@ -130,6 +134,7 @@ export async function syncExistingPushSubscription() {
         await saveSubscription(subscription);
         return { synced: true };
     } catch (err) {
+        reportHandledError(err, "utils/pushNotification.js:137");
         console.error('Failed to synchronize push subscription:', err);
         return { synced: false, error: err };
     }
@@ -178,6 +183,7 @@ export async function subscribePush() {
         clearDismissedBanner();
         return { success: true };
     } catch (err) {
+        reportHandledError(err, "utils/pushNotification.js:186");
         console.error('Failed to subscribe to push notifications:', err);
         const reason = err?.name === 'AbortError' &&
             err?.message?.includes('push service error')
@@ -221,6 +227,7 @@ export async function detachPushSubscription() {
         }
         return true;
     } catch (err) {
+        reportHandledError(err, "utils/pushNotification.js:230");
         console.error('Failed to detach push subscription:', err);
 
         // Failing closed is safer on a shared device: invalidate the local
@@ -229,6 +236,7 @@ export async function detachPushSubscription() {
             try {
                 await subscription.unsubscribe();
             } catch (unsubscribeError) {
+                reportHandledError(unsubscribeError, "utils/pushNotification.js:239");
                 console.error('Failed to invalidate local push subscription:', unsubscribeError);
             }
         }
@@ -253,6 +261,7 @@ export async function unsubscribePush() {
         }
         return true;
     } catch (err) {
+        reportHandledError(err, "utils/pushNotification.js:264");
         console.error('Failed to unsubscribe push:', err);
         return false;
     }
@@ -266,7 +275,8 @@ export function isBannerDismissed() {
         const dismissedUntil = localStorage.getItem(DISMISS_STORAGE_KEY);
         if (!dismissedUntil) return false;
         return Date.now() < parseInt(dismissedUntil, 10);
-    } catch {
+    } catch (caughtError) {
+        reportHandledError(caughtError, "utils/pushNotification.js:279");
         return false;
     }
 }
@@ -276,6 +286,7 @@ export function dismissBanner(days = 3) {
         const expiryTime = Date.now() + days * 24 * 60 * 60 * 1000;
         localStorage.setItem(DISMISS_STORAGE_KEY, expiryTime.toString());
     } catch (e) {
+        reportHandledError(e, "utils/pushNotification.js:289");
         console.error('Failed to save dismiss state:', e);
     }
 }
@@ -284,6 +295,7 @@ export function clearDismissedBanner() {
     try {
         localStorage.removeItem(DISMISS_STORAGE_KEY);
     } catch (e) {
+        reportHandledError(e, "utils/pushNotification.js:298");
         console.error('Failed to clear dismiss state:', e);
     }
 }

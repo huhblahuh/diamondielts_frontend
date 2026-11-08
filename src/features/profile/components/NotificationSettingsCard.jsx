@@ -1,3 +1,4 @@
+import { reportHandledError } from '../../../utils/errorReporting.js';
 import React, { useState, useEffect } from 'react';
 import {
     isPushSupported,
@@ -76,6 +77,7 @@ export default function NotificationSettingsCard({
                 showToastError(getPushFailureMessage(res));
             }
         } catch (err) {
+            reportHandledError(err, "features/profile/components/NotificationSettingsCard.jsx:80");
             console.error('Push enable error:', err);
             showToastError('Đã xảy ra lỗi khi bật thông báo.');
         } finally {

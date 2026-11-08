@@ -1,3 +1,4 @@
+import { reportHandledError } from '../../utils/errorReporting.js';
 import { logSpeakingDiagnostic } from './speakingDiagnostics';
 
 const SAMPLE_RATE = 16_000;
@@ -283,6 +284,7 @@ export class SpeakingAssessmentPipeline {
             this.capturing = true;
             logSpeakingDiagnostic('capture_started', this.diagnosticState());
         } catch (error) {
+            reportHandledError(error, "features/student/speakingAssessmentPipeline.js:287");
             logSpeakingDiagnostic('pipeline_start_failed', { code: error?.code || error?.name || 'UNKNOWN' });
             await this.dispose();
             throw error;
@@ -348,7 +350,8 @@ export class SpeakingAssessmentPipeline {
         socket.onmessage = event => {
             try {
                 this.handleSonioxMessage(JSON.parse(event.data));
-            } catch {
+            } catch (caughtError) {
+                reportHandledError(caughtError, "features/student/speakingAssessmentPipeline.js:354");
                 logSpeakingDiagnostic('soniox_invalid_response');
                 this.fatalError = pipelineError(
                     'STT_INVALID_RESPONSE',
@@ -394,7 +397,8 @@ export class SpeakingAssessmentPipeline {
 
         try {
             this.audioContext = new AudioContextClass({ sampleRate: SAMPLE_RATE });
-        } catch {
+        } catch (caughtError) {
+            reportHandledError(caughtError, "features/student/speakingAssessmentPipeline.js:401");
             this.audioContext = new AudioContextClass();
         }
 
@@ -427,6 +431,7 @@ export class SpeakingAssessmentPipeline {
                 try {
                     this.queuePcm(pcm);
                 } catch (cause) {
+                    reportHandledError(cause, "features/student/speakingAssessmentPipeline.js:434");
                     this.fatalError = pipelineError(
                         'STT_AUDIO_SEND_FAILED',
                         'Không gửi được âm thanh tới dịch vụ nhận dạng. Vui lòng kiểm tra mạng rồi ghi âm lại.'
@@ -476,6 +481,7 @@ export class SpeakingAssessmentPipeline {
                             this.socket.send(event.data);
                             this.stats.webmChunksSent += 1;
                         } catch (cause) {
+                            reportHandledError(cause, "features/student/speakingAssessmentPipeline.js:484");
                             this.fatalError ||= pipelineError(
                                 'STT_AUDIO_SEND_FAILED',
                                 'Không gửi được âm thanh WebM tới dịch vụ nhận dạng. Vui lòng ghi âm lại.'
@@ -610,6 +616,7 @@ export class SpeakingAssessmentPipeline {
         try {
             this.socket.send(new Int16Array(sampleCount).buffer);
         } catch (cause) {
+            reportHandledError(cause, "features/student/speakingAssessmentPipeline.js:619");
             const error = pipelineError(
                 'STT_SEND_FAILED',
                 'Không gửi được phần cuối bài nói tới dịch vụ nhận dạng. Hãy kiểm tra mạng rồi ghi âm lại.'
@@ -707,6 +714,7 @@ export class SpeakingAssessmentPipeline {
                 try {
                     this.flushPendingPcm();
                 } catch (cause) {
+                    reportHandledError(cause, "features/student/speakingAssessmentPipeline.js:717");
                     const error = pipelineError(
                         'STT_SEND_FAILED',
                         'Không gửi được phần âm thanh cuối tới dịch vụ nhận dạng. Hãy kiểm tra mạng rồi ghi âm lại.'
@@ -722,6 +730,7 @@ export class SpeakingAssessmentPipeline {
                 this.socket.send('');
                 logSpeakingDiagnostic('soniox_end_queued', this.diagnosticState());
             } catch (cause) {
+                reportHandledError(cause, "features/student/speakingAssessmentPipeline.js:733");
                 const error = pipelineError(
                     'STT_FINISH_SEND_FAILED',
                     'Không gửi được tín hiệu kết thúc bài nói. Hãy kiểm tra mạng rồi ghi âm lại.'
@@ -767,7 +776,7 @@ export class SpeakingAssessmentPipeline {
                 sessionId: this.credentials.sessionId
             };
         } finally {
-            await Promise.resolve(mediaBlobPromise).catch(() => null);
+            await Promise.resolve(mediaBlobPromise).catch((caughtError) => { reportHandledError(caughtError, "features/student/speakingAssessmentPipeline.js:779"); return (null); });
             await this.releaseBrowserResources();
         }
     }

@@ -1,3 +1,4 @@
+import { reportHandledError } from '../../utils/errorReporting.js';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, NavLink, useLocation, useOutletContext } from 'react-router-dom';
 import Swal from 'sweetalert2';
@@ -35,7 +36,7 @@ export default function StudentProfile() {
                     avatarUrl: result.avatarUrl
                 });
             })
-            .catch((error) => showToastError(error.message || 'Không thể tải cài đặt tài khoản.'))
+            .catch((error) => { reportHandledError(error, "features/profile/StudentProfile.jsx:39"); return (showToastError(error.message || 'Không thể tải cài đặt tài khoản.')); })
             .finally(() => { if (active) setLoading(false); });
         return () => { active = false; };
     }, []);

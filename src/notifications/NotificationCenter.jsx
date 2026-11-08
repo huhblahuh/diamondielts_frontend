@@ -1,3 +1,4 @@
+import { reportHandledError } from '../utils/errorReporting.js';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
@@ -28,6 +29,7 @@ export default function NotificationCenter({ variant = 'icon' }) {
             setPage(nextPage);
             setHasMore(nextPage * 20 < list.totalCount);
         } catch (error) {
+            reportHandledError(error, "notifications/NotificationCenter.jsx:32");
             console.error('Could not load notifications', error);
         }
     }, []);

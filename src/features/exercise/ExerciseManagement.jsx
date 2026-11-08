@@ -1,3 +1,4 @@
+import { reportHandledError } from '../../utils/errorReporting.js';
 import React, { useState, useEffect } from 'react';
 import topicService from '../../api/services/topic.service';
 import exerciseService from '../../api/services/exercise.service';
@@ -17,6 +18,7 @@ export default function ExerciseManagement() {
             const res = await topicService.getAll();
             setTopics(res || []);
         } catch (err) {
+            reportHandledError(err, "features/exercise/ExerciseManagement.jsx:21");
             console.error(err);
         } finally {
             setLoading(false);
@@ -45,6 +47,7 @@ export default function ExerciseManagement() {
                     Swal.fire('Thành công', 'Đã xóa chủ đề thành công!', 'success');
                     loadTopics();
                 } catch (err) {
+                    reportHandledError(err, "features/exercise/ExerciseManagement.jsx:50");
                     console.error(err);
                     Swal.fire('Lỗi', 'Không thể thực hiện thao tác. Vui lòng thử lại.', 'error');
                 } finally {

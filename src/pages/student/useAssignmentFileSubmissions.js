@@ -1,3 +1,4 @@
+import { reportHandledError } from '../../utils/errorReporting.js';
 import { useState } from 'react';
 import axiosClient from '../../api/axiosClient';
 import Swal from 'sweetalert2';
@@ -53,6 +54,7 @@ export default function useAssignmentFileSubmissions({ histories, refreshItem })
             setPendingFiles(prev => ({ ...prev, [itemId]: [] }));
             await refreshItem(itemId, true);
         } catch (err) {
+            reportHandledError(err, "pages/student/useAssignmentFileSubmissions.js:57");
             console.error('Failed to submit homework:', err);
             showToastError('Nộp bài thất bại. Vui lòng thử lại sau.');
         } finally {
@@ -112,6 +114,7 @@ export default function useAssignmentFileSubmissions({ histories, refreshItem })
             setPendingFiles(prev => ({ ...prev, [itemId]: [] }));
             await refreshItem(itemId, true);
         } catch (err) {
+            reportHandledError(err, "pages/student/useAssignmentFileSubmissions.js:117");
             console.error('Failed to edit submission:', err);
             showToastError(err?.code === 'SUBMISSION_ALREADY_GRADED'
                 ? err.message
@@ -158,6 +161,7 @@ export default function useAssignmentFileSubmissions({ histories, refreshItem })
             }
             await refreshItem(itemId, true);
         } catch (err) {
+            reportHandledError(err, "pages/student/useAssignmentFileSubmissions.js:164");
             console.error('Failed to delete submission:', err);
             showToastError('Không thể xóa bài nộp. Vui lòng thử lại sau.');
         } finally {

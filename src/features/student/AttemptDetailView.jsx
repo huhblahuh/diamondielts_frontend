@@ -1,3 +1,4 @@
+import { reportHandledError } from '../../utils/errorReporting.js';
 import React, { useState, useRef, useEffect, useCallback, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
 import s from './AttemptDetailView.module.css';
@@ -151,7 +152,8 @@ function speakWord(word) {
     if (!clean) return;
     try {
         window.speechSynthesis.cancel();
-    } catch (e) { }
+    } catch (e) {
+        reportHandledError(e, "features/student/AttemptDetailView.jsx:156"); }
     setTimeout(() => {
         const u = new SpeechSynthesisUtterance(clean);
         const voices = (cachedVoices.length > 0 ? cachedVoices : window.speechSynthesis.getVoices()) || [];
@@ -168,7 +170,14 @@ function speakWord(word) {
         u.rate = 0.9;
         window.currentSpeechUtterance = u;
         u.onend = () => { window.currentSpeechUtterance = null; };
-        u.onerror = () => { window.currentSpeechUtterance = null; };
+        u.onerror = event => {
+            if (!['canceled', 'interrupted'].includes(event.error)) {
+                reportHandledError(new Error('Speech synthesis failed'), 'speechSynthesis.onerror', {
+                    error_code: event.error,
+                });
+            }
+            window.currentSpeechUtterance = null;
+        };
         window.speechSynthesis.speak(u);
     }, 50);
 }
@@ -253,7 +262,8 @@ export default function AttemptDetailView({ results }) {
         return () => {
             stopActiveSegmentListener();
             if ('speechSynthesis' in window) {
-                try { window.speechSynthesis.cancel(); } catch (e) { }
+                try { window.speechSynthesis.cancel(); } catch (e) {
+                    reportHandledError(e, "features/student/AttemptDetailView.jsx:266"); }
             }
         };
     }, [stopActiveSegmentListener]);
@@ -263,7 +273,8 @@ export default function AttemptDetailView({ results }) {
         durationProbeRef.current = { active: false, restoreTime: 0 };
         stopActiveSegmentListener();
         if (audioRef.current) {
-            try { audioRef.current.load(); } catch (e) { }
+            try { audioRef.current.load(); } catch (e) {
+                reportHandledError(e, "features/student/AttemptDetailView.jsx:277"); }
         }
     }, [audioSource, stopActiveSegmentListener]);
 
@@ -407,6 +418,7 @@ export default function AttemptDetailView({ results }) {
         stopActiveSegmentListener();
         if (a.paused) {
             a.play().catch(err => {
+                reportHandledError(err, "features/student/AttemptDetailView.jsx:421");
                 if (a.error) handleAudioError();
                 else console.warn("Audio play error:", err);
             });
@@ -452,7 +464,8 @@ export default function AttemptDetailView({ results }) {
         const nextTime = Math.min(Math.max(0, val), seekLimit);
         try {
             a.currentTime = nextTime;
-        } catch {
+        } catch (caughtError) {
+            reportHandledError(caughtError, "features/student/AttemptDetailView.jsx:468");
             // Metadata may still be loading.
         }
         setCurTime(nextTime);
@@ -472,6 +485,7 @@ export default function AttemptDetailView({ results }) {
             const playPromise = a.play();
             if (playPromise !== undefined) {
                 playPromise.catch(err => {
+                    reportHandledError(err, "features/student/AttemptDetailView.jsx:488");
                     if (a.error) handleAudioError();
                     else console.warn("Segment playback error:", err);
                 });
@@ -514,6 +528,7 @@ export default function AttemptDetailView({ results }) {
             try {
                 a.currentTime = safeStart;
             } catch (e) {
+                reportHandledError(e, "features/student/AttemptDetailView.jsx:531");
                 a.removeEventListener('seeked', onSeeked);
                 console.warn("Audio seek error:", e);
                 startPlaying(); // Fallback: try playing from wherever we are
@@ -526,7 +541,8 @@ export default function AttemptDetailView({ results }) {
                 executePlay();
             };
             a.addEventListener('loadedmetadata', onLoaded);
-            try { a.load(); } catch (e) {}
+            try { a.load(); } catch (e) {
+                reportHandledError(e, "features/student/AttemptDetailView.jsx:545");}
         } else {
             executePlay();
         }

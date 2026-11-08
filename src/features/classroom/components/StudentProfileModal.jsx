@@ -1,3 +1,4 @@
+import { reportHandledError } from '../../../utils/errorReporting.js';
 import React, { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import profileService from '../../../api/services/profile.service';
@@ -37,7 +38,8 @@ export default function StudentProfileModal({ student, onClose }) {
         setData(null);
         profileService.getStudentProfile(student.studentId, { month }).then((result) => {
             if (active) setData(result);
-        }).catch(() => {
+        }).catch((caughtError) => {
+            reportHandledError(caughtError, "features/classroom/components/StudentProfileModal.jsx:42");
             if (active) setError('Không thể tải hồ sơ học viên. Vui lòng thử lại.');
         }).finally(() => {
             if (active) setLoading(false);

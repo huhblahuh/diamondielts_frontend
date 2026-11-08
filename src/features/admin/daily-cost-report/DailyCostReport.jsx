@@ -1,3 +1,4 @@
+import { reportHandledError } from '../../../utils/errorReporting.js';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
     CategoryScale,
@@ -50,6 +51,7 @@ export default function DailyCostReport({ from, to, classId }) {
             const data = await dailyCostReportService.getRange({ from, to, classId });
             if (currentRequestId === requestId.current) setReport(data);
         } catch (requestError) {
+            reportHandledError(requestError, "features/admin/daily-cost-report/DailyCostReport.jsx:54");
             if (currentRequestId === requestId.current) {
                 setError(requestError?.message || 'Không thể tải báo cáo chi phí.');
             }

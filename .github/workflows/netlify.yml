@@ -21,6 +21,11 @@ jobs:
         with:
           node-version: 20
       - name: Build
+        env:
+          VITE_SENTRY_DSN: ${{ vars.VITE_SENTRY_DSN || 'https://99a08f06e355b84fe868360b7d47290a@o4512397147701248.ingest.us.sentry.io/4512397255770112' }}
+          VITE_SENTRY_ENVIRONMENT: ${{ github.event_name == 'pull_request' && 'preview' || 'production' }}
+          VITE_SENTRY_RELEASE: diamond-ielts-frontend@${{ github.sha }}
+          VITE_SENTRY_TRACES_SAMPLE_RATE: '0.1'
         run: |
           npm ci
           npm run build

@@ -1,3 +1,4 @@
+import { reportHandledError } from '../../../utils/errorReporting.js';
 import React, { useState, useEffect } from 'react';
 import Swal from 'sweetalert2';
 import axiosClient from '../../../api/axiosClient';
@@ -126,6 +127,7 @@ export default function FolderConfigModal({ show, onClose, assignmentId, classId
                     setFolderItems(mappedItems);
                     setExpandedItemId(null);
                 } catch (err) {
+                    reportHandledError(err, "features/classroom/components/FolderConfigModal.jsx:130");
                     console.error("Error loading assignment details:", err);
                     Swal.fire('Lỗi', 'Không thể tải chi tiết deadline.', 'error');
                     onClose();
@@ -289,7 +291,8 @@ export default function FolderConfigModal({ show, onClose, assignmentId, classId
                 let parsed;
                 try {
                     parsed = JSON.parse(input);
-                } catch {
+                } catch (caughtError) {
+                    reportHandledError(caughtError, "features/classroom/components/FolderConfigModal.jsx:295");
                     Swal.showValidationMessage('Script không đúng cú pháp JSON. Hãy kiểm tra dấu ngoặc và dấu phẩy.');
                     return false;
                 }
@@ -491,6 +494,7 @@ export default function FolderConfigModal({ show, onClose, assignmentId, classId
                             : null
                     );
                 } catch (error) {
+                    reportHandledError(error, "features/classroom/components/FolderConfigModal.jsx:497");
                     reminderError = error;
                     console.error('Error saving deadline reminder:', error);
                 }
@@ -515,6 +519,7 @@ export default function FolderConfigModal({ show, onClose, assignmentId, classId
             onSaved();
             onClose();
         } catch (err) {
+            reportHandledError(err, "features/classroom/components/FolderConfigModal.jsx:522");
             console.error("Error saving folder:", err);
             Swal.fire('Lỗi', 'Không thể lưu thông tin. Vui lòng thử lại.', 'error');
         } finally {

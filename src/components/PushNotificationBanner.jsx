@@ -1,3 +1,4 @@
+import { reportHandledError } from '../utils/errorReporting.js';
 import React, { useState, useEffect } from 'react';
 import {
     isPushSupported,
@@ -55,6 +56,7 @@ export default function PushNotificationBanner({ pushStatus, onStatusChange }) {
                 showToastError(getPushFailureMessage(res));
             }
         } catch (err) {
+            reportHandledError(err, "components/PushNotificationBanner.jsx:59");
             console.error('Subscription error:', err);
             showToastError('Đã xảy ra lỗi khi đăng ký thông báo.');
         } finally {

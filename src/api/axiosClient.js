@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { reportApiError } from '../utils/errorReporting.js';
 
 const API_URL = import.meta.env.DEV
     ? '/api'
@@ -30,6 +31,12 @@ axiosClient.interceptors.response.use(
     (error) => {
         const status = error.response?.status;
         const responseData = error.response?.data;
+        const normalizedError = {
+            code: responseData?.code,
+            status,
+            canRetry: responseData?.canRetry === true,
+        };
+        reportApiError(error, normalizedError);
         if (status === 401 && !error.config?.skipAuth && localStorage.getItem('token')) {
             localStorage.removeItem('token');
             localStorage.removeItem('user');
@@ -60,7 +67,7 @@ axiosClient.interceptors.response.use(
             ? `${publicMessage} (Mã lỗi: ${publicCode})`
             : publicMessage || fallbackMessage;
 
-        return Promise.reject({
+        Object.assign(normalizedError, {
             code: publicCode,
             message,
             status,
@@ -69,6 +76,7 @@ axiosClient.interceptors.response.use(
                 : error.config?.headers?.['X-Request-ID'],
             canRetry: responseData?.canRetry === true,
         });
+        return Promise.reject(normalizedError);
     }
 );
 

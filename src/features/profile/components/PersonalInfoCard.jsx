@@ -1,3 +1,4 @@
+import { reportHandledError } from '../../../utils/errorReporting.js';
 import React, { useEffect, useRef, useState } from 'react';
 import { showToastError, showToastSuccess } from '../../../utils/toast';
 import authService from '../../../api/services/auth.service';
@@ -56,6 +57,7 @@ export default function PersonalInfoCard({ profile, onUpdated }) {
             notifyUpdated(updated);
             showToastSuccess('Đã cập nhật tài khoản.');
         } catch (error) {
+            reportHandledError(error, "features/profile/components/PersonalInfoCard.jsx:60");
             showToastError(error.message);
         } finally {
             setSaving(false);
@@ -85,6 +87,7 @@ export default function PersonalInfoCard({ profile, onUpdated }) {
             setCropFile(null);
             showToastSuccess('Đã cập nhật ảnh đại diện.');
         } catch (error) {
+            reportHandledError(error, "features/profile/components/PersonalInfoCard.jsx:90");
             showToastError(error.message);
         } finally {
             setAvatarBusy(false);
@@ -98,6 +101,7 @@ export default function PersonalInfoCard({ profile, onUpdated }) {
             notifyUpdated(updated);
             showToastSuccess('Đã xóa ảnh đại diện.');
         } catch (error) {
+            reportHandledError(error, "features/profile/components/PersonalInfoCard.jsx:104");
             showToastError(error.message);
         } finally {
             setAvatarBusy(false);

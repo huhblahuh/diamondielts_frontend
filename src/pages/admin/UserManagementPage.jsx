@@ -1,3 +1,4 @@
+import { reportHandledError } from '../../utils/errorReporting.js';
 import React, { useEffect, useMemo, useState } from 'react';
 import styles from './UserManagementPage.module.css';
 import axiosClient from '../../api/axiosClient';
@@ -46,6 +47,7 @@ export default function UserManagementPage() {
             const data = await axiosClient.get('/admin/users');
             setUsers(data);
         } catch (error) {
+            reportHandledError(error, "pages/admin/UserManagementPage.jsx:50");
             console.error("Error fetching users:", error);
             Swal.fire('Lỗi!', 'Không thể tải dữ liệu. Vui lòng thử lại.', 'error');
         } finally {
@@ -58,6 +60,7 @@ export default function UserManagementPage() {
             const data = await axiosClient.get('/admin/classes');
             setClasses(data);
         } catch (error) {
+            reportHandledError(error, "pages/admin/UserManagementPage.jsx:63");
             console.error("Error fetching classes:", error);
             Swal.fire(
                 'Lỗi!',
@@ -145,6 +148,7 @@ export default function UserManagementPage() {
             link.remove();
             window.URL.revokeObjectURL(url);
         } catch (error) {
+            reportHandledError(error, "pages/admin/UserManagementPage.jsx:151");
             Swal.fire('Không thể tải file mẫu!', error.message, 'error');
         }
     };
@@ -164,6 +168,7 @@ export default function UserManagementPage() {
             });
             setExcelPreview(preview);
         } catch (error) {
+            reportHandledError(error, "pages/admin/UserManagementPage.jsx:171");
             setExcelPreview(null);
             Swal.fire('File Excel không hợp lệ!', error.message, 'error');
         } finally {
@@ -181,6 +186,7 @@ export default function UserManagementPage() {
             try {
                 await axiosClient.post('/admin/users', item.user);
             } catch (error) {
+                reportHandledError(error, "pages/admin/UserManagementPage.jsx:189");
                 failures.push({
                     index: item.index,
                     username: item.user.username,
@@ -247,6 +253,7 @@ export default function UserManagementPage() {
             setIsModalOpen(false);
             fetchUsers();
         } catch (error) {
+            reportHandledError(error, "pages/admin/UserManagementPage.jsx:256");
             console.error("Save User error:", error);
             Swal.fire('Thất bại!', 'Không thể lưu thông tin. Vui lòng thử lại.', 'error');
         } finally {
@@ -278,6 +285,7 @@ export default function UserManagementPage() {
                     Swal.fire('Đã xóa!', 'Người dùng đã bị xóa thành công.', 'success');
                     fetchUsers();
                 } catch (error) {
+                    reportHandledError(error, "pages/admin/UserManagementPage.jsx:288");
                     console.error("Delete user error:", error);
                     Swal.fire('Lỗi!', 'Không thể thực hiện thao tác. Vui lòng thử lại.', 'error');
                 }

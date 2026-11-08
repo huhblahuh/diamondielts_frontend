@@ -1,3 +1,4 @@
+import { reportHandledError } from '../../utils/errorReporting.js';
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import axiosClient from '../../api/axiosClient';
@@ -12,7 +13,8 @@ import { parseAssignmentDueDate } from '../../utils/assignmentDate';
 // ─────────────────────────────────────────────
 const tryParseJson = (str) => {
     if (!str) return {};
-    try { return JSON.parse(str); } catch { return {}; }
+    try { return JSON.parse(str); } catch (caughtError) {
+        reportHandledError(caughtError, "pages/teacher/AssignmentReviewPage.jsx:17"); return {}; }
 };
 
 const fmtDateTime = (iso, isDueDate = false) => {
@@ -194,6 +196,7 @@ function TeacherGradePanel({ attempt, onGrade }) {
                 originalFileName: res.fileName
             }]);
         } catch (err) {
+            reportHandledError(err, "pages/teacher/AssignmentReviewPage.jsx:199");
             Swal.fire('Lỗi', 'Không thể tải file lên. Vui lòng thử lại.', 'error');
         } finally {
             setUploadingFile(false);
@@ -227,6 +230,7 @@ function TeacherGradePanel({ attempt, onGrade }) {
             setPayloadsToDelete([]);
             onGrade && onGrade(attempt.submissionId);
         } catch (err) {
+            reportHandledError(err, "pages/teacher/AssignmentReviewPage.jsx:233");
             Swal.fire('Lỗi', 'Không thể lưu thông tin. Vui lòng thử lại.', 'error');
         } finally {
             setSubmitting(false);
@@ -470,6 +474,7 @@ export default function AssignmentReviewPage() {
                 setSelectedStudentId(stateStudentId);
             }
         } catch (err) {
+            reportHandledError(err, "pages/teacher/AssignmentReviewPage.jsx:477");
             console.error(err);
             Swal.fire('Lỗi', 'Không thể tải dữ liệu bài nộp.', 'error');
             navigate('/teacher/classrooms');

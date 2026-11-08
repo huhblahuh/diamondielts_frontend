@@ -1,3 +1,4 @@
+import { reportHandledError } from './errorReporting.js';
 import { isPushSupported, subscribePush } from './pushNotification';
 
 export async function getMissingBrowserPermissions(role) {
@@ -6,7 +7,8 @@ export async function getMissingBrowserPermissions(role) {
         try {
             const status = await navigator.permissions.query({ name: 'microphone' });
             microphone = status.state === 'prompt';
-        } catch {
+        } catch (caughtError) {
+            reportHandledError(caughtError, "utils/browserPermissions.js:11");
             // Some browsers do not expose microphone through Permissions.query.
             // getUserMedia will reuse a saved decision without showing another prompt.
             microphone = true;

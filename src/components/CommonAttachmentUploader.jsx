@@ -1,3 +1,4 @@
+import { reportHandledError } from '../utils/errorReporting.js';
 import React, { useState } from 'react';
 import Swal from 'sweetalert2';
 import assignmentService from '../api/services/assignment.service';
@@ -95,6 +96,7 @@ export default function CommonAttachmentUploader({
                 showConfirmButton: false
             });
         } catch (err) {
+            reportHandledError(err, "components/CommonAttachmentUploader.jsx:99");
             Swal.fire({
                 icon: 'error',
                 title: 'Thất bại',
@@ -113,6 +115,7 @@ export default function CommonAttachmentUploader({
             try {
                 await assignmentService.deleteMaterial(fileToRemove.dataValue);
             } catch (err) {
+                reportHandledError(err, "components/CommonAttachmentUploader.jsx:118");
                 console.error("Failed to delete physical file from cloud:", err);
             }
         }

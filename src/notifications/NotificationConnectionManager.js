@@ -1,3 +1,4 @@
+import { reportHandledError } from '../utils/errorReporting.js';
 import * as signalR from '@microsoft/signalr';
 import axiosClient from '../api/axiosClient';
 
@@ -49,6 +50,7 @@ class NotificationConnectionManager {
         });
         this.connection.onreconnected(() => this.sync());
         this.connection.onclose(error => {
+            if (error) reportHandledError(error, 'notifications.connection.onclose');
             if (!this.stopped && !this.isAuthError(error)) this.scheduleRetry();
         });
         void this.connect();
@@ -66,6 +68,7 @@ class NotificationConnectionManager {
             this.retryCount = 0;
             this.sync();
         } catch (error) {
+            reportHandledError(error, "notifications/NotificationConnectionManager.js:71");
             if (this.generation === generation && !this.isAuthError(error)) this.scheduleRetry();
         } finally {
             if (this.generation === generation) this.starting = false;
@@ -99,7 +102,7 @@ class NotificationConnectionManager {
         const connection = this.connection;
         this.connection = null;
         if (connection) void connection.stop().catch(error =>
-            console.error('Could not stop notification connection', error));
+            { reportHandledError(error, "notifications/NotificationConnectionManager.js:105"); return (console.error('Could not stop notification connection', error)); });
     }
 }
 

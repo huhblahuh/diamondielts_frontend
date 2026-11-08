@@ -1,3 +1,4 @@
+import { reportHandledError } from '../../../utils/errorReporting.js';
 import React, { useState, useEffect } from 'react';
 import Swal from 'sweetalert2';
 import exerciseService from '../../../api/services/exercise.service';
@@ -43,7 +44,8 @@ export default function ExerciseList({
             link.click();
             link.remove();
             setTimeout(() => URL.revokeObjectURL(url), 0);
-        } catch {
+        } catch (caughtError) {
+            reportHandledError(caughtError, "features/exercise/components/ExerciseList.jsx:48");
             Swal.fire('Lỗi', 'Không thể tải tệp mẫu. Vui lòng thử lại.', 'error');
         }
     };
@@ -138,6 +140,7 @@ export default function ExerciseList({
 
                 if (onRefresh) onRefresh();
             } catch (err) {
+                reportHandledError(err, "features/exercise/components/ExerciseList.jsx:143");
                 console.error(err);
                 Swal.close();
                 Swal.fire('Thất bại', 'Không thể xử lý file. Vui lòng kiểm tra và thử lại.', 'error');
@@ -217,6 +220,7 @@ export default function ExerciseList({
                 try {
                     parsed = JSON.parse(input);
                 } catch (e) {
+                    reportHandledError(e, "features/exercise/components/ExerciseList.jsx:223");
                     Swal.showValidationMessage('Đoạn script không đúng cú pháp JSON! Kiểm tra lại dấu ngoặc, phẩy...');
                     return false;
                 }
@@ -305,6 +309,7 @@ export default function ExerciseList({
 
                 if (onRefresh) onRefresh();
             } catch (err) {
+                reportHandledError(err, "features/exercise/components/ExerciseList.jsx:312");
                 console.error(err);
                 Swal.close();
                 let errorMessage = 'Không thể xử lý script. Vui lòng kiểm tra lại dữ liệu.';

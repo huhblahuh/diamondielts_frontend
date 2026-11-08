@@ -1,3 +1,4 @@
+import { reportHandledError } from '../../../utils/errorReporting.js';
 import React, { useState } from 'react';
 import Swal from 'sweetalert2';
 import styles from '../CreateAssignment.module.css';
@@ -85,6 +86,7 @@ export default function AssignmentBuilder({ items, setItems, onOpenBank }) {
             }]);
             Swal.fire({ icon: 'success', title: 'Tải lên thành công', timer: 1000, showConfirmButton: false });
         } catch (err) {
+            reportHandledError(err, "features/assignment/components/AssignmentBuilder.jsx:89");
             Swal.fire('Thất bại', 'Không thể tải file lên. Vui lòng thử lại.', 'error');
         } finally {
             setIsUploading(false);

@@ -1,3 +1,4 @@
+import { reportHandledError } from '../../utils/errorReporting.js';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import axiosClient from '../../api/axiosClient';
 
@@ -25,7 +26,8 @@ export default function useSpeakingAvailability({ exerciseId = null, assignmentI
                 usedAttempts: response.usedAttempts,
                 remainingAttempts: response.remainingAttempts,
             });
-        } catch {
+        } catch (caughtError) {
+            reportHandledError(caughtError, "features/student/useSpeakingAvailability.js:30");
             if (version !== requestVersion.current) return;
             setSnapshot({ key: scopeKey,
                 status: optimisticKey.current === scopeKey ? 'processing' : 'error' });

@@ -1,3 +1,4 @@
+import { reportHandledError } from '../../utils/errorReporting.js';
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import authService from '../../api/services/auth.service';
@@ -55,6 +56,7 @@ export default function ForgotPassword({ embedded = false, onBack }) {
         try {
             await operation();
         } catch (requestError) {
+            reportHandledError(requestError, "features/auth/ForgotPassword.jsx:59");
             setError(requestError.message || 'Không thể thực hiện yêu cầu. Vui lòng thử lại.');
         } finally {
             setLoading(false);

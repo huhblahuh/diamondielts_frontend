@@ -1,3 +1,4 @@
+import { reportHandledError } from '../../utils/errorReporting.js';
 import React, {
     useCallback,
     useEffect,
@@ -206,6 +207,7 @@ export default function QuotaDashboardPage() {
                 setOverview(data);
             }
         } catch (error) {
+            reportHandledError(error, "pages/admin/QuotaDashboardPage.jsx:210");
             if (requestId === overviewRequestId.current) {
                 Swal.fire(
                     'Không thể tải dashboard',
@@ -238,6 +240,7 @@ export default function QuotaDashboardPage() {
             );
             setSelectedStudents([]);
         } catch (error) {
+            reportHandledError(error, "pages/admin/QuotaDashboardPage.jsx:243");
             Swal.fire(
                 'Không thể tải quota',
                 getErrorMessage(error, 'Vui lòng thử lại sau.'),
@@ -257,6 +260,7 @@ export default function QuotaDashboardPage() {
                 ]);
                 setClasses(classData);
             } catch (error) {
+                reportHandledError(error, "pages/admin/QuotaDashboardPage.jsx:263");
                 Swal.fire(
                     'Không thể tải danh sách lớp',
                     getErrorMessage(error, 'Vui lòng thử lại sau.'),
@@ -312,6 +316,7 @@ export default function QuotaDashboardPage() {
                 showConfirmButton: false,
             });
         } catch (error) {
+            reportHandledError(error, "pages/admin/QuotaDashboardPage.jsx:319");
             Swal.fire(
                 'Cập nhật thất bại',
                 getErrorMessage(error, 'Không thể cập nhật quota.'),
@@ -368,6 +373,7 @@ export default function QuotaDashboardPage() {
                 showConfirmButton: false,
             });
         } catch (error) {
+            reportHandledError(error, "pages/admin/QuotaDashboardPage.jsx:376");
             Swal.fire(
                 'Cập nhật thất bại',
                 getErrorMessage(error, 'Không thể cập nhật quota.'),

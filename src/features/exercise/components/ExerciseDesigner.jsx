@@ -1,3 +1,4 @@
+import { reportHandledError } from '../../../utils/errorReporting.js';
 import React, { useState, useEffect } from 'react';
 import Swal from 'sweetalert2';
 import exerciseService from '../../../api/services/exercise.service';
@@ -17,6 +18,7 @@ export default function ExerciseDesigner({ topic, onBack, onRefreshTopics }) {
             const res = await exerciseService.getAll(topic.id);
             setExistingExercises(res || []);
         } catch (err) {
+            reportHandledError(err, "features/exercise/components/ExerciseDesigner.jsx:21");
             console.error(err);
         } finally {
             setLoadingExercises(false);
@@ -55,6 +57,7 @@ export default function ExerciseDesigner({ topic, onBack, onRefreshTopics }) {
                 loadTopicExercises();
                 onRefreshTopics();
             } catch (err) {
+                reportHandledError(err, "features/exercise/components/ExerciseDesigner.jsx:60");
                 Swal.fire('Lỗi', 'Không thể xóa đề bài.', 'error');
             }
         }

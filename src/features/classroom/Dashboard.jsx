@@ -1,3 +1,4 @@
+import { reportHandledError } from '../../utils/errorReporting.js';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Doughnut } from 'react-chartjs-2';
 import {
@@ -61,7 +62,7 @@ export default function Dashboard() {
         let active = true;
         teacherDashboardService.getClasses()
             .then((data) => active && setClasses(Array.isArray(data) ? data : []))
-            .catch(() => active && setScopeError('Không thể tải danh sách lớp học.'))
+            .catch((caughtError) => { reportHandledError(caughtError, "features/classroom/Dashboard.jsx:65"); return (active && setScopeError('Không thể tải danh sách lớp học.')); })
             .finally(() => active && setLoadingClasses(false));
         return () => { active = false; };
     }, []);
@@ -79,6 +80,7 @@ export default function Dashboard() {
         teacherDashboardService.getAnalytics({ type: scope.type, id: scope.id, fromDate, toDate })
             .then((data) => active && setAnalytics(data))
             .catch((requestError) => {
+                reportHandledError(requestError, "features/classroom/Dashboard.jsx:83");
                 if (active) {
                     setAnalytics(null);
                     setError(requestError?.message || 'Không thể tải dữ liệu phân tích.');
@@ -99,6 +101,7 @@ export default function Dashboard() {
                 if (active) setStudents((detail?.members || []).filter((member) => member.role === 'Student'));
             })
             .catch((requestError) => {
+                reportHandledError(requestError, "features/classroom/Dashboard.jsx:104");
                 if (active) setScopeError(requestError?.message || 'Không thể tải danh sách học sinh.');
             })
             .finally(() => active && setLoadingStudents(false));

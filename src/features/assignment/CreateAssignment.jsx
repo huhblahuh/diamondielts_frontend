@@ -1,3 +1,4 @@
+import { reportHandledError } from '../../utils/errorReporting.js';
 import React, { useState, useEffect } from 'react';
 import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
@@ -84,6 +85,7 @@ export default function CreateAssignment() {
                     }
                 }
             } catch (error) {
+                reportHandledError(error, "features/assignment/CreateAssignment.jsx:88");
                 console.error("Init Failed", error);
                 Swal.fire('Lỗi', 'Không thể tải cấu hình', 'error');
             } finally {
@@ -99,6 +101,7 @@ export default function CreateAssignment() {
                 const data = await exerciseService.getAll();
                 setExercises(data || []);
             } catch (error) {
+                reportHandledError(error, "features/assignment/CreateAssignment.jsx:104");
                 console.error('Failed to load exercise bank:', error);
                 Swal.fire('Lỗi', 'Không thể tải ngân hàng bài tập.', 'error');
                 return;
@@ -141,6 +144,7 @@ export default function CreateAssignment() {
             }
             setTimeout(() => navigate(-1), 1200);
         } catch (err) {
+            reportHandledError(err, "features/assignment/CreateAssignment.jsx:147");
             console.error("Submit error", err);
             Swal.fire('Lỗi', 'Không thể lưu thông tin. Vui lòng thử lại.', 'error');
         } finally {

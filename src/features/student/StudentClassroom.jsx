@@ -1,3 +1,4 @@
+import { reportHandledError } from '../../utils/errorReporting.js';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axiosClient from '../../api/axiosClient';
@@ -54,6 +55,7 @@ export default function StudentClassroom() {
                     setSelectedClass(targetClass);
                 }
             } catch (e) {
+                reportHandledError(e, "features/student/StudentClassroom.jsx:58");
                 console.error(e);
                 Swal.fire('Lỗi', 'Không thể tải danh sách lớp học', 'error');
             } finally {
@@ -71,6 +73,7 @@ export default function StudentClassroom() {
                 const data = await axiosClient.get(`/student/assignment/class/${selectedClass.classId}`);
                 setDeadlines(data || []);
             } catch (e) {
+                reportHandledError(e, "features/student/StudentClassroom.jsx:76");
                 console.error(e);
             } finally {
                 setLoadingDeadlines(false);
