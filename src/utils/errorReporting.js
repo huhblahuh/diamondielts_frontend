@@ -4,6 +4,28 @@ const reported = new WeakSet();
 const privateKey = /authorization|cookie|password|passwd|secret|token|email|phone|transcript|prompt|recording|audio|requestbody|responsebody|^body$|^data$|^headers$|^user$/i;
 const safeIdentifier = value => typeof value === 'string' && /^[\w:.-]{1,150}$/.test(value) ? value : undefined;
 
+function accountId(value) {
+    if (typeof value !== 'number' && typeof value !== 'string') return undefined;
+    const id = String(value);
+    return /^[1-9]\d{0,15}$/.test(id) ? id : undefined;
+}
+
+export function setReportUser(userId) {
+    const id = accountId(userId);
+    Sentry.setUser(id ? { id } : null);
+}
+
+export function syncReportUser() {
+    try {
+        const user = localStorage.getItem('token')
+            ? JSON.parse(localStorage.getItem('user') || 'null') : null;
+        setReportUser(user?.userId);
+    } catch {
+        // Invalid/unavailable storage must not interrupt the application.
+        setReportUser(null);
+    }
+}
+
 export function scrubText(value) {
     return String(value)
         .replace(/\bBearer\s+[^\s"',;]+/gi, 'Bearer [Filtered]')
@@ -43,6 +65,8 @@ export function sanitizeEvent(event, hint = {}) {
     if (hint.originalException && reported.has(hint.originalException) && !event.tags?.error_source) return null;
     const clean = scrub(event);
     delete clean.user;
+    const id = accountId(event.user?.id);
+    if (id) clean.user = { id };
     if (clean.request) {
         clean.request = { url: safeUrl(event.request?.url || ''), method: event.request?.method };
     }
@@ -117,7 +141,11 @@ export function reportApiError(error, normalizedError) {
         const method = String(error.config?.method || 'unknown').toUpperCase();
         const endpoint = safeUrl(error.config?.url || '');
         const code = error.response?.data?.code;
-        reportHandledError(new Error(`API ${method} ${endpoint}: ${status || error.code || 'NETWORK_ERROR'}`), 'axios.response', {
+        const diagnosticError = new Error(`API ${method} ${endpoint}: ${status || error.code || 'NETWORK_ERROR'}`);
+        // Preserve the request's original stack (including async caller frames),
+        // while avoiding Axios config, headers, bodies and response payloads.
+        if (typeof error.stack === 'string') diagnosticError.stack = error.stack;
+        reportHandledError(diagnosticError, 'axios.response', {
             source: 'api', method, endpoint, status,
             network_code: safeIdentifier(error.code), response_code: safeIdentifier(code),
             request_id: safeIdentifier(error.response?.data?.requestId

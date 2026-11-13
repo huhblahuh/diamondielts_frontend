@@ -1,44 +1,32 @@
 import { reportHandledError } from '../../../utils/errorReporting.js';
-const MIME_TYPE = 'audio/webm;codecs=opus';
+import { selectRecordingMimeType } from './recordingFormat.js';
 const TIMESLICE_MS = 100;
 
 export class SharedWebmAudioSource {
     constructor() {
         this.chunks = [];
-        this.chunksSent = 0;
-        this.maxQueuedChunks = 0;
-        this.bytes = 0;
-        this.pending = Promise.resolve();
         this.startedAt = null;
         this.stoppedAt = null;
         this.finishPromise = null;
     }
 
     async start(handlers) {
-        if (!navigator.mediaDevices?.getUserMedia || !globalThis.MediaRecorder?.isTypeSupported?.(MIME_TYPE)) {
-            throw new Error('Trình duyệt không hỗ trợ ghi âm WebM/Opus. Hãy thử Chrome hoặc trình duyệt hỗ trợ WebM/Opus.');
+        // Chọn định dạng trình duyệt hỗ trợ, xin quyền micro và gom từng chunk audio.
+        this.mimeType = selectRecordingMimeType();
+        if (!navigator.mediaDevices?.getUserMedia || !this.mimeType) {
+            throw new Error('Trình duyệt không hỗ trợ ghi âm WebM hoặc MP4. Hãy cập nhật trình duyệt rồi thử lại.');
         }
         this.handlers = handlers;
         try {
             this.stream = await navigator.mediaDevices.getUserMedia({
                 audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true }
             });
-            this.recorder = new MediaRecorder(this.stream, { mimeType: MIME_TYPE });
+            this.recorder = new MediaRecorder(this.stream, { mimeType: this.mimeType });
+            this.mimeType = this.recorder.mimeType || this.mimeType;
             this.recorder.ondataavailable = event => {
                 if (!event.data?.size) return;
                 this.chunks.push(event.data);
-                this.bytes += event.data.size;
-                this.maxQueuedChunks = Math.max(this.maxQueuedChunks, this.chunks.length - this.chunksSent);
-                // Blob conversion is asynchronous. Chain it to preserve recorder order.
-                this.pending = this.pending.then(async () => {
-                    const buffer = await event.data.arrayBuffer();
-                    this.handlers.onData(buffer);
-                    this.chunksSent += 1;
-                }).catch(error => {
-                    reportHandledError(error, "features/student/audio/SharedWebmAudioSource.js:38");
-                    this.captureError = error;
-                    this.handlers.onError(error);
-                });
+
             };
             this.recorder.onerror = event => {
                 this.captureError = event.error || new Error('MediaRecorder gặp lỗi.');
@@ -55,6 +43,7 @@ export class SharedWebmAudioSource {
     }
 
     async finishCaptureAndFlush() {
+        // Chờ MediaRecorder phát chunk cuối sau stop rồi ghép tất cả thành Blob để preview/nộp.
         if (this.finishPromise) return this.finishPromise;
         this.finishPromise = (async () => {
             if (!this.recorder) throw new Error('Chưa bắt đầu ghi âm.');
@@ -66,17 +55,17 @@ export class SharedWebmAudioSource {
                 });
             }
             this.stoppedAt ??= performance.now();
-            await this.pending;
             if (this.captureError) throw this.captureError;
-            if (!this.chunks.length || this.chunksSent !== this.chunks.length) {
-                throw new Error('Các chunk âm thanh chưa được chuyển đầy đủ.');
+            if (!this.chunks.length) {
+                throw new Error('Không có dữ liệu ghi âm.');
             }
-            return new Blob(this.chunks, { type: MIME_TYPE });
+            return new Blob(this.chunks, { type: this.mimeType });
         })();
         return this.finishPromise;
     }
 
     stop() {
+        // Luôn giải phóng micro khi dừng pipeline hoặc khi khởi tạo ghi âm gặp lỗi.
         if (this.recorder?.state !== 'inactive') {
             try { this.recorder.stop(); } catch { /* already stopping */ }
         }

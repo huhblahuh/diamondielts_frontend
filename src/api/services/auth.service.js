@@ -1,4 +1,5 @@
 import axiosClient from '../axiosClient';
+import { setReportUser } from '../../utils/errorReporting.js';
 
 const authService = {
     login: (credentials) => axiosClient.post('/auth/login', credentials),
@@ -30,6 +31,7 @@ const authService = {
     logout: () => {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
+        setReportUser(null);
     }
 };
 

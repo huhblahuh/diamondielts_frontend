@@ -7,15 +7,15 @@ import { isRejectedOffTopic, isUnviewableSpeakingSubmission } from './speakingSu
 import { addSpeakingHistoryCard } from './gradingHistory';
 import Swal from 'sweetalert2';
 import AttemptDetailView from './AttemptDetailView';
-import { formatSpeakingPipelineError } from './speakingAssessmentPipeline';
+import { formatSpeakingRecordingError } from './speakingRecordingError';
+import { recordingExtension } from './audio/recordingFormat.js';
 import { createSpeakingPipeline } from './speakingPipelineFactory';
 import { normalizeSpeakingContent } from '../../utils/speakingContent';
 import { parseAssignmentDueDate } from '../../utils/assignmentDate';
 import PageSkeleton from '../../components/common/PageSkeleton';
-import SpeakingDebugPanel from './SpeakingDebugPanel';
-import { logSpeakingDiagnostic } from './speakingDiagnostics';
 import useSpeakingAvailability from './useSpeakingAvailability';
 import useSpeakingRecordingPreview from './useSpeakingRecordingPreview';
+import { speakingSubmissionNotice } from './speakingSubmissionNotice';
 
 export default function SpeakingPractice({
     isAssignmentMode = false,
@@ -61,6 +61,8 @@ export default function SpeakingPractice({
     const [loadingHistory, setLoadingHistory] = useState(false);
     const [isSubmissionQueueing, setIsSubmissionQueueing] = useState(false);
     const [pendingRecording, setPendingRecording] = useState(null);
+    const [submissionNotice, setSubmissionNotice] = useState('');
+    useEffect(() => { setSubmissionNotice(''); }, [activeId]);
     const recordingPreviewUrl = useSpeakingRecordingPreview(pendingRecording?.audioBlob);
     const availability = useSpeakingAvailability(isAssignmentMode
         ? { assignmentItemId: currentItemId }
@@ -302,9 +304,6 @@ export default function SpeakingPractice({
 
     useEffect(() => {
         return () => {
-            logSpeakingDiagnostic('speaking_view_unmounted', {
-                hadPipeline: Boolean(assessmentPipelineRef.current),
-            });
             assessmentPipelineRef.current?.dispose();
             if (timerRef.current) clearInterval(timerRef.current);
             timerRef.current = null;
@@ -312,6 +311,7 @@ export default function SpeakingPractice({
     }, []);
 
     const startRecording = async () => {
+        // Luyện tự do và Speaking trong assignment dùng chung pipeline MediaRecorder.
         // Prevent rapid double-clicks from starting multiple pipelines/timers.
         if (
             startInProgressRef.current
@@ -321,8 +321,8 @@ export default function SpeakingPractice({
         ) return;
 
         startInProgressRef.current = true;
+        setSubmissionNotice('');
         setStatus('starting');
-        logSpeakingDiagnostic('recording_requested', { part: partNum, assignmentMode: isAssignmentMode });
 
         try {
             // Kiểm tra giới hạn số lượt làm bài trước khi ghi âm
@@ -331,7 +331,6 @@ export default function SpeakingPractice({
                     ? `/student/PracticeSpeaking/check-attempts/${currentItemId}`
                     : `/student/PracticeSpeaking/check-exercise-attempts/${practiceExerciseId}`;
                 const checkData = await axiosClient.get(checkUrl);
-                logSpeakingDiagnostic('attempt_check_complete', { limitReached: Boolean(checkData.isLimitReached) });
                 if (checkData.isLimitReached) {
                     Swal.fire({
                         icon: 'warning',
@@ -347,14 +346,12 @@ export default function SpeakingPractice({
                 }
             } catch (err) {
                 reportHandledError(err, "features/student/SpeakingPractice.jsx:340");
-                logSpeakingDiagnostic('attempt_check_failed', { code: err?.code ?? null, status: err?.status ?? null });
                 console.error("Failed to check attempt limit:", err);
             }
 
             const pipeline = createSpeakingPipeline();
             assessmentPipelineRef.current = pipeline;
             await pipeline.start();
-            logSpeakingDiagnostic('recording_started', pipeline.diagnosticState());
 
             setIsRecording(true);
             setPendingRecording(null);
@@ -373,11 +370,10 @@ export default function SpeakingPractice({
 
         } catch (err) {
             reportHandledError(err, "features/student/SpeakingPractice.jsx:366");
-            logSpeakingDiagnostic('recording_start_failed', { code: err?.code || err?.name || 'UNKNOWN' });
             console.error('Speaking recording could not start:', err);
             assessmentPipelineRef.current = null;
             setStatus('idle');
-            Swal.fire('Không thể bắt đầu ghi âm', formatSpeakingPipelineError(err), 'error');
+            Swal.fire('Không thể bắt đầu ghi âm', formatSpeakingRecordingError(err), 'error');
         } finally {
             startInProgressRef.current = false;
         }
@@ -388,7 +384,6 @@ export default function SpeakingPractice({
 
         stopInProgressRef.current = true;
         const pipeline = assessmentPipelineRef.current;
-        logSpeakingDiagnostic('recording_stop_requested', pipeline.diagnosticState());
 
         setStatus('processing');
         setIsSubmissionQueueing(true);
@@ -398,12 +393,8 @@ export default function SpeakingPractice({
         recordingStartedAtRef.current = null;
 
         try {
+            // Dừng thu chỉ tạo bản ghi chờ: người học nghe lại trước khi chủ động nộp.
             const outcome = await pipeline.stop();
-            logSpeakingDiagnostic('recording_finalized', {
-                durationMs: Math.round(outcome.durationSeconds * 1000),
-                fileBytes: outcome.audioBlob?.size ?? 0,
-                fileMimeType: outcome.audioBlob?.type ?? null,
-            });
             if (assessmentPipelineRef.current === pipeline) {
                 assessmentPipelineRef.current = null;
             }
@@ -443,17 +434,13 @@ export default function SpeakingPractice({
             setIsSubmissionQueueing(false);
         } catch (err) {
             reportHandledError(err, "features/student/SpeakingPractice.jsx:440");
-            logSpeakingDiagnostic('recording_stop_failed', {
-                code: err?.code || err?.name || 'UNKNOWN',
-                ...pipeline.diagnosticState(),
-            });
             console.error('Speaking recording could not finish:', err);
             if (assessmentPipelineRef.current === pipeline) {
                 assessmentPipelineRef.current = null;
             }
             setStatus('idle');
             setIsSubmissionQueueing(false);
-            Swal.fire('Chưa thể nộp bài nói', formatSpeakingPipelineError(err), 'error');
+            Swal.fire('Chưa thể nộp bài nói', formatSpeakingRecordingError(err), 'error');
         } finally {
             stopInProgressRef.current = false;
         }
@@ -461,6 +448,7 @@ export default function SpeakingPractice({
 
     const submitPendingRecording = async () => {
         if (!pendingRecording || isSubmissionQueueing) return;
+        setSubmissionNotice('');
         setStatus('processing');
         setIsSubmissionQueueing(true);
         const submitted = await submitToBackend(pendingRecording.duration, pendingRecording.audioBlob);
@@ -476,16 +464,10 @@ export default function SpeakingPractice({
             setIsSubmissionQueueing(false);
             setStatus('idle');
             void availability.refresh();
-            Swal.fire('Chưa thể nộp bài', 'Vui lòng kiểm tra lại trạng thái bài nói trước khi nộp.', 'warning');
+            setSubmissionNotice('Vui lòng kiểm tra lại trạng thái bài nói trước khi nộp. Bản ghi vẫn được giữ ở đây.');
             return false;
         }
-        const uploadStartedAt = performance.now();
         try {
-            logSpeakingDiagnostic('submission_upload_started', {
-                durationMs: Math.round(duration * 1000),
-                fileBytes: audioBlob?.size ?? 0,
-                fileMimeType: audioBlob?.type ?? null,
-            });
             const formData = new FormData();
 
             // Append các thông tin cơ bản
@@ -501,15 +483,13 @@ export default function SpeakingPractice({
 
             // Append file vật lý nếu có
             if (audioBlob) {
-                formData.append("file", audioBlob, `speaking_${Date.now()}.webm`);
+                // Multipart gửi ID bài, thời lượng (ms) và file WebM/MP4 nguyên bản.
+                formData.append("file", audioBlob, `speaking_${Date.now()}.${recordingExtension(audioBlob)}`);
             }
 
+            // Endpoint trả Accepted khi backend đã nhận và xếp quy trình Speaking.
             const resp = await axiosClient.post('/student/submissions/speaking', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
-            });
-            logSpeakingDiagnostic('submission_upload_accepted', {
-                requestId: resp.requestId,
-                elapsedMs: Math.round(performance.now() - uploadStartedAt),
             });
 
             setHistory(previous => addSpeakingHistoryCard(previous, {
@@ -523,33 +503,9 @@ export default function SpeakingPractice({
             return true;
         } catch (err) {
             reportHandledError(err, "features/student/SpeakingPractice.jsx:520");
-            logSpeakingDiagnostic('submission_upload_failed', {
-                code: err?.code ?? null,
-                status: err?.status ?? null,
-                elapsedMs: Math.round(performance.now() - uploadStartedAt),
-            });
             console.error(err);
             availability.submitFailed(err.code === 'SUBMISSION_IN_PROGRESS');
-            if (err.code === 'OFF_TOPIC') {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Nội dung chưa phù hợp',
-                    text: err.message,
-                    confirmButtonText: 'Nói lại'
-                });
-            } else if (err.code === 'OFF_TOPIC_RETRY_LIMIT') {
-                Swal.fire(
-                    'Chưa thể gửi bài',
-                    err.message,
-                    'warning'
-                );
-            } else {
-                Swal.fire(
-                    'Lỗi',
-                    err.message || 'Không thể nộp bài. Vui lòng thử lại.',
-                    'error'
-                );
-            }
+            setSubmissionNotice(speakingSubmissionNotice(err));
             setStatus('idle');
             setIsSubmissionQueueing(false);
             return false;
@@ -817,6 +773,7 @@ export default function SpeakingPractice({
                                             {pendingRecording && recordingPreviewUrl && (
                                                 <audio className={styles.recordingPreview} controls src={recordingPreviewUrl} aria-label="Nghe lại bài nói đã ghi âm" />
                                             )}
+                                            {submissionNotice && <p className={styles.submissionNotice} role="status">{submissionNotice}</p>}
                                             {availability.status === 'error' && (
                                                 <button type="button" className="btn btn-outline-secondary mt-2" onClick={() => void availability.refresh()}>
                                                     Thử kiểm tra lại
@@ -830,8 +787,6 @@ export default function SpeakingPractice({
                     )}
                 </div>
             </main>
-
-            <SpeakingDebugPanel />
         </div>
     );
 }

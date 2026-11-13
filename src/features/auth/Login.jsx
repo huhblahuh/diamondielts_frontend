@@ -1,4 +1,4 @@
-import { reportHandledError } from '../../utils/errorReporting.js';
+import { reportHandledError, setReportUser } from '../../utils/errorReporting.js';
 import React, { useRef, useState } from 'react';
 import styles from './Login.module.css';
 import axiosClient from '../../api/axiosClient';
@@ -72,6 +72,7 @@ export default function Login() {
                 // Persist the token first so the authenticated quota request
                 // can identify the current student from JWT.
                 localStorage.setItem('token', data.token);
+                setReportUser(data.userId);
                 let speakingQuota = null;
                 if (data.role === 'Student') {
                     try {

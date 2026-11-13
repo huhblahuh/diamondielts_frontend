@@ -1422,4 +1422,16 @@
 }
 .backBtn:hover { background: #e2e8f0; color: #101d54; }
 
+.submissionNotice {
+    max-width: 32rem;
+    margin: 0.75rem 0;
+    padding: 0.85rem 1rem;
+    border: 1px solid #d5a840;
+    border-radius: 0.75rem;
+    background: #fff8e6;
+    color: #624407;
+    text-align: center;
+    overflow-wrap: anywhere;
+}
+
 

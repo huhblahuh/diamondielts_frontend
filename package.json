@@ -11,7 +11,6 @@
   "dependencies": {
     "@microsoft/signalr": "^8.0.29",
     "@sentry/react": "^11.11.0",
-    "@soniox/client": "^2.4.0",
     "@tiptap/extension-underline": "^3.23.1",
     "@tiptap/pm": "^3.23.1",
     "@tiptap/react": "^3.23.1",

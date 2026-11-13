@@ -5,6 +5,7 @@ import Layout from './components/layout/Layout';
 import ProtectedRoute from './components/routing/ProtectedRoute';
 import LoadingSpinner from './components/common/LoadingSpinner';
 import DiamondsLayout from './components/diamonds/DiamondsLayout';
+import ZaloBrowserNotice from './components/common/ZaloBrowserNotice';
 
 const RedirectToStudentAssignment = () => {
   const { assignmentId } = useParams();
@@ -60,6 +61,7 @@ function App() {
 
   return (
     <Router>
+      <ZaloBrowserNotice />
       <DiamondsLayout>
       <Routes>
         {/* Tự động chuyển hướng dựa trên Role */}

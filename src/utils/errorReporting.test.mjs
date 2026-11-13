@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import * as Sentry from '@sentry/react';
 import {
     reportHandledError, reportApiError, sanitizeEvent, sanitizeBreadcrumb, safeUrl,
+    setReportUser, syncReportUser,
 } from './errorReporting.js';
 
 const events = [];
@@ -23,6 +24,7 @@ test('API failure contains debugging metadata, excludes payloads, and is not dup
     events.length = 0;
     const normalized = { message: 'popup message', status: 500 };
     const apiError = {
+        stack: 'AxiosError: Request failed\n    at submitSpeaking (https://app.example.com/assets/speaking.js:42:7)',
         config: { method: 'post', url: '/student/submissions/speaking?token=private-token',
             headers: { Authorization: 'Bearer private-key' }, data: { audio: 'private-audio' } },
         response: { status: 500, headers: { 'x-request-id': 'request-123' },
@@ -38,6 +40,8 @@ test('API failure contains debugging metadata, excludes payloads, and is not dup
     assert.equal(events[0].contexts.failure.request_id, 'request-123');
     assert.equal(events[0].contexts.failure.endpoint, '/student/submissions/speaking');
     assert.equal(events[0].tags.error_source, 'api');
+    assert.ok(events[0].exception.values[0].stacktrace.frames.some(frame =>
+        frame.function === 'submitSpeaking' && frame.lineno === 42));
     assert.doesNotMatch(JSON.stringify(events), /private-|popup message/);
 });
 
@@ -87,4 +91,47 @@ test('scrubbing removes credentials, request bodies, personal fields and URL par
     assert.equal(sanitizeBreadcrumb({ category: 'console', message: 'private' }), null);
     const breadcrumb = sanitizeBreadcrumb({ category: 'fetch', data: { url: '/api/test?secret=abc', method: 'POST', status_code: 500, body: 'secret' } });
     assert.deepEqual(breadcrumb.data, { url: '/api/test', method: 'POST', status_code: 500 });
+});
+
+test('only an internal numeric account ID survives the user filter', () => {
+    const event = { user: { id: 123, email: 'private@example.com', username: 'private-name', ip_address: '127.0.0.1' } };
+    assert.deepEqual(sanitizeEvent(event).user, { id: '123' });
+    assert.equal(event.user.email, 'private@example.com');
+    for (const id of [null, '', 0, -1, 'private@example.com', {}, '1.5']) {
+        assert.equal(sanitizeEvent({ user: { id } }).user, undefined);
+    }
+});
+
+test('reports restore a stored account, change accounts and clear identity when the session ends', async () => {
+    const originalStorage = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
+    const stored = new Map([
+        ['token', 'private-token'],
+        ['user', JSON.stringify({ userId: 123, email: 'private@example.com', fullName: 'private-name' })],
+    ]);
+    Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: {
+        getItem: key => stored.get(key) ?? null,
+    } });
+    try {
+        events.length = 0;
+        syncReportUser();
+        reportHandledError(new Error('restored session'), 'test');
+        setReportUser(456);
+        reportHandledError(new Error('new session'), 'test');
+        setReportUser(null);
+        reportHandledError(new Error('logged out'), 'test');
+        stored.delete('token');
+        syncReportUser();
+        reportHandledError(new Error('missing token'), 'test');
+        stored.set('token', 'private-token');
+        stored.set('user', '{invalid json');
+        syncReportUser();
+        reportHandledError(new Error('invalid storage'), 'test');
+        await Sentry.flush(2000);
+        assert.deepEqual(events.map(event => event.user), [{ id: '123' }, { id: '456' }, undefined, undefined, undefined]);
+        assert.doesNotMatch(JSON.stringify(events), /private-token|private@example|private-name/);
+    } finally {
+        setReportUser(null);
+        if (originalStorage) Object.defineProperty(globalThis, 'localStorage', originalStorage);
+        else delete globalThis.localStorage;
+    }
 });

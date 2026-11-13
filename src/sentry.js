@@ -1,5 +1,5 @@
 import * as Sentry from '@sentry/react';
-import { sanitizeEvent, sanitizeBreadcrumb, reportHandledError, safeUrl } from './utils/errorReporting.js';
+import { sanitizeEvent, sanitizeBreadcrumb, reportHandledError, safeUrl, syncReportUser } from './utils/errorReporting.js';
 
 const sentryDsn = import.meta.env.VITE_SENTRY_DSN;
 const configuredTraceRate = Number(import.meta.env.VITE_SENTRY_TRACES_SAMPLE_RATE ?? '');
@@ -20,6 +20,10 @@ if (sentryDsn) {
         beforeBreadcrumb: sanitizeBreadcrumb,
         beforeSendTransaction: sanitizeEvent,
         beforeSendSpan: span => sanitizeEvent(span),
+    });
+    syncReportUser();
+    window.addEventListener('storage', event => {
+        if (event.key === 'user' || event.key === 'token' || event.key === null) syncReportUser();
     });
 
     // Resource errors do not bubble and are not JavaScript exceptions. Capture

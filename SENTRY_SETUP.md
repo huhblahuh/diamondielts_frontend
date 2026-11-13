@@ -25,7 +25,7 @@ default. `VITE_SENTRY_TRACES_SAMPLE_RATE` accepts values from 0 to 1, including
   before returning the existing popup-friendly error shape.
 - Existing handled errors in app screens, file uploads, microphone/audio handling,
   notifications and account settings explicitly call `reportHandledError`.
-- MediaRecorder, Soniox and notification connection error callbacks are covered.
+- MediaRecorder and notification connection error callbacks are covered.
 - Image/audio/video/script/style resource failures and speech synthesis failures
   are reported without attaching the media or spoken text.
 - A root React ErrorBoundary captures render failures and offers a reload button.

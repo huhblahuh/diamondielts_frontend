@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { reportApiError } from '../utils/errorReporting.js';
+import { reportApiError, setReportUser } from '../utils/errorReporting.js';
 
 const API_URL = import.meta.env.DEV
     ? '/api'
@@ -40,6 +40,7 @@ axiosClient.interceptors.response.use(
         if (status === 401 && !error.config?.skipAuth && localStorage.getItem('token')) {
             localStorage.removeItem('token');
             localStorage.removeItem('user');
+            setReportUser(null);
 
             if (window.location.pathname !== '/login') {
                 window.location.replace('/login');

@@ -558,6 +558,18 @@
     margin: 0.75rem auto 1rem;
 }
 
+.submissionNotice {
+    max-width: 32rem;
+    margin: 0.75rem 0;
+    padding: 0.85rem 1rem;
+    border: 1px solid #d5a840;
+    border-radius: 0.75rem;
+    background: #fff8e6;
+    color: #624407;
+    text-align: center;
+    overflow-wrap: anywhere;
+}
+
 .submitRecordingBtn, .retakeRecordingBtn {
     border: 0;
     border-radius: 0.75rem;

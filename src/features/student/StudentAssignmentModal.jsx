@@ -9,16 +9,16 @@ import CommonAttachmentUploader from '../../components/CommonAttachmentUploader'
 import Swal from 'sweetalert2';
 import { showToastError } from '../../utils/toast';
 import AttemptDetailView from './AttemptDetailView';
-import { formatSpeakingPipelineError } from './speakingAssessmentPipeline';
+import { formatSpeakingRecordingError } from './speakingRecordingError';
+import { recordingExtension } from './audio/recordingFormat.js';
 import { createSpeakingPipeline } from './speakingPipelineFactory';
 import useSpeakingRecordingPreview from './useSpeakingRecordingPreview';
+import { speakingSubmissionNotice } from './speakingSubmissionNotice';
 import SpeakingQuestionCard from '../../components/SpeakingQuestionCard';
 import { normalizeSpeakingContent } from '../../utils/speakingContent';
 import { parseAssignmentDueDate } from '../../utils/assignmentDate';
 import { isRejectedOffTopic, isUnviewableSpeakingSubmission } from './speakingSubmissionStatus';
 import { addSpeakingHistoryCard } from './gradingHistory';
-
-// Soniox credentials are issued by the backend for each recording session.
 
 export default function StudentAssignmentModal({ assignmentId, onClose }) {
     const [assignment, setAssignment] = useState(null);
@@ -46,6 +46,7 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
     const [speakingStatus, setSpeakingStatus] = useState({}); // itemId => 'idle' | 'recording' | 'processing' | 'submitted' | 'completed'
     const [speakingTimer, setSpeakingTimer] = useState(0);
     const [pendingSpeakingRecording, setPendingSpeakingRecording] = useState(null);
+    const [speakingNotices, setSpeakingNotices] = useState({});
     const recordingPreviewUrl = useSpeakingRecordingPreview(pendingSpeakingRecording?.audioBlob);
     const [speakingResults, setSpeakingResults] = useState({}); // itemId => results object (feedback)
     const [activeSubmissionId, setActiveSubmissionId] = useState({}); // itemId => active attempt submission ID
@@ -351,6 +352,7 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
     };
 
     const startSpeakingRecording = async (itemId, itemType, content) => {
+        // Assignment cũng mở cùng pipeline ghi âm như màn luyện Speaking tự do.
         if (assessmentPipelineRef.current || stopInProgressRef.current || availability.status !== 'available') return;
         try {
             // Kiểm tra giới hạn số lần nộp bài trước khi bắt đầu ghi âm
@@ -378,6 +380,7 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
 
             setIsRecording(true);
             setPendingSpeakingRecording(null);
+            setSpeakingNotices(previous => ({ ...previous, [itemId]: '' }));
             setSpeakingStatus(prev => ({ ...prev, [itemId]: 'recording' }));
             setSpeakingTimer(0);
             timerRef.current = setInterval(() => setSpeakingTimer(prev => prev + 1), 1000);
@@ -399,6 +402,7 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
         if (timerRef.current) clearInterval(timerRef.current);
 
         try {
+            // Hoàn tất bản ghi và giữ Blob để nghe lại hoặc thử nộp lại nếu request lỗi.
             const outcome = await assessmentPipelineRef.current.stop();
             assessmentPipelineRef.current = null;
             const duration = outcome.durationSeconds;
@@ -438,7 +442,7 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
             console.error(err);
             assessmentPipelineRef.current = null;
             setSpeakingStatus(prev => ({ ...prev, [itemId]: 'idle' }));
-            showToastError(formatSpeakingPipelineError(err));
+            showToastError(formatSpeakingRecordingError(err));
         } finally {
             stopInProgressRef.current = false;
         }
@@ -464,10 +468,11 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
         duration,
         audioBlob = null
     ) => {
+        setSpeakingNotices(previous => ({ ...previous, [itemId]: '' }));
         if (!availability.beginSubmit()) {
             setSpeakingStatus(prev => ({ ...prev, [itemId]: 'idle' }));
             void availability.refresh();
-            showToastError('Vui lòng kiểm tra lại trạng thái bài nói trước khi nộp.');
+            setSpeakingNotices(previous => ({ ...previous, [itemId]: 'Vui lòng kiểm tra lại trạng thái bài nói trước khi nộp. Bản ghi vẫn được giữ ở đây.' }));
             return false;
         }
         try {
@@ -480,9 +485,11 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
             );
 
             if (audioBlob) {
-                formData.append("file", audioBlob, `speaking_${Date.now()}.webm`);
+                // Backend phân biệt assignment bằng AssignmentItemId trong multipart.
+                formData.append("file", audioBlob, `speaking_${Date.now()}.${recordingExtension(audioBlob)}`);
             }
 
+            // Dùng chung endpoint tiếp nhận Speaking với bài luyện tự do.
             const resp = await axiosClient.post('/student/submissions/speaking', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
@@ -502,13 +509,7 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
             reportHandledError(err, "features/student/StudentAssignmentModal.jsx:504");
             console.error(err);
             availability.submitFailed(err.code === 'SUBMISSION_IN_PROGRESS');
-            if (err.code === 'OFF_TOPIC') {
-                showToastError(err.message);
-            } else {
-                showToastError(
-                    err.message || 'Không thể nộp bài. Vui lòng thử lại.'
-                );
-            }
+            setSpeakingNotices(previous => ({ ...previous, [itemId]: speakingSubmissionNotice(err) }));
             setSpeakingStatus(prev => ({ ...prev, [itemId]: 'idle' }));
             return false;
         }
@@ -785,6 +786,9 @@ export default function StudentAssignmentModal({ assignmentId, onClose }) {
                                                         </button>}
                                                         {pendingSpeakingRecording?.itemId === activeSpeakingItemId && recordingPreviewUrl && (
                                                             <audio className={styles.recordingPreview} controls src={recordingPreviewUrl} aria-label="Nghe lại bài nói đã ghi âm" />
+                                                        )}
+                                                        {speakingNotices[activeSpeakingItemId] && (
+                                                            <p className={styles.submissionNotice} role="status">{speakingNotices[activeSpeakingItemId]}</p>
                                                         )}
                                                         {availability.status === 'error' && (
                                                             <button type="button" className="btn btn-outline-secondary mt-2" onClick={() => void availability.refresh()}>

@@ -2,26 +2,25 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { SharedWebmAudioSource } from './SharedWebmAudioSource.js';
 
-test('final recorder chunk is sent once and in order before finalization', async () => {
+for (const mimeType of ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4;codecs=mp4a.40.2', 'audio/mp4']) {
+test(`${mimeType}: includes the final chunk once and in order in the recording file`, async () => {
     const originalNavigator = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
     const originalRecorder = Object.getOwnPropertyDescriptor(globalThis, 'MediaRecorder');
     const stoppedTracks = [];
-    const sent = [];
     class Recorder extends EventTarget {
-        static isTypeSupported(type) { return type === 'audio/webm;codecs=opus'; }
-        constructor() { super(); this.state = 'inactive'; }
+        static isTypeSupported(type) { return type === mimeType; }
+        constructor(stream, options) {
+            super();
+            assert.equal(options.mimeType, mimeType);
+            this.mimeType = options.mimeType;
+            this.state = 'inactive';
+        }
         start() { this.state = 'recording'; }
-        emitChunk(value, waitMs) {
-            const data = new Blob([Uint8Array.of(value)]);
-            const read = data.arrayBuffer.bind(data);
-            data.arrayBuffer = async () => {
-                await new Promise(resolve => setTimeout(resolve, waitMs));
-                return read();
-            };
-            this.ondataavailable({ data });
+        emitChunk(value) {
+            this.ondataavailable({ data: new Blob([Uint8Array.of(value)]) });
         }
         stop() {
-            this.emitChunk(3, 0);
+            this.emitChunk(3);
             this.state = 'inactive';
             queueMicrotask(() => this.dispatchEvent(new Event('stop')));
         }
@@ -32,14 +31,13 @@ test('final recorder chunk is sent once and in order before finalization', async
     Object.defineProperty(globalThis, 'MediaRecorder', { configurable: true, value: Recorder });
     try {
         const source = new SharedWebmAudioSource();
-        await source.start({ onData: data => sent.push(new Uint8Array(data)[0]), onError: error => { throw error; } });
-        source.recorder.emitChunk(1, 20);
-        source.recorder.emitChunk(2, 0);
+        await source.start({ onError: error => { throw error; } });
+        source.recorder.emitChunk(1);
+        source.recorder.emitChunk(2);
         const audioBlob = await source.finishCaptureAndFlush();
         await source.finishCaptureAndFlush();
-        assert.deepEqual(sent, [1, 2, 3]);
         assert.deepEqual([...new Uint8Array(await audioBlob.arrayBuffer())], [1, 2, 3]);
-        assert.equal(source.chunksSent, 3);
+        assert.equal(audioBlob.type, mimeType);
         source.stop();
         assert.equal(stoppedTracks.length, 1);
     } finally {
@@ -49,3 +47,4 @@ test('final recorder chunk is sent once and in order before finalization', async
         else delete globalThis.MediaRecorder;
     }
 });
+}
