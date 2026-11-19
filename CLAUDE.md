@@ -7,7 +7,7 @@ Hướng dẫn cho Claude khi làm việc trên kho này. Kho là phần giao di
 ## Ranh giới
 
 - **Frontend (kho này):** của thầy. Claude được sửa, mở pull request, gộp khi thầy duyệt.
-- **Backend:** bạn dev giữ, Claude không xem và không sửa được. Gồm tài khoản, lớp, bài tập, bài nộp, file ghi âm, chấm điểm, chuyển giọng nói thành chữ, gửi email, CORS. Địa chỉ server nằm trong biến `VITE_API_URL`, không có trong kho.
+- **Backend:** bạn dev giữ, Claude không xem và không sửa được. Gồm tài khoản, lớp, bài tập, bài nộp, file ghi âm, chấm điểm, chuyển giọng nói thành chữ, gửi email, CORS. Địa chỉ server ghi cứng trong `src/api/axiosClient.js`: `https://api-tunnel.diamonds-speaking.space/api`, tên miền do bạn dev giữ. Đổi tên miền của web Speaking thì bạn dev phải cho phép địa chỉ mới ở phía server (CORS) và sửa link trong email đặt lại mật khẩu, nên phải báo bạn dev trước.
 - Lỗi phía server (đăng nhập xoay mãi, lỗi CORS, chấm không ra điểm, không nhận được email): chỉ chẩn đoán rồi soạn lời nhắn để thầy gửi bạn dev. Không đoán mò cách server chạy. Chỗ nào không chắc thì nói rõ là phải hỏi bạn dev.
 - Lời nhắn cho bạn dev (hoặc AI bên bạn dev): viết như ghi chú kỹ thuật, ngắn, rõ, không kiểu tin nhắn tâm sự.
 - Web không dùng Supabase. Không cần environment hay mã riêng, mở phiên với environment nào cũng được.
