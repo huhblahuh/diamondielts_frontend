@@ -4,7 +4,7 @@ import siteLogo from '../../assets/site-logo.webp';
 import { diamondsModeForRoute } from './studentLayoutPolicy';
 import { DRAW, GROUPS, PHASES, THEMES } from './themeArtwork';
 
-const PORTAL = 'https://diamonds-ielts.netlify.app/';
+const PORTAL = 'https://diamonds-ielts.pages.dev/';
 const DiamondLayoutContext = createContext({ openThemePicker: () => {} });
 const phaseKeys = ['far', 'mid', 'near', 'g1', 'g2', 'g3', 'w2', 'snow', 'cloud', 'sand', 'sand2'];
 const prefixClasses = (html) => html.replace(/class="([^"]*)"/g, (_, classes) =>

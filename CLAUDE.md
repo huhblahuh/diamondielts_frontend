@@ -1,6 +1,6 @@
 # Web Speaking · Diamonds IELTS (frontend)
 
-Hướng dẫn cho Claude khi làm việc trên kho này. Kho là phần giao diện (frontend) của web Speaking, viết bằng React và Vite, chạy tại https://diamonds-speaking.netlify.app. Kho thuộc thầy Vinh. Bạn dev bên ngoài là cộng tác viên và vẫn sửa kho thường xuyên.
+Hướng dẫn cho Claude khi làm việc trên kho này. Kho là phần giao diện (frontend) của web Speaking, viết bằng React và Vite, chạy tại https://diamonds-speaking.pages.dev (Cloudflare Pages, chuyển từ Netlify 21/11/2026). Link cũ diamonds-speaking.netlify.app tự chuyển sang link mới. Kho thuộc thầy Vinh. Bạn dev bên ngoài là cộng tác viên và vẫn sửa kho thường xuyên.
 
 **Kho đang công khai.** Không đưa vào kho: mật khẩu, khóa, file tài khoản học sinh, cách đặt username và mật khẩu, tên lớp, chuyện chi phí hay hợp đồng với bạn dev. Những thứ đó nằm ở Project "Website Speaking" bên claude.ai của thầy.
 
@@ -14,7 +14,7 @@ Hướng dẫn cho Claude khi làm việc trên kho này. Kho là phần giao di
 
 ## Cách sửa
 
-- Bạn dev đẩy thẳng lên `main` thường xuyên. Claude không đẩy thẳng lên `main`: sửa trên nhánh mới, mở pull request. GitHub Actions (`.github/workflows/netlify.yml`) tự đăng bản xem thử `pr-N--...netlify.app` và ghi link vào pull request. Gửi link cho thầy, thầy duyệt mới gộp. Gộp vào `main` là đăng web thật, khoảng 2 đến 3 phút, thầy tải lại bằng Ctrl + F5.
+- Bạn dev đẩy thẳng lên `main` thường xuyên. Claude không đẩy thẳng lên `main`: sửa trên nhánh mới, mở pull request. GitHub Actions (`.github/workflows/cloudflare.yml`) build rồi tự đăng bản xem thử `pr-N.diamonds-speaking.pages.dev` và ghi link vào pull request. Gửi link cho thầy, thầy duyệt mới gộp. Gộp vào `main` là đăng web thật, khoảng 2 đến 3 phút, thầy tải lại bằng Ctrl + F5.
 - Trước khi sửa, lấy bản `main` mới nhất. Sửa xong chạy `npm ci` rồi `npx vite build` để chắc build không lỗi. Không commit thư mục `dist`.
 - Giữ nguyên kiểu xuống dòng (CRLF hoặc LF) của từng file. Không để script ghi lại cả file làm đổi kiểu xuống dòng.
 - Đổi giao diện lớn: dựng bản xem trước cho thầy xem trước. Sửa nhỏ, rõ ràng (đổi chỗ nút, sửa chữ): làm luôn.
@@ -56,3 +56,8 @@ Hướng dẫn cho Claude khi làm việc trên kho này. Kho là phần giao di
 - Hai lỗi có từ bản gốc, cần thử trên web thật. Còn thì báo bạn dev, hoặc tự sửa nếu là lỗi frontend:
   - Trang `/student/dashboard/progress` trắng màn (`Cannot read properties of undefined (reading 'slice')`).
   - Ô Diamond ở trang chủ học viên hiện "Còn NaN/NaN diamond".
+
+- **Đăng web (21/11/2026, chuyển từ Netlify sang Cloudflare vì Netlify thu 15 credit mỗi lần đăng web thật):** GitHub build và tự đăng lên Cloudflare Pages bằng `.github/workflows/cloudflare.yml` (wrangler, project `diamonds-speaking`). Cần 1 secret trong kho: `CLOUDFLARE_API_TOKEN` (quyền Cloudflare Pages: Edit). Đẩy lên `main` là đăng web thật. Bạn dev không phải đổi cách làm.
+- **Link Netlify cũ:** site Netlify cũ chỉ còn xuất bản thư mục `chuyen-huong/` (`netlify.toml`: publish = chuyen-huong, có dòng ignore nên chỉ đăng lại khi thư mục này đổi). Nếu Netlify không tự lấy kho thì chạy tay `.github/workflows/netlify-chuyen-huong.yml` (còn giữ 2 secret `NETLIFY_AUTH_TOKEN`, `NETLIFY_SITE_ID`).
+- Backend phải cho phép origin `https://diamonds-speaking.pages.dev` và `https://*.diamonds-speaking.pages.dev` (CORS), link trong email phải trỏ link mới. Bạn dev làm phần này.
+- Thông báo đẩy (Web Push) gắn theo địa chỉ web. Học sinh đã bật thông báo ở link cũ thì phải bật lại ở link mới.

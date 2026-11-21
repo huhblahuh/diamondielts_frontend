@@ -1,3 +1,7 @@
+# Site Netlify cu (diamonds-speaking.netlify.app) chi con la trang tu chuyen sang Cloudflare.
+# Netlify xuat ban thu muc chuyen-huong/. Web that nam o Cloudflare Pages (build tu GitHub, thu muc dist/).
 [build]
-command = "npm run build"
-publish = "dist"
+  publish = "chuyen-huong"
+  command = ""
+  # Bo qua (khong dang, khong ton credit) tru khi trang chuyen huong doi.
+  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- chuyen-huong/ netlify.toml"

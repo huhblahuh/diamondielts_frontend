@@ -1,0 +1,31 @@
+# Link cu diamonds-speaking.netlify.app: trang tu chuyen sang link moi tren Cloudflare.
+# Chi chay khi bam tay (Actions, chon workflow nay, Run workflow). Moi lan chay ton 15 credit Netlify.
+# Doi link dich thi sua chuyen-huong/_redirects roi chay lai.
+# Can 2 secret trong kho: NETLIFY_AUTH_TOKEN, NETLIFY_SITE_ID.
+name: Netlify chuyen huong
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Kiem tra ma Netlify
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+        run: |
+          if [ -z "$NETLIFY_AUTH_TOKEN" ] || [ -z "$NETLIFY_SITE_ID" ]; then echo "::error::Thieu ma Netlify"; exit 1; fi
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Dang trang chuyen huong len Netlify
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+        run: |
+          npm i -g netlify-cli@17 >/dev/null 2>&1
+          netlify deploy --dir=chuyen-huong --prod
